@@ -3,7 +3,7 @@
     <section class="w-full bg-surface-container-low px-gutter py-space-sm">
       <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-space-xs">
         <div class="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
-          <router-link to="/" class="hover:text-primary transition-colors">Beranda</router-link>
+          <router-link to="/sma" class="hover:text-primary transition-colors">Beranda</router-link>
           <span class="material-symbols-outlined text-[13px] text-outline">chevron_right</span>
           <span class="text-on-surface font-semibold">Galeri Kegiatan</span>
         </div>
@@ -25,7 +25,7 @@
     <section class="w-full max-w-7xl mx-auto px-gutter pb-space-xl">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-lg">
         <article v-for="(a, i) in albums" :key="a.id" class="stagger-slow landing-card flex flex-col bg-surface-container-lowest rounded shadow-md overflow-hidden" :style="{ animationDelay: `${Math.min(i, 8) * 140}ms` }">
-          <router-link :to="'/galeri/' + a.id" class="flex flex-col h-full">
+          <router-link :to="'/sma/galeri/' + a.id" class="flex flex-col h-full">
             <div class="relative h-56 w-full bg-surface-container overflow-hidden landing-img-wrap">
               <img v-if="coverUrl(a)" class="w-full h-full object-cover" :src="coverUrl(a)" :alt="a.title" loading="lazy" />
               <div v-else class="w-full h-full flex items-center justify-center text-outline">

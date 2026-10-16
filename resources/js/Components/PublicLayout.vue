@@ -3,7 +3,7 @@
     <header class="fixed top-0 w-full z-50 bg-white/85 backdrop-blur-xl border-b border-outline-variant shadow-sm">
       <div class="h-20 w-full px-gutter-desktop mx-auto flex items-center justify-between gap-space-md">
         <div class="flex items-center gap-space-md shrink-0">
-          <router-link to="/" class="flex items-center gap-space-md">
+          <router-link to="/sma" class="flex items-center gap-space-md">
             <AppLogo :src="logo" :size="34" shape="md" alt="Logo SMA Madani Al Aziziyah" />
             <div class="flex flex-col">
               <span class="font-headline-sm text-headline-sm text-on-surface tracking-tight uppercase leading-none">{{ brand }}</span>
@@ -28,7 +28,6 @@
           </router-link>
         </nav>
         <div class="flex items-center gap-space-md">
-          <router-link to="/login" class="hidden sm:inline-flex items-center justify-center px-space-md py-space-sm bg-primary-container text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary hover:text-on-primary hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,color]">Portal Akademik / Masuk</router-link>
           <button
             class="xl:hidden w-9 h-9 rounded-full border border-outline-variant bg-white shadow-sm flex items-center justify-center transition-transform duration-200"
             :class="menuOpen ? 'rotate-90' : ''"
@@ -50,7 +49,6 @@
             :class="isActive(item) ? 'text-primary font-semibold' : 'text-on-surface-variant'"
             @click="menuOpen = false"
           >{{ item.label }}</router-link>
-          <router-link to="/login" class="py-2 font-title-md text-title-md text-primary" @click="menuOpen = false">Portal Akademik / Masuk</router-link>
         </div>
       </Transition>
     </header>
@@ -81,18 +79,18 @@
           <div class="flex flex-col gap-space-sm">
             <h3 class="font-headline-sm text-headline-sm text-on-surface border-b-2 border-primary pb-1 inline-block w-fit">Akses Cepat</h3>
             <nav class="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
-              <router-link to="/profil" class="hover:text-primary transition-colors">Profil &amp; Kurikulum</router-link>
-              <router-link to="/ppdb" class="hover:text-primary transition-colors">Penerimaan Peserta Didik Baru (PPDB)</router-link>
-              <router-link to="/prestasi" class="hover:text-primary transition-colors">Prestasi &amp; Pengakuan Sekolah</router-link>
-              <router-link to="/fasilitas" class="hover:text-primary transition-colors">Fasilitas Sekolah</router-link>
+              <router-link to="/sma/profil" class="hover:text-primary transition-colors">Profil &amp; Kurikulum</router-link>
+              <router-link to="/sma/ppdb" class="hover:text-primary transition-colors">Penerimaan Peserta Didik Baru (PPDB)</router-link>
+              <router-link to="/sma/prestasi" class="hover:text-primary transition-colors">Prestasi &amp; Pengakuan Sekolah</router-link>
+              <router-link to="/sma/fasilitas" class="hover:text-primary transition-colors">Fasilitas Sekolah</router-link>
             </nav>
           </div>
           <div class="flex flex-col gap-space-sm">
             <h3 class="font-headline-sm text-headline-sm text-on-surface border-b-2 border-primary pb-1 inline-block w-fit">Informasi &amp; Media</h3>
             <nav class="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
-              <router-link to="/berita" class="hover:text-primary transition-colors">Berita Sekolah</router-link>
-              <router-link to="/galeri" class="hover:text-primary transition-colors">Galeri Kegiatan</router-link>
-              <router-link to="/kontak" class="hover:text-primary transition-colors">Kontak &amp; Lokasi</router-link>
+              <router-link to="/sma/berita" class="hover:text-primary transition-colors">Berita Sekolah</router-link>
+              <router-link to="/sma/galeri" class="hover:text-primary transition-colors">Galeri Kegiatan</router-link>
+              <router-link to="/sma/kontak" class="hover:text-primary transition-colors">Kontak &amp; Lokasi</router-link>
             </nav>
           </div>
         </div>
@@ -130,18 +128,18 @@ const npsn = computed(() => get('npsn', '69986030'))
 const nspp = computed(() => get('nspp', '') || '')
 
 const nav = [
-  { label: 'Beranda', path: '/' },
-  { label: 'Profil & Kurikulum', path: '/profil' },
-  { label: 'Fasilitas', path: '/fasilitas' },
-  { label: 'Prestasi', path: '/prestasi' },
-  { label: 'Berita', path: '/berita' },
-  { label: 'Galeri', path: '/galeri' },
-  { label: 'Penerimaan (PPDB)', path: '/ppdb' },
-  { label: 'Kontak', path: '/kontak' },
+  { label: 'Beranda', path: '/sma' },
+  { label: 'Profil & Kurikulum', path: '/sma/profil' },
+  { label: 'Fasilitas', path: '/sma/fasilitas' },
+  { label: 'Prestasi', path: '/sma/prestasi' },
+  { label: 'Berita', path: '/sma/berita' },
+  { label: 'Galeri', path: '/sma/galeri' },
+  { label: 'Penerimaan (PPDB)', path: '/sma/ppdb' },
+  { label: 'Kontak', path: '/sma/kontak' },
 ]
 
 function isActive(item) {
-  if (item.path === '/') return route.path === '/'
+  if (item.path === '/sma') return route.path === '/sma'
   return route.path.startsWith(item.path)
 }
 </script>

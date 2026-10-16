@@ -3,7 +3,7 @@
     <section class="w-full bg-surface-container-low px-gutter py-space-sm">
       <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-space-xs">
         <div class="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
-          <router-link to="/" class="hover:text-primary transition-colors">Beranda</router-link>
+          <router-link to="/sma" class="hover:text-primary transition-colors">Beranda</router-link>
           <span class="material-symbols-outlined text-[13px] text-outline">chevron_right</span>
           <span class="text-on-surface font-semibold">Pendaftaran Santri Baru 2026–2027</span>
         </div>
@@ -276,7 +276,7 @@
         <p class="font-body-sm text-body-sm text-on-surface-variant">Simpan nomor pendaftaran. Pantau pengumuman resmi sekolah untuk jadwal, berkas, dan tahapan seleksi.</p>
         <div class="flex flex-wrap justify-center gap-2">
           <button @click="printBukti" class="px-5 py-2 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-primary-hover">Cetak Bukti</button>
-          <router-link to="/ppdb" @click="resetAll" class="px-5 py-2 bg-surface-container-low border border-outline-variant rounded-full text-sm font-semibold">Daftar Lain</router-link>
+          <router-link to="/sma/ppdb" @click="resetAll" class="px-5 py-2 bg-surface-container-low border border-outline-variant rounded-full text-sm font-semibold">Daftar Lain</router-link>
         </div>
       </div>
     </section>

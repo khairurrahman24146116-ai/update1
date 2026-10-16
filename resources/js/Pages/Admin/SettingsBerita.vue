@@ -32,7 +32,7 @@
 <div v-else class="space-y-2">
 <div v-for="n in list" :key="n.id" class="p-3 bg-white border border-outline-variant rounded-xl flex items-center justify-between gap-2 transition-transform duration-200 ease-in-out hover:-translate-y-1">
 <div class="min-w-0"><div class="font-bold text-sm truncate">{{ n.title }}</div><div class="text-xs text-on-surface-variant">{{ n.category?.name || '—' }} • {{ n.status }} • {{ n.slug }}</div></div>
-<div class="flex gap-1 shrink-0"><a :href="'/berita/'+n.id" target="_blank" class="btn btn--ghost btn--sm">Preview</a><button @click="openEdit(n)" class="btn btn--ghost btn--sm">Edit</button><button @click="remove(n)" class="btn btn--destructive btn--sm">Hapus</button></div>
+<div class="flex gap-1 shrink-0"><a :href="'/sma/berita/'+n.id" target="_blank" class="btn btn--ghost btn--sm">Preview</a><button @click="openEdit(n)" class="btn btn--ghost btn--sm">Edit</button><button @click="remove(n)" class="btn btn--destructive btn--sm">Hapus</button></div>
 </div>
 <div v-if="!list.length" class="text-center py-6 text-sm text-on-surface-variant">Belum ada berita.</div>
 <div v-if="meta" class="flex items-center justify-between pt-2 border-t text-xs"><span class="text-on-surface-variant">Total {{ meta.total }} — Hal {{ meta.current_page }}/{{ meta.last_page }}</span><div class="flex gap-2"><button @click="goPage(meta.current_page-1)" :disabled="meta.current_page<=1" class="btn btn--ghost btn--sm disabled:opacity-40">‹ Prev</button><button @click="goPage(meta.current_page+1)" :disabled="meta.current_page>=meta.last_page" class="btn btn--ghost btn--sm disabled:opacity-40">Next ›</button></div></div>

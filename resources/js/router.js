@@ -33,6 +33,8 @@ import LpiBeranda from './Pages/Lpi/LpiBeranda.vue'
 import LpiTentang from './Pages/Lpi/LpiTentang.vue'
 import LpiProgram from './Pages/Lpi/LpiProgram.vue'
 import LpiLayanan from './Pages/Lpi/LpiLayanan.vue'
+import NotFound from './Pages/NotFound.vue'
+import { LOGIN_PATH } from './site-paths.js'
 
 const roleMap = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara', wali_murid: '/app/wali-murid' }
 function currentRole() {
@@ -40,21 +42,35 @@ function currentRole() {
 }
 
 const routes = [
-    { path: '/', component: Landing },
-    { path: '/profil', component: Profil },
-    { path: '/fasilitas', component: Fasilitas },
-    { path: '/prestasi', component: Prestasi },
-    { path: '/kontak', component: Kontak },
-    { path: '/ppdb', component: PPDB },
-    { path: '/berita', component: BeritaList },
-    { path: '/galeri', component: GaleriList },
-    { path: '/berita/:id', component: BeritaDetail },
-    { path: '/galeri/:id', component: GaleriDetail },
-    { path: '/lpi', component: LpiBeranda },
-    { path: '/lpi/tentang', component: LpiTentang },
-    { path: '/lpi/program', component: LpiProgram },
-    { path: '/lpi/layanan', component: LpiLayanan },
-    { path: '/login', component: Login, meta: { guestOnly: true } },
+    { path: '/', component: LpiBeranda },
+    { path: '/tentang', component: LpiTentang },
+    { path: '/program', component: LpiProgram },
+    { path: '/layanan', component: LpiLayanan },
+    { path: '/sma', component: Landing },
+    { path: '/sma/profil', component: Profil },
+    { path: '/sma/fasilitas', component: Fasilitas },
+    { path: '/sma/prestasi', component: Prestasi },
+    { path: '/sma/kontak', component: Kontak },
+    { path: '/sma/ppdb', component: PPDB },
+    { path: '/sma/berita', component: BeritaList },
+    { path: '/sma/galeri', component: GaleriList },
+    { path: '/sma/berita/:id', component: BeritaDetail },
+    { path: '/sma/galeri/:id', component: GaleriDetail },
+    { path: '/lpi', redirect: '/' },
+    { path: '/lpi/tentang', redirect: '/tentang' },
+    { path: '/lpi/program', redirect: '/program' },
+    { path: '/lpi/layanan', redirect: '/layanan' },
+    { path: '/profil', redirect: '/sma/profil' },
+    { path: '/fasilitas', redirect: '/sma/fasilitas' },
+    { path: '/prestasi', redirect: '/sma/prestasi' },
+    { path: '/kontak', redirect: '/sma/kontak' },
+    { path: '/ppdb', redirect: '/sma/ppdb' },
+    { path: '/berita', redirect: '/sma/berita' },
+    { path: '/galeri', redirect: '/sma/galeri' },
+    { path: '/berita/:id', redirect: (to) => `/sma/berita/${to.params.id}` },
+    { path: '/galeri/:id', redirect: (to) => `/sma/galeri/${to.params.id}` },
+    { path: LOGIN_PATH, component: Login, meta: { guestOnly: true } },
+    { path: '/:pathMatch(.*)*', component: NotFound },
     { path: '/app', redirect: () => roleMap[currentRole()] || '/' },
     { path: '/app/admin', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/app/admin/settings', component: AdminSettings, meta: { requiresAuth: true, role: 'admin' } },
@@ -87,14 +103,14 @@ const router = createRouter({
 })
 router.beforeEach((to) => {
   const token = localStorage.getItem('madani_token')
-  if (to.meta.requiresAuth && !token) return '/login'
+  if (to.meta.requiresAuth && !token) return LOGIN_PATH
   if (to.meta.guestOnly && token) {
     const r = currentRole()
     return roleMap[r] || '/'
   }
   if (to.meta.role && token) {
     const r = currentRole()
-    if (r && r !== to.meta.role) return roleMap[r] || '/login'
+    if (r && r !== to.meta.role) return roleMap[r] || LOGIN_PATH
   }
   return true
 })

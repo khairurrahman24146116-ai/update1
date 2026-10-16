@@ -1,4 +1,5 @@
-export const smaUrl = import.meta.env.VITE_SMA_URL || 'http://127.0.0.1:8000/'
+import { SMA_BASE } from '../site-paths.js'
+export const smaUrl = SMA_BASE
 
 export const brand = {
   name: 'LPI Dayah Madani Al-Aziziyah',

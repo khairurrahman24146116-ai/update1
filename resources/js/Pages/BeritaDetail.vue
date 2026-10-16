@@ -1,7 +1,7 @@
 <template>
 <div class="min-h-screen bg-surface text-on-surface">
 <div class="max-w-[800px] mx-auto px-4 py-8 space-y-4">
-<BackButton fallback="/" label="Kembali" />
+<BackButton fallback="/sma/berita" label="Kembali" />
 <div v-if="loading" class="text-center py-12 opacity-60">Memuat...</div>
 <div v-else-if="!item" class="text-center py-12">Berita tidak ditemukan.</div>
 <Reveal slow v-else class="bg-white border border-outline-variant rounded shadow-sm overflow-hidden landing-card">
@@ -25,6 +25,6 @@ import { useSeo } from '../composables/useSeo.js'
 const route = useRoute()
 const item = ref(null), loading = ref(true)
 onMounted(async()=>{
-  try{ const r=await fetch('/api/news/public/'+route.params.id); if(r.ok){ item.value=await r.json(); useSeo({title:item.value.title, description:item.value.excerpt, image:item.value.image_path?location.origin+'/storage/'+item.value.image_path:null, url:location.href}) } } finally{ loading.value=false }
+  try{ const r=await fetch('/api/news/public/'+route.params.id); if(r.ok){ item.value=await r.json(); useSeo({title:item.value.title, description:item.value.excerpt, image:item.value.image_path?location.origin+'/storage/'+item.value.image_path:null, url:location.href, brand:'SMA Madani Al-Aziziyah'}) } } finally{ loading.value=false }
 })
 </script>

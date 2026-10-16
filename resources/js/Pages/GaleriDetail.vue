@@ -1,7 +1,7 @@
 <template>
 <div class="min-h-screen bg-surface text-on-surface">
 <div class="max-w-[1000px] mx-auto px-4 py-8 space-y-4">
-<BackButton fallback="/" label="Kembali" />
+<BackButton fallback="/sma/galeri" label="Kembali" />
 <div v-if="loading" class="text-center py-12 opacity-60">Memuat...</div>
 <div v-else-if="!album" class="text-center py-12">Album tidak ditemukan.</div>
 <div v-else class="space-y-4">
@@ -34,5 +34,5 @@ import BackButton from '../Components/BackButton.vue'
 import Reveal from '../Components/Reveal.vue'
 import { useSeo } from '../composables/useSeo.js'
 const route=useRoute(); const album=ref(null), loading=ref(true)
-onMounted(async()=>{ try{ const r=await fetch('/api/gallery/public/'+route.params.id); if(r.ok){ album.value=await r.json(); useSeo({title:album.value.title, description:album.value.description, image:album.value.cover_path?location.origin+'/storage/'+album.value.cover_path:null, url:location.href}) } } finally{ loading.value=false } })
+onMounted(async()=>{ try{ const r=await fetch('/api/gallery/public/'+route.params.id); if(r.ok){ album.value=await r.json(); useSeo({title:album.value.title, description:album.value.description, image:album.value.cover_path?location.origin+'/storage/'+album.value.cover_path:null, url:location.href, brand:'SMA Madani Al-Aziziyah'}) } } finally{ loading.value=false } })
 </script>

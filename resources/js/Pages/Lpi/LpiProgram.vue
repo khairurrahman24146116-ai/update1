@@ -8,10 +8,10 @@
           <span class="material-symbols-outlined text-primary text-[28px]">{{ p.icon }}</span>
           <h2 class="font-headline-sm text-headline-sm font-semibold">{{ p.name }}</h2>
           <p class="font-body-sm text-body-sm text-on-surface-variant">{{ p.active ? p.desc : 'Segera hadir' }}</p>
-          <a v-if="p.active" :href="p.href" class="inline-flex items-center gap-1 font-title-md text-primary underline underline-offset-4 w-fit">
+          <router-link v-if="p.active" :to="p.href" class="inline-flex items-center gap-1 font-title-md text-primary underline underline-offset-4 w-fit">
             <span>Kunjungi situs</span>
             <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-          </a>
+          </router-link>
           <span v-else class="inline-flex items-center gap-1 font-title-md text-on-surface-variant">
             <span class="material-symbols-outlined text-[16px]">schedule</span>
             <span>Segera hadir</span>
@@ -23,6 +23,9 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import LpiLayout from '../../Components/LpiLayout.vue'
 import { brand, programs } from '../../data/lpi.js'
+import { useSeo } from '../../composables/useSeo.js'
+onMounted(() => { useSeo({ title: 'Program', description: brand.tagline, url: location.href }) })
 </script>

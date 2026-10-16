@@ -4,7 +4,7 @@
     <div class="w-full bg-surface-container-low px-gutter py-space-sm">
       <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-space-xs">
         <div class="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
-          <router-link to="/" class="hover:text-primary transition-colors">Beranda</router-link>
+          <router-link to="/sma" class="hover:text-primary transition-colors">Beranda</router-link>
           <span class="material-symbols-outlined text-[13px] text-outline" aria-hidden="true">chevron_right</span>
           <span class="text-on-surface font-semibold">Fasilitas &amp; Kehidupan Santri</span>
         </div>

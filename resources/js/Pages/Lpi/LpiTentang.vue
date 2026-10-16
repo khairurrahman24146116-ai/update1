@@ -43,6 +43,9 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import LpiLayout from '../../Components/LpiLayout.vue'
 import { brand, visi, misi, profil, struktur } from '../../data/lpi.js'
+import { useSeo } from '../../composables/useSeo.js'
+onMounted(() => { useSeo({ title: 'Tentang', description: visi, url: location.href }) })
 </script>

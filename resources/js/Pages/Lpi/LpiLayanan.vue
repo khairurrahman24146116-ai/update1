@@ -17,6 +17,9 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import LpiLayout from '../../Components/LpiLayout.vue'
 import { brand, layanan } from '../../data/lpi.js'
+import { useSeo } from '../../composables/useSeo.js'
+onMounted(() => { useSeo({ title: 'Layanan', description: brand.tagline, url: location.href }) })
 </script>

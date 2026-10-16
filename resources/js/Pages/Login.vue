@@ -84,7 +84,7 @@ Secure Auth Layer
 <!-- Bottom links -->
 <div class="w-full mt-4 flex flex-col items-center gap-2.5 px-1">
 <p class="font-code text-[11px] text-on-surface-variant text-center opacity-80">© {{ currentYear }} SMA Madani Al-Aziziyah. Seluruh Hak Cipta Dilindungi.</p>
-<a href="/" class="text-xs text-primary hover:underline">← Kembali ke Beranda</a>
+<router-link to="/" class="text-xs text-primary hover:underline">← Kembali ke Beranda</router-link>
 </div>
 </main>
 
@@ -127,7 +127,7 @@ const map = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara
 async function submit() {
   try {
     const res = await doLogin(form.value.identity, form.value.password)
-    router.push(map[res.user.role] || '/portal')
+    router.push(map[res.user.role] || '/')
   } catch {}
 }
 function doRecovery(ch) {

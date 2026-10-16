@@ -5,11 +5,11 @@
       <h1 class="font-display-lg text-display-lg font-bold tracking-tight">{{ brand.name }}</h1>
       <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">{{ brand.tagline }}</p>
       <div class="flex flex-wrap gap-space-sm">
-        <a :href="smaUrl" class="inline-flex items-center justify-center gap-2 px-space-lg py-space-sm bg-primary text-on-primary font-title-md rounded-full shadow-sm hover:bg-primary-hover">
+        <router-link :to="smaUrl" class="inline-flex items-center justify-center gap-2 px-space-lg py-space-sm bg-primary text-on-primary font-title-md rounded-full shadow-sm hover:bg-primary-hover">
           <span>Kunjungi Situs SMA</span>
           <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-        </a>
-        <router-link to="/lpi/program" class="inline-flex items-center justify-center gap-2 px-space-lg py-space-sm bg-surface-container-lowest border border-outline-variant font-title-md rounded-full shadow-sm">
+        </router-link>
+        <router-link to="/program" class="inline-flex items-center justify-center gap-2 px-space-lg py-space-sm bg-surface-container-lowest border border-outline-variant font-title-md rounded-full shadow-sm">
           <span>Lihat Program</span>
         </router-link>
       </div>
@@ -27,6 +27,9 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import LpiLayout from '../../Components/LpiLayout.vue'
 import { brand, programs, smaUrl } from '../../data/lpi.js'
+import { useSeo } from '../../composables/useSeo.js'
+onMounted(() => { useSeo({ title: 'Beranda', description: brand.tagline, url: location.href }) })
 </script>

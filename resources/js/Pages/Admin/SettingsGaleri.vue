@@ -23,7 +23,7 @@
 <div class="text-xs text-on-surface-variant">{{ a.is_public?'public':'private' }} • {{ a.items_count }} foto</div>
 </div>
 <div class="flex flex-wrap gap-2 shrink-0">
-<a :href="'/galeri/'+a.id" target="_blank" class="btn btn--ghost btn--sm">Preview</a>
+<a :href="'/sma/galeri/'+a.id" target="_blank" class="btn btn--ghost btn--sm">Preview</a>
 <button @click="openEdit(a)" class="btn btn--ghost btn--sm">Edit</button>
 <button @click="remove(a)" class="btn btn--destructive btn--sm">Hapus</button>
 </div>

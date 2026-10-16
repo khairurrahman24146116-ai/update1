@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import * as authApi from '../services/auth.js'
+import { LOGIN_PATH } from '../site-paths.js'
 const KEY = 'madani_token'
 const KEY_USER = 'madani_user'
 const token = ref(localStorage.getItem(KEY) || '')
@@ -16,8 +17,8 @@ function clearSession() {
 function handleUnauthorized() {
   if (!token.value) return
   clearSession()
-  const expired = location.pathname !== '/login'
-  location.href = expired ? '/login?expired=1' : '/login'
+  const expired = location.pathname !== LOGIN_PATH
+  location.href = expired ? `${LOGIN_PATH}?expired=1` : LOGIN_PATH
 }
 
 function patchFetch() {

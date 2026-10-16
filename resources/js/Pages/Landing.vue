@@ -19,7 +19,7 @@
             </Reveal>
             <Reveal slow :delay="360">
               <div class="flex flex-wrap items-center gap-space-md pt-space-xs">
-                <router-link to="/ppdb" class="landing-cta landing-glow inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
+                <router-link to="/sma/ppdb" class="landing-cta landing-glow inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
                   <span>Daftar PPDB Online</span>
                   <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
                 </router-link>
@@ -27,7 +27,7 @@
                   <span class="material-symbols-outlined text-[18px]">how_to_reg</span>
                   <span>Cara Mendaftar</span>
                 </a>
-                <router-link to="/fasilitas" class="inline-flex items-center gap-1 font-title-md text-title-md text-on-surface-variant hover:text-primary transition-colors duration-500 underline decoration-1 underline-offset-4">
+                <router-link to="/sma/fasilitas" class="inline-flex items-center gap-1 font-title-md text-title-md text-on-surface-variant hover:text-primary transition-colors duration-500 underline decoration-1 underline-offset-4">
                   <span>Jelajahi Fasilitas</span>
                   <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                 </router-link>
@@ -183,7 +183,7 @@
             </div>
           </Reveal>
           <Reveal slow :delay="140">
-            <router-link to="/prestasi" class="font-title-md text-title-md text-primary hover:text-primary-hover inline-flex items-center gap-1 underline decoration-2 transition-colors duration-500">
+            <router-link to="/sma/prestasi" class="font-title-md text-title-md text-primary hover:text-primary-hover inline-flex items-center gap-1 underline decoration-2 transition-colors duration-500">
               <span>Lihat Halaman Prestasi</span>
               <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
             </router-link>
@@ -234,7 +234,7 @@
             </span>
             <h3 class="font-headline-md text-headline-md text-on-surface font-semibold">Informasi Alur &amp; Gelombang PPDB</h3>
             <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">Jadwal gelombang dan alur pendaftaran ditetapkan oleh panitia sekolah dan diumumkan melalui laman ini. Periksa kembali halaman ini secara berkala untuk informasi terbaru.</p>
-            <router-link to="/ppdb" class="landing-cta landing-glow inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
+            <router-link to="/sma/ppdb" class="landing-cta landing-glow inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
               <span>Buka Halaman PPDB</span>
               <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
             </router-link>
@@ -252,11 +252,11 @@
               </div>
             </div>
             <div class="flex flex-wrap items-center justify-center gap-space-sm shrink-0">
-              <router-link to="/kontak" class="landing-cta inline-flex items-center gap-space-xs px-space-md py-space-sm bg-surface-container-lowest text-on-surface font-title-md text-title-md rounded-full shadow-sm hover:bg-surface hover:shadow-md">
+              <router-link to="/sma/kontak" class="landing-cta inline-flex items-center gap-space-xs px-space-md py-space-sm bg-surface-container-lowest text-on-surface font-title-md text-title-md rounded-full shadow-sm hover:bg-surface hover:shadow-md">
                 <span class="material-symbols-outlined text-primary text-[18px]">mail</span>
                 <span>Hubungi Sekretariat</span>
               </router-link>
-              <router-link to="/ppdb" class="landing-cta inline-flex items-center gap-space-xs px-space-md py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
+              <router-link to="/sma/ppdb" class="landing-cta inline-flex items-center gap-space-xs px-space-md py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
                 <span>Daftar Sekarang</span>
                 <span class="material-symbols-outlined text-[18px]">login</span>
               </router-link>
@@ -277,11 +277,11 @@
               <p class="font-body-md text-body-md text-on-surface-variant">Lengkapi pendaftaran secara daring dan pantau pengumuman resmi sekolah untuk informasi jadwal, berkas, dan tahapan seleksi.</p>
             </div>
             <div class="flex flex-col sm:flex-row items-center gap-space-md w-full lg:w-auto shrink-0">
-              <router-link to="/ppdb" class="landing-cta landing-glow w-full sm:w-auto inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
+              <router-link to="/sma/ppdb" class="landing-cta landing-glow w-full sm:w-auto inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
                 <span>Registrasi Santri Baru</span>
                 <span class="material-symbols-outlined text-[18px]">how_to_reg</span>
               </router-link>
-              <router-link to="/kontak" class="landing-cta w-full sm:w-auto inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-surface-container-low text-on-surface font-title-md text-title-md border border-outline-variant rounded-full shadow-sm hover:bg-surface-container hover:shadow-md">
+              <router-link to="/sma/kontak" class="landing-cta w-full sm:w-auto inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-surface-container-low text-on-surface font-title-md text-title-md border border-outline-variant rounded-full shadow-sm hover:bg-surface-container hover:shadow-md">
                 <span class="material-symbols-outlined text-[18px]">mail</span>
                 <span>Hubungi Sekretariat</span>
               </router-link>
@@ -298,6 +298,7 @@ import { ref, computed, onMounted } from 'vue'
 import PublicLayout from '../Components/PublicLayout.vue'
 import Reveal from '../Components/Reveal.vue'
 import { useSiteSettings } from '../composables/useSiteSettings'
+import { useSeo } from '../composables/useSeo.js'
 
 const { load, asset } = useSiteSettings()
 const sections = ref([])
@@ -318,6 +319,7 @@ const profilTitle = computed(() => profil.value?.title || 'Trilogi Kurikulum SMA
 const profilBody = computed(() => profil.value?.body || "Perpaduan kedalaman ilmu-ilmu syar'i, ketajaman nalar sains modern, dan kemandirian kepemimpinan santri.")
 
 onMounted(async () => {
+  useSeo({ title: 'Beranda SMA', description: 'Situs resmi SMA Madani Al-Aziziyah.', url: location.href, brand: 'SMA Madani Al-Aziziyah' })
   await load()
   try {
     const r = await fetch('/api/landing-sections/public')

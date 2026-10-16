@@ -28,6 +28,7 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth.js'
+import { LOGIN_PATH } from '../site-paths.js'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import AppLogo from './AppLogo.vue'
 
@@ -54,6 +55,6 @@ const homePath = computed(() => {
 
 function logout() {
   doLogout()
-  router.push('/login')
+  router.push(LOGIN_PATH)
 }
 </script>
