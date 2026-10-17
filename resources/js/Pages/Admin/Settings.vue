@@ -13,7 +13,7 @@
 </div>
 
 <nav class="flex gap-2 overflow-x-auto pb-1 p-1 bg-surface-container-low border border-outline-variant rounded-xl shadow-sm max-w-full min-w-0">
-<button v-for="t in tabs" :key="t.key" @click="active=t.key" :class="active===t.key?'bg-primary-container text-white shadow-sm border-outline-variant/60':'bg-white hover:bg-surface-container-high border-transparent'" class="inline-flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-bold whitespace-nowrap transition-colors duration-200 ease-in-out">{{ t.label }}</button>
+<button v-for="t in tabs" :key="t.key" @click="active=t.key" :class="active===t.key?'bg-primary text-on-primary shadow-sm border-outline-variant/60':'bg-white hover:bg-surface-container-high border-transparent'" class="inline-flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-bold whitespace-nowrap transition-colors duration-200 ease-in-out">{{ t.label }}</button>
 </nav>
 
   <section v-if="active==='landing'" class="bg-white border border-outline-variant rounded-xl shadow-sm p-6 space-y-4">
@@ -36,7 +36,7 @@
   <div class="lg:col-span-8 space-y-6">
 <section class="bg-white border border-outline-variant rounded-xl shadow-sm overflow-hidden">
 <div class="bg-surface-container-low border-b border-outline-variant px-4 py-3 flex items-center justify-between">
-<div class="flex items-center gap-2"><span class="w-8 h-8 rounded-full bg-primary-container text-white flex items-center justify-center border border-outline-variant"><span class="material-symbols-outlined !w-5 !h-5">account_balance</span></span><div><h2 class="font-bold text-sm">1. Legalitas & Identitas Dayah</h2><p class="text-xs text-on-surface-variant">Data primer untuk Rapor Digital, Ijazah & Portal Publik</p></div></div>
+<div class="flex items-center gap-2"><span class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center border border-outline-variant"><span class="material-symbols-outlined !w-5 !h-5">account_balance</span></span><div><h2 class="font-bold text-sm">1. Legalitas & Identitas Dayah</h2><p class="text-xs text-on-surface-variant">Data primer untuk Rapor Digital, Ijazah & Portal Publik</p></div></div>
 </div>
 <div class="p-4 md:p-6 space-y-4">
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -56,19 +56,22 @@
 <div class="p-4 md:p-6">
 <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start md:items-center">
 <div class="md:col-span-4 flex flex-col items-center p-4 bg-surface border border-dashed border-outline-variant rounded-xl text-center gap-2">
-<img :src="asset(form.logo_path) || '/images/emblem.svg'" alt="Preview logo" class="w-32 h-32 object-contain border border-outline-variant rounded-full bg-white p-2"/>
+<div class="logo-plate rounded-full p-3">
+  <img :src="asset(form.logo_path) || '/images/profile/logo-lpi-transparent.png'" alt="Pratinjau logo" width="128" height="128" class="w-32 h-32 object-contain"/>
+</div>
 <label class="btn btn--ghost btn--sm cursor-pointer">
   <span class="material-symbols-outlined !w-4 !h-4">upload</span>
   {{ uploading.field === 'logo' ? 'Mengunggah…' : 'Pilih Logo' }}
   <input @change="upload($event,'logo')" type="file" accept="image/*" class="sr-only" :disabled="uploading.active"/>
 </label>
+<p class="text-[11px] text-on-surface-variant">Gunakan PNG latar transparan agar logo bersih tanpa kotak latar.</p>
 <p v-if="fileStatus.logo" class="text-xs font-bold" :class="fileStatus.logo.ok ? 'text-green-700' : 'text-error'">{{ fileStatus.logo.msg }}</p>
 <p v-else-if="form.logo_path" class="text-xs text-on-surface-variant truncate max-w-full" :title="form.logo_path">{{ fileNameOf(form.logo_path) }}</p>
 </div>
 <div class="md:col-span-8 space-y-2">
 <div v-for="item in brandAssets" :key="item.k" class="p-3 bg-surface-container-low border border-outline-variant rounded-2xl flex flex-col sm:flex-row sm:items-center gap-3 justify-between transition-transform duration-200 ease-in-out hover:-translate-y-1">
 <div class="flex items-center gap-3 min-w-0">
-  <div class="w-12 h-12 rounded-xl bg-white border border-outline-variant flex items-center justify-center overflow-hidden shrink-0">
+  <div class="logo-plate rounded-xl w-12 h-12 shrink-0">
     <img v-if="asset(form[item.k])" :src="asset(form[item.k])" :alt="item.l" class="w-full h-full object-contain"/>
     <span v-else class="material-symbols-outlined !w-5 !h-5 text-on-surface-variant">{{ item.icon }}</span>
   </div>

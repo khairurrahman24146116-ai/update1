@@ -41,7 +41,7 @@
             <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold mb-2">Progres Pengisian</h3>
             <ol class="flex flex-col gap-1">
               <li v-for="(s, i) in steps" :key="s.key" class="flex items-center gap-2">
-                <span :class="i < step ? 'bg-primary text-on-primary' : i === step ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'" class="w-6 h-6 rounded-full flex items-center justify-center font-label-sm text-label-sm font-bold shrink-0">{{ i < step ? '✓' : (i + 1) }}</span>
+                <span :class="i < step ? 'bg-primary text-on-primary' : i === step ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container text-on-surface-variant'" class="w-6 h-6 rounded-full flex items-center justify-center font-label-sm text-label-sm font-bold shrink-0">{{ i < step ? '✓' : (i + 1) }}</span>
                 <span :class="i === step ? 'text-on-surface font-semibold' : 'text-on-surface-variant'" class="font-body-sm text-body-sm">{{ s.label }}</span>
               </li>
             </ol>
@@ -254,16 +254,19 @@
             </div>
 
             <div class="flex flex-wrap gap-2 mt-4">
-              <button v-if="step > 0" @click="prev" type="button" class="px-5 py-2 bg-surface-container-low text-on-surface border border-outline-variant rounded-full text-sm font-semibold">Sebelumnya</button>
-              <button v-if="step < steps.length - 1" @click="next" type="button" class="px-5 py-2 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-primary-hover">Selanjutnya</button>
-              <button v-else @click="submit" :disabled="submitting" type="button" class="px-5 py-2 bg-primary text-on-primary rounded-full text-sm font-semibold disabled:opacity-50 hover:bg-primary-hover">{{ submitting ? 'Mengirim…' : 'Kirim Pendaftaran' }}</button>
+              <button v-if="step > 0" @click="prev" type="button" class="px-5 py-2 bg-surface-container-low text-on-surface border border-outline-variant rounded-full text-sm font-semibold transition-colors hover:bg-surface-container">Sebelumnya</button>
+              <button v-if="step < steps.length - 1" @click="next" type="button" class="btn-skeu px-5 py-2 bg-primary text-on-primary rounded-full text-sm font-semibold">Selanjutnya</button>
+              <button v-else @click="submit" :disabled="submitting" type="button" class="btn-skeu inline-flex items-center gap-2 px-5 py-2 bg-primary text-on-primary rounded-full text-sm font-semibold disabled:opacity-60">
+                <span v-if="submitting" class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                {{ submitting ? 'Mengirim…' : 'Kirim Pendaftaran' }}
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Sukses -->
-      <div v-if="success" class="max-w-3xl mx-auto bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-md p-space-lg text-center flex flex-col gap-3 items-center">
+      <div v-if="success" class="hero-scale max-w-3xl mx-auto bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-md p-space-lg text-center flex flex-col gap-3 items-center">
         <span class="w-14 h-14 rounded-full bg-primary-fixed text-primary flex items-center justify-center"><span class="material-symbols-outlined text-[28px]">check_circle</span></span>
         <h2 class="font-headline-lg text-headline-lg font-bold">Pendaftaran Berhasil Dikirim</h2>
         <p class="font-body-md text-body-md text-on-surface-variant">Status: <strong>Menunggu verifikasi panitia</strong>. Keputusan diterima/ditolak diumumkan kemudian.</p>
@@ -536,6 +539,23 @@ function printBukti() { window.print() }
 
 <style scoped>
 .lbl { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: var(--color-on-surface); }
-.inp { width: 100%; padding: 10px 14px; border: 1px solid var(--color-outline-variant); border-radius: 10px; background: #fff; font-size: 14px; outline: none; }
-.inp:focus { border-color: var(--color-primary-container); box-shadow: 0 0 0 3px rgba(11, 35, 71, 0.12); }
+.inp {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 10px;
+  background: var(--color-surface-container-lowest);
+  font-size: 14px;
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(50, 104, 84, 0.05);
+  color: var(--color-on-surface);
+  transition: border-color 0.25s var(--ease-out-soft), box-shadow 0.25s var(--ease-out-soft), background-color 0.25s var(--ease-out-soft);
+}
+.inp:hover { border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-outline-variant)); }
+.inp:focus {
+  border-color: var(--color-primary);
+  background: var(--color-surface-container);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 22%, transparent);
+}
+.inp:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 </style>

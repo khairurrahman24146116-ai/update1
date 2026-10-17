@@ -2,8 +2,8 @@
   <AppShell title="Import Siswa">
     <BackButton fallback="/app/admin" label="Kembali" />
     <div class="flex gap-3">
-      <button @click="gender='L'" :class="gender==='L'?'bg-primary-container text-white':'bg-white'" class="btn">Siswa Putra (L)</button>
-      <button @click="gender='P'" :class="gender==='P'?'bg-primary-container text-white':'bg-white'" class="btn">Siswa Putri (P)</button>
+      <button @click="gender='L'" :class="gender==='L'?'bg-primary text-on-primary':'bg-white'" class="btn">Siswa Putra (L)</button>
+      <button @click="gender='P'" :class="gender==='P'?'bg-primary text-on-primary':'bg-white'" class="btn">Siswa Putri (P)</button>
       <button @click="downloadTemplate" class="btn btn--secondary">
         <span class="material-symbols-outlined !w-4 !h-4">download</span>
         Template {{ gender==='L'?'Putra':'Putri' }}
@@ -17,7 +17,7 @@
     <Transition name="fade">
     <div v-if="preview" class="bg-white border border-outline-variant rounded-xl shadow-sm p-5 space-y-3">
       <div class="flex gap-4 text-sm font-bold"><span>Total: {{ preview.total }}</span><span class="text-green-700">Valid: {{ preview.valid }}</span><span class="text-error">Invalid: {{ preview.invalid }}</span></div>
-      <div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-primary-container text-white"><tr><th class="p-2 text-left">Baris</th><th class="p-2 text-left">NIS</th><th class="p-2 text-left">NISN</th><th class="p-2 text-left">Nama</th><th class="p-2 text-left">Kelas</th><th class="p-2 text-left">Status</th><th class="p-2 text-left">Error</th></tr></thead><tbody><tr v-for="r in preview.rows" :key="r.row" class="border-t border-outline-variant"><td class="p-2">{{ r.row }}</td><td class="p-2">{{ r.data.nis }}</td><td class="p-2">{{ r.data.nisn }}</td><td class="p-2">{{ r.data.nama }}</td><td class="p-2">{{ r.data.kelas }}</td><td class="p-2 font-bold" :class="r.status==='PASS'?'text-green-700':'text-error'">{{ r.status }}</td><td class="p-2 text-error">{{ r.errors.join('; ') }}</td></tr></tbody></table></div>
+      <div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-primary text-on-primary"><tr><th class="p-2 text-left">Baris</th><th class="p-2 text-left">NIS</th><th class="p-2 text-left">NISN</th><th class="p-2 text-left">Nama</th><th class="p-2 text-left">Kelas</th><th class="p-2 text-left">Status</th><th class="p-2 text-left">Error</th></tr></thead><tbody><tr v-for="r in preview.rows" :key="r.row" class="border-t border-outline-variant"><td class="p-2">{{ r.row }}</td><td class="p-2">{{ r.data.nis }}</td><td class="p-2">{{ r.data.nisn }}</td><td class="p-2">{{ r.data.nama }}</td><td class="p-2">{{ r.data.kelas }}</td><td class="p-2 font-bold" :class="r.status==='PASS'?'text-green-700':'text-error'">{{ r.status }}</td><td class="p-2 text-error">{{ r.errors.join('; ') }}</td></tr></tbody></table></div>
       <button @click="doImport" class="btn btn--primary">Konfirmasi Import (hanya valid)</button>
     </div>
     </Transition>

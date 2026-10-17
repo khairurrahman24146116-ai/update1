@@ -6,9 +6,11 @@ use App\Http\Controllers\Api\BackupController;
 use App\Http\Controllers\Api\ClassroomController;
 use App\Http\Controllers\Api\GalleryAlbumController;
 use App\Http\Controllers\Api\GuruAttendanceImportController;
+use App\Http\Controllers\Api\HomepageSettingController;
 use App\Http\Controllers\Api\LandingSectionController;
 use App\Http\Controllers\Api\NewsCategoryController;
 use App\Http\Controllers\Api\NewsController;
+use App\Http\Controllers\Api\OrganizationMemberController;
 use App\Http\Controllers\Api\PPDBRegistrationController;
 use App\Http\Controllers\Api\PPDBWaveController;
 use App\Http\Controllers\Api\ScheduleController;
@@ -29,6 +31,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:60,1');
 
 Route::get('/site-settings/public', [SiteSettingController::class, 'publicIndex']);
+Route::get('/homepage-settings/public', [HomepageSettingController::class, 'publicIndex']);
 Route::get('/school-principals/current', fn () => SchoolPrincipal::where('is_current', true)->orderBy('id')->get());
 Route::get('/landing-sections/public', fn () => LandingSection::where('is_visible', true)->orderBy('order')->get());
 Route::get('/news/public', [NewsController::class, 'publicIndex']);
@@ -39,6 +42,7 @@ Route::get('/gallery/public/{id}', [GalleryAlbumController::class, 'publicShow']
 Route::get('/ppdb-waves/public', [PPDBWaveController::class, 'publicIndex']);
 Route::get('/ppdb-waves/public/{id}', [PPDBWaveController::class, 'publicShow']);
 Route::post('/ppdb-registrations', [PPDBRegistrationController::class, 'publicStore'])->middleware('throttle:10,1');
+Route::get('/organization-members/public', [OrganizationMemberController::class, 'publicIndex']);
 
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/user', fn (Request $request) => $request->user());
@@ -98,5 +102,19 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::delete('/gallery-albums/{galleryAlbum}/items/{item}', [GalleryAlbumController::class, 'destroyItem']);
         Route::apiResource('ppdb-waves', PPDBWaveController::class)->parameters(['ppdb-waves' => 'ppdb_wave']);
         Route::apiResource('ppdb-registrations', PPDBRegistrationController::class)->only(['index', 'show', 'update', 'destroy']);
+
+        Route::get('/homepage-settings', [HomepageSettingController::class, 'index']);
+        Route::put('/homepage-settings', [HomepageSettingController::class, 'update']);
+        Route::post('/homepage-settings/upload-logo', [HomepageSettingController::class, 'uploadLogo'])->middleware('throttle:20,1');
+        Route::delete('/homepage-settings/reset-logo', [HomepageSettingController::class, 'resetLogo']);
+        Route::post('/homepage-settings/upload-media', [HomepageSettingController::class, 'uploadMedia'])->middleware('throttle:20,1');
+        Route::put('/homepage-settings/update-media', [HomepageSettingController::class, 'updateMedia']);
+        Route::delete('/homepage-settings/media/{id}', [HomepageSettingController::class, 'destroyMedia']);
+
+        Route::get('/organization-members', [OrganizationMemberController::class, 'index']);
+        Route::post('/organization-members', [OrganizationMemberController::class, 'store']);
+        Route::post('/organization-members/upload-photo', [OrganizationMemberController::class, 'uploadPhoto'])->middleware('throttle:20,1');
+        Route::put('/organization-members/{organization_member}', [OrganizationMemberController::class, 'update']);
+        Route::delete('/organization-members/{organization_member}', [OrganizationMemberController::class, 'destroy']);
     });
 });

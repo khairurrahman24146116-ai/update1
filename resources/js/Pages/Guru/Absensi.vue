@@ -29,7 +29,7 @@
         </div>
         <div class="overflow-x-auto">
           <table class="w-full min-w-[700px] text-sm">
-            <thead class="bg-primary-container text-white">
+            <thead class="bg-primary text-on-primary">
               <tr>
                 <th class="p-2 sm:p-3 text-left">No</th>
                 <th class="p-2 sm:p-3 text-left">NIS</th>
@@ -39,7 +39,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, i) in sheet" :key="row.student.id" class="border-t border-outline-variant transition-colors hover:bg-gray-50">
+              <tr v-for="(row, i) in sheet" :key="row.student.id" class="border-t border-outline-variant transition-colors hover:bg-surface-container-low">
                 <td class="p-2 sm:p-3 text-xs sm:text-sm">{{ i + 1 }}</td>
                 <td class="p-2 sm:p-3 text-xs sm:text-sm whitespace-nowrap">{{ row.student.nis }}</td>
                 <td class="p-2 sm:p-3 text-xs sm:text-sm">{{ row.student.name }}</td>

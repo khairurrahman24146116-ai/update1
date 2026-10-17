@@ -5,7 +5,7 @@
     <EmptyState v-else-if="!children.length" icon="child_care" title="Belum ada data anak" description="Belum ada data anak yang terhubung ke akun wali murid ini." />
     <div v-for="c in children" :key="c.id" class="p-6 bg-white border border-outline-variant rounded-xl shadow-sm">
       <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-full bg-primary-container text-white flex items-center justify-center font-black border border-outline-variant">{{ initials(c.name) }}</div>
+        <div class="w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center font-black border border-outline-variant">{{ initials(c.name) }}</div>
         <div>
           <div class="font-extrabold">{{ c.name }} — {{ c.classroom?.name ?? '-' }}</div>
           <div class="text-xs text-on-surface-variant">NIS: {{ c.nis }}<span v-if="c.nisn"> • NISN: {{ c.nisn }}</span> • Status: {{ (c.status||'').toUpperCase() }}</div>

@@ -23,6 +23,6 @@ class ExampleTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('<link rel="icon"', false);
-        $response->assertSee('/images/emblem.svg', false);
+        $response->assertSee('/images/profile/logo-lpi-transparent.png', false);
     }
 }

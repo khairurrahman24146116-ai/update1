@@ -16,7 +16,7 @@
     <EmptyState v-else-if="!sheet.length" icon="assignment" title="Pilih kelas & mapel" description="Pilih kelas dan mata pelajaran, lalu klik Tampilkan." />
     <div v-else class="bg-white border border-outline-variant rounded-xl shadow-sm overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-primary-container text-white"><tr><th class="p-3 text-left">No</th><th class="p-3 text-left">NIS</th><th class="p-3 text-left">Siswa</th><th class="p-3 text-left">Nilai (0-100)</th></tr></thead>
+        <thead class="bg-primary text-on-primary"><tr><th class="p-3 text-left">No</th><th class="p-3 text-left">NIS</th><th class="p-3 text-left">Siswa</th><th class="p-3 text-left">Nilai (0-100)</th></tr></thead>
         <tbody>
           <tr v-for="(r,i) in sheet" :key="r.student.id" class="border-t border-outline-variant">
             <td class="p-3">{{ i+1 }}</td><td class="p-3 text-xs">{{ r.student.nis }}</td><td class="p-3">{{ r.student.name }}</td>
