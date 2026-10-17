@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Classroom;
+use App\Models\SiteSetting;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -57,6 +58,48 @@ class HardeningTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $file = UploadedFile::fake()->create('icon.svg', 10, 'image/svg+xml');
         $this->actingAs($admin)->postJson('/api/site-settings/upload', ['file' => $file, 'field' => 'logo_path'])->assertStatus(422);
+    }
+
+    public function test_non_admin_cannot_manage_homepage_settings(): void
+    {
+        foreach (['guru', 'wali_murid', 'bendahara'] as $role) {
+            $u = User::factory()->create(['role' => $role]);
+            $this->actingAs($u)->getJson('/api/homepage-settings')->assertStatus(403);
+            $this->actingAs($u)->putJson('/api/homepage-settings', [])->assertStatus(403);
+        }
+    }
+
+    public function test_admin_can_read_homepage_settings(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin)->getJson('/api/homepage-settings')
+            ->assertOk()
+            ->assertJsonStructure(['settings', 'hero_media']);
+    }
+
+    public function test_homepage_media_upload_rejects_svg(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $file = UploadedFile::fake()->create('icon.svg', 10, 'image/svg+xml');
+        $this->actingAs($admin)->postJson('/api/homepage-settings/upload-media', ['file' => $file])->assertStatus(422);
+    }
+
+    public function test_homepage_media_upload_accepts_jpg(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Storage::fake('public');
+        $file = UploadedFile::fake()->image('hero.jpg', 200, 120);
+        $this->actingAs($admin)->post('/api/homepage-settings/upload-media', ['file' => $file])->assertOk();
+    }
+
+    public function test_public_homepage_endpoint_exposes_default_prayer_location(): void
+    {
+        SiteSetting::create(['app_name' => 'Test LPI']);
+        $this->getJson('/api/homepage-settings/public')
+            ->assertOk()
+            ->assertJsonPath('prayer_city_name', 'Banda Aceh')
+            ->assertJsonPath('prayer_timezone', 'Asia/Jakarta')
+            ->assertJsonPath('prayer_card_visible', true);
     }
 
     public function test_students_pagination(): void

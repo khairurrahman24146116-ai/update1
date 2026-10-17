@@ -94,6 +94,8 @@ const manajemen = [
   { to:'/app/admin/schedules', label:'Jadwal Pelajaran', desc:'Kelola jadwal mengajar harian', icon:'calendar_month', bg:'bg-primary-fixed' },
 ]
 const konten = [
+  { to:'/app/admin/homepage', label:'Pengaturan Beranda', desc:'Hero, logo, media & waktu salat', icon:'home', bg:'bg-secondary-container' },
+  { to:'/app/admin/organization', label:'Struktur Organisasi', desc:'Susun bagan, jabatan & foto pengurus', icon:'account_tree', bg:'bg-tertiary-fixed' },
   { to:'/app/admin/settings?tab=landing', label:'Landing Page Content', desc:'Hero, sambutan & section', icon:'language', bg:'bg-surface-container-low' },
   { to:'/app/admin/settings?tab=berita', label:'Berita & Kategori', desc:'Artikel publish/draft', icon:'newspaper', bg:'bg-primary-fixed' },
   { to:'/app/admin/settings?tab=galeri', label:'Galeri & Album', desc:'Foto & video per album', icon:'photo_library', bg:'bg-tertiary-fixed' },

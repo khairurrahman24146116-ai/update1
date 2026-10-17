@@ -1,13 +1,10 @@
 <template>
-  <span
-    class="inline-flex shrink-0 items-center justify-center overflow-hidden border border-outline-variant bg-surface-container-lowest rounded-full shadow-sm"
-    :class="[`rounded-${shape === 'pill' ? 'full' : shape}`]"
-    :style="dims"
-    aria-hidden="true"
-  >
+  <span class="logo-plate" :style="plateStyle">
     <img
       :src="currentSrc"
       :alt="alt"
+      :width="size"
+      :height="size"
       class="h-full w-full object-contain"
       loading="lazy"
       @error="currentSrc = fallback"
@@ -25,7 +22,7 @@ const props = defineProps({
   shape: { type: String, default: 'lg' },
 })
 
-const fallback = '/images/emblem.svg'
+const fallback = '/images/profile/logo-lpi-transparent.png'
 const currentSrc = ref(props.src || fallback)
 
 watch(
@@ -35,5 +32,16 @@ watch(
   }
 )
 
-const dims = computed(() => ({ width: `${props.size}px`, height: `${props.size}px` }))
+const plateStyle = computed(() => {
+  const size = Number(props.size) || 40
+  const radius = props.shape === 'pill'
+    ? '9999px'
+    : `${Math.max(6, Math.min(22, Math.round(size * 0.28)))}px`
+  return {
+    width: `${size}px`,
+    height: `${size}px`,
+    borderRadius: radius,
+    padding: `${Math.max(2, Math.round(size * 0.08))}px`,
+  }
+})
 </script>

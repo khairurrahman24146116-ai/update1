@@ -1,52 +1,9 @@
+/*
+ * Token non-warna (tipografi, radius, spasi, bayangan, easing).
+ * Nilai warna Mode Terang didefinisikan sekali di blok @theme pada app.css.
+ * Nilai warna Mode Gelap didefinisikan di blok html[data-theme='dark'] di bawah.
+ */
 :root {
-  --color-surface: #faf9f5;
-  --color-surface-dim: #dadad6;
-  --color-surface-bright: #faf9f5;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f4f4f0;
-  --color-surface-container: #eeeeea;
-  --color-surface-container-high: #e8e8e4;
-  --color-surface-container-highest: #e2e3df;
-  --color-on-surface: #1a1c1a;
-  --color-on-surface-variant: #44474e;
-  --color-inverse-surface: #2f312e;
-  --color-inverse-on-surface: #f1f1ed;
-  --color-outline: #75777f;
-  --color-outline-variant: #c4c6cf;
-  --color-surface-tint: #4a5e86;
-  --color-primary: #000d27;
-  --color-on-primary: #ffffff;
-  --color-primary-container: #0b2347;
-  --color-on-primary-container: #778bb5;
-  --color-inverse-primary: #b2c7f4;
-  --color-secondary: #455e8f;
-  --color-on-secondary: #ffffff;
-  --color-secondary-container: #adc7fe;
-  --color-on-secondary-container: #395282;
-  --color-tertiary: #010e22;
-  --color-on-tertiary: #ffffff;
-  --color-tertiary-container: #162439;
-  --color-on-tertiary-container: #7d8ba5;
-  --color-error: #ba1a1a;
-  --color-on-error: #ffffff;
-  --color-error-container: #ffdad6;
-  --color-on-error-container: #93000a;
-  --color-primary-fixed: #d7e2ff;
-  --color-primary-fixed-dim: #b2c7f4;
-  --color-on-primary-fixed: #011b3f;
-  --color-on-primary-fixed-variant: #32476c;
-  --color-secondary-fixed: #d8e2ff;
-  --color-secondary-fixed-dim: #adc7fe;
-  --color-on-secondary-fixed: #001a41;
-  --color-on-secondary-fixed-variant: #2c4675;
-  --color-tertiary-fixed: #d5e3ff;
-  --color-tertiary-fixed-dim: #b9c7e2;
-  --color-on-tertiary-fixed: #0d1c30;
-  --color-on-tertiary-fixed-variant: #3a475e;
-  --color-background: #faf9f5;
-  --color-on-background: #1a1c1a;
-  --color-surface-variant: #e2e3df;
-
   --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-headline: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
@@ -71,14 +28,125 @@
   --space-2xl: 3rem;
   --space-3xl: 4.5rem;
 
-  --shadow-0: 0 1px 3px rgba(11, 35, 71, 0.04);
-  --shadow-0-hover: 0 6px 16px rgba(11, 35, 71, 0.08);
-  --shadow-0-active: 0 1px 2px rgba(11, 35, 71, 0.03);
-  --shadow-inset: inset 0 1px 2px rgba(11, 35, 71, 0.04);
+  --shadow-0: 0 1px 3px rgba(23, 37, 29, 0.05);
+  --shadow-0-hover: 0 6px 16px rgba(23, 37, 29, 0.09);
+  --shadow-0-active: 0 1px 2px rgba(23, 37, 29, 0.04);
+  --shadow-inset: inset 0 1px 2px rgba(23, 37, 29, 0.04);
+
+  --glass-card-top: rgba(255, 255, 255, 0.92);
+  --glass-card-bottom: rgba(244, 247, 244, 0.8);
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --duration: 200ms;
   --duration-slow: 400ms;
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/*
+ * MODE GELAP — permukaan bertingkat (bukan hitam pekat), teks kontras tinggi,
+ * glow hanya aksen lembut. Hanya nilai warna; struktur & animasi tidak berubah.
+ */
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-surface: #101713;
+  --color-surface-dim: #0b100d;
+  --color-surface-bright: #2a3a31;
+  --color-surface-container-lowest: #19231d;
+  --color-surface-container-low: #222f27;
+  --color-surface-container: #26342c;
+  --color-surface-container-high: #2c3b32;
+  --color-surface-container-highest: #33443a;
+  --color-surface-variant: #33443a;
+  --color-surface-card: #19231d;
+  --color-surface-raised: #222f27;
+  --color-surface-tint: #55d99a;
+  --color-background: #101713;
+  --color-on-background: #edf5ef;
+  --color-on-surface: #edf5ef;
+  --color-on-surface-variant: #b4c5b8;
+  --color-ink: #edf5ef;
+  --color-ink-muted: #b4c5b8;
+  --color-inverse-surface: #edf5ef;
+  --color-inverse-on-surface: #101713;
+  --color-outline: #6e8074;
+  --color-outline-variant: #35463a;
+  --color-border: #35463a;
+  --color-border-hard: #edf5ef;
+
+  --color-primary: #55d99a;
+  --color-primary-hover: #79e7b0;
+  --color-on-primary: #06281a;
+  --color-primary-container: #1b4c34;
+  --color-on-primary-container: #a9efc9;
+  --color-inverse-primary: #168653;
+  --color-primary-fixed: #12382a;
+  --color-primary-fixed-dim: #1b4c34;
+  --color-on-primary-fixed: #a9efc9;
+  --color-on-primary-fixed-variant: #79e7b0;
+
+  --color-secondary: #f2ce5c;
+  --color-secondary-hover: #ffe085;
+  --color-on-secondary: #2a2000;
+  --color-secondary-container: #4a3a00;
+  --color-on-secondary-container: #f6e1a4;
+  --color-secondary-fixed: #4a3a00;
+  --color-secondary-fixed-dim: #6b5200;
+  --color-on-secondary-fixed: #ffe9a8;
+  --color-on-secondary-fixed-variant: #f2ce5c;
+
+  --color-tertiary: #9bc9dc;
+  --color-on-tertiary: #06202b;
+  --color-tertiary-container: #1d4250;
+  --color-on-tertiary-container: #cfe6f2;
+  --color-tertiary-fixed: #12303d;
+  --color-tertiary-fixed-dim: #1d4250;
+  --color-on-tertiary-fixed: #cfe6f2;
+  --color-on-tertiary-fixed-variant: #a8cfe0;
+
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #5c1310;
+  --color-on-error-container: #ffd9d4;
+  --color-error-bg: #4a1310;
+  --color-error-solid: #a3281f;
+
+  --color-success: #6fe3a8;
+  --color-success-bg: #16301f;
+  --color-success-solid: #1e7a4e;
+  --color-warning: #f2c14e;
+  --color-warning-bg: #33280b;
+  --color-warning-solid: #7a5606;
+  --color-info: #7cd0ee;
+  --color-info-bg: #122b38;
+  --color-info-solid: #1b6b8a;
+
+  --shadow-0: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-0-hover: 0 8px 20px rgba(0, 0, 0, 0.5);
+  --shadow-0-active: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-neu: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-neu-hover: 0 8px 20px rgba(0, 0, 0, 0.5);
+  --shadow-neu-active: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-neu-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-neu-sm-hover: 0 4px 10px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 14px 34px -18px rgba(0, 0, 0, 0.7);
+
+  --glass-card-top: rgba(38, 52, 44, 0.94);
+  --glass-card-bottom: rgba(25, 35, 29, 0.86);
+
+  --glass-bg: rgba(16, 23, 19, 0.76);
+  --glass-bg-strong: rgba(16, 23, 19, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-soft: rgba(110, 128, 116, 0.28);
+  --glass-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.7);
+  --glow-primary: rgba(85, 217, 154, 0.1);
+  --glow-primary-soft: rgba(85, 217, 154, 0.05);
+  --glow-gold: rgba(242, 206, 92, 0.1);
+  --glow-white: rgba(255, 255, 255, 0.06);
+  --card-highlight: rgba(255, 255, 255, 0.07);
+  --card-ring: rgba(85, 217, 154, 0.35);
+  --lift-shadow: 0 20px 44px -22px rgba(0, 0, 0, 0.75);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -87,4 +155,10 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-body { margin: 0; font-family: var(--font-body); background: var(--color-surface); color: var(--color-on-background); }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-surface);
+  color: var(--color-on-background);
+  transition: background-color 220ms var(--ease-out-soft), color 220ms var(--ease-out-soft);
+}

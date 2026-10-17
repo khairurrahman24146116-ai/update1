@@ -7,7 +7,7 @@ let fetched = false
 function applyFavicon(favicon) {
   const href = favicon
     ? (/^https?:\/\//.test(favicon) ? favicon : `${location.origin}/storage/${favicon}`)
-    : `${location.origin}/images/emblem.svg`
+    : `${location.origin}/images/profile/logo-lpi-transparent.png`
   let link = document.querySelector('link[rel="icon"]')
   if (!link) {
     link = document.createElement('link')

@@ -8,8 +8,9 @@
             {{ brand }}
           </span>
         </router-link>
-        <div class="flex items-center gap-space-sm shrink-0">
-          <span class="badge bg-surface-container-low text-on-surface-variant capitalize">{{ roleLabel }}</span>
+      <div class="flex items-center gap-space-sm shrink-0">
+        <ThemeToggle />
+        <span class="badge bg-surface-container-low text-on-surface-variant capitalize">{{ roleLabel }}</span>
           <button type="button" class="btn btn--ghost btn--sm" @click="logout">
             <span class="material-symbols-outlined !w-4 !h-4">logout</span>
             Keluar
@@ -31,6 +32,7 @@ import { useAuth } from '../composables/useAuth.js'
 import { LOGIN_PATH } from '../site-paths.js'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import AppLogo from './AppLogo.vue'
+import ThemeToggle from './ThemeToggle.vue'
 
 defineProps({ title: { type: String, default: '' } })
 const router = useRouter()

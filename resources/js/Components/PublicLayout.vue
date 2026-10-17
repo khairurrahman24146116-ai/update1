@@ -28,6 +28,7 @@
           </router-link>
         </nav>
         <div class="flex items-center gap-space-md">
+          <ThemeToggle />
           <button
             class="xl:hidden w-9 h-9 rounded-full border border-outline-variant bg-white shadow-sm flex items-center justify-center transition-transform duration-200"
             :class="menuOpen ? 'rotate-90' : ''"
@@ -111,6 +112,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import AppLogo from './AppLogo.vue'
+import ThemeToggle from './ThemeToggle.vue'
 
 const route = useRoute()
 const menuOpen = ref(false)

@@ -1,7 +1,7 @@
 <template>
 <div class="min-h-screen bg-surface font-body text-on-surface antialiased flex items-center justify-center p-4 md:p-6 relative overflow-hidden">
-<div class="pointer-events-none absolute -top-24 -left-24 w-96 h-96 bg-secondary-container/40 rounded-full blur-3xl"></div>
-<div class="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 bg-primary-container/10 rounded-full blur-3xl"></div>
+      <div class="pointer-events-none absolute -top-24 -left-24 w-96 h-96 bg-secondary-container/25 rounded-full blur-3xl"></div>
+      <div class="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 bg-primary-container/10 rounded-full blur-3xl"></div>
 
 <main class="w-full max-w-[30rem] relative">
 <div v-if="expiredParam" class="px-4 py-2.5 bg-error-container border border-error rounded-full text-xs font-semibold text-on-error-container text-center mb-3">Sesi login telah berakhir. Silakan login kembali.</div>
@@ -10,6 +10,7 @@
 <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
 Secure Auth Layer
 </div>
+<ThemeToggle />
 </div>
 
 <div class="w-full bg-surface-container-lowest rounded-[28px] border border-outline-variant shadow-card p-6 md:p-8 flex flex-col gap-5 relative overflow-hidden">
@@ -17,9 +18,9 @@ Secure Auth Layer
 
 <div class="flex flex-col items-center text-center gap-3 pt-1">
 <div class="relative group">
-<div class="w-20 h-20 rounded-full bg-surface-container-low border border-outline-variant shadow-sm p-1.5 flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:-translate-y-0.5">
-<img :src="logo" alt="Logo SMA Madani" class="w-full h-full object-contain"/>
-</div>
+            <div class="w-20 h-20 rounded-full logo-plate p-2.5 group-hover:-translate-y-0.5 transition-transform duration-200">
+              <img :src="logo" alt="Logo SMA Madani Al Aziziyah" width="80" height="80" class="h-full w-full object-contain"/>
+            </div>
 </div>
 <div>
 <h1 class="font-headline text-lg font-extrabold text-on-surface tracking-tight uppercase leading-none">{{ brand }}</h1>
@@ -67,7 +68,7 @@ Secure Auth Layer
 </div>
 
   <!-- CTA -->
-<button type="submit" :disabled="loading" class="w-full mt-1 h-12 bg-primary-container text-on-primary font-headline text-base font-semibold rounded-full shadow-sm hover:bg-primary hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-none transition-[transform,box-shadow,background-color,opacity] flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm">
+<button type="submit" :disabled="loading" class="w-full mt-1 h-12 bg-primary text-on-primary font-headline text-base font-semibold rounded-full shadow-sm hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-none transition-[transform,box-shadow,background-color,opacity] flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm">
 <span class="truncate">{{ loading ? 'Memproses…' : 'Masuk ke Portal' }}</span>
 <span class="material-symbols-outlined text-[20px] flex items-center justify-center w-6 h-6 shrink-0">arrow_forward</span>
 </button>
@@ -108,11 +109,12 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth.js'
 import { useSiteSettings } from '../composables/useSiteSettings'
+import ThemeToggle from '../Components/ThemeToggle.vue'
 const router = useRouter()
 const { loading, error: authError, doLogin } = useAuth()
 const { get, asset, load } = useSiteSettings()
 load()
-const logo = computed(() => asset(get('logo_path', null)) || '/images/emblem.svg')
+const logo = computed(() => asset(get('logo_path', null)) || '/images/profile/logo-lpi-transparent.png')
 const brand = computed(() => get('app_name', 'SMA Madani Al-Aziziyah'))
 const showPwd = ref(false)
 const showRecovery = ref(false)

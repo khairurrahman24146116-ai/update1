@@ -17,7 +17,7 @@
 </div>
 </div>
 <div class="bg-white p-4 rounded-xl border border-outline-variant shadow-sm overflow-x-auto">
-<table class="w-full text-sm"><thead class="bg-primary-container text-white"><tr><th class="p-2 text-left">Nama</th><th class="p-2 text-left">Email</th><th class="p-2">Aktif</th><th class="p-2 text-right">Aksi</th></tr></thead><tbody><tr v-for="u in list" :key="u.id" class="border-t"><td class="p-2">{{ u.name }}</td><td class="p-2 text-xs">{{ u.email }}</td><td class="p-2 text-center">{{ u.is_active?'Ya':'Tidak' }}</td><td class="p-2 text-right"><button @click="edit(u)" class="text-xs underline">Edit</button></td></tr></tbody></table>
+<table class="w-full text-sm"><thead class="bg-primary text-on-primary"><tr><th class="p-2 text-left">Nama</th><th class="p-2 text-left">Email</th><th class="p-2">Aktif</th><th class="p-2 text-right">Aksi</th></tr></thead><tbody><tr v-for="u in list" :key="u.id" class="border-t"><td class="p-2">{{ u.name }}</td><td class="p-2 text-xs">{{ u.email }}</td><td class="p-2 text-center">{{ u.is_active?'Ya':'Tidak' }}</td><td class="p-2 text-right"><button @click="edit(u)" class="text-xs underline">Edit</button></td></tr></tbody></table>
 <EmptyState v-if="!list.length" icon="person_off" title="Tidak ada data" description="Belum ada guru yang cocok dengan filter saat ini." />
 </div>
 </div>

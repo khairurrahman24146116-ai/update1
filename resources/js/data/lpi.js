@@ -26,20 +26,6 @@ export const profil = [
   'Profil LPI Dayah Madani Al-Aziziyah akan dilengkapi kemudian.',
 ]
 
-export const struktur = [
-  { jabatan: 'Ketua Yayasan', nama: '—' },
-  { jabatan: 'Pimpinan Dayah', nama: '—' },
-  { jabatan: 'Kepala SMA', nama: '—' },
-  { jabatan: 'Kepala SMP', nama: 'Segera hadir' },
-]
-
-export const tentangMenu = [
-  { key: 'profil', label: 'Profil', hash: '#profil', icon: 'person' },
-  { key: 'visi', label: 'Visi', hash: '#visi', icon: 'visibility' },
-  { key: 'misi', label: 'Misi', hash: '#misi', icon: 'checklist' },
-  { key: 'struktur', label: 'Struktur', hash: '#struktur', icon: 'account_tree' },
-]
-
 export const programs = [
   {
     key: 'sma',
@@ -59,9 +45,51 @@ export const programs = [
   },
 ]
 
+export const akademikMenu = [
+  { key: 'kurikulum', label: 'Kurikulum', href: '/akademik/kurikulum', icon: 'menu_book' },
+  { key: 'kalender', label: 'Kalender Akademik', href: '/akademik/kalender', icon: 'calendar_month' },
+]
+
 export const layanan = [
   { name: 'Penerimaan Santri Baru (PSB)', desc: 'Layanan informasi dan pendaftaran santri baru. Detail menyusul.', icon: 'how_to_reg' },
   { name: 'Akademik dan Kurikulum', desc: 'Layanan administrasi akademik. Detail menyusul.', icon: 'menu_book' },
   { name: 'Kesantrian dan Asrama', desc: 'Layanan pembinaan dan kehidupan asrama. Detail menyusul.', icon: 'home' },
   { name: 'Konsultasi dan Bantuan', desc: 'Layanan komunikasi wali dan bantuan. Detail menyusul.', icon: 'support_agent' },
+]
+
+export const navigation = [
+  { name: 'Beranda', href: '/' },
+  {
+    name: 'Profil',
+    href: '/tentang',
+    children: [
+      { name: 'Profil Dayah', href: '/tentang', icon: 'account_balance' },
+      { name: 'Struktur Organisasi', href: '/struktur', icon: 'account_tree' },
+    ],
+  },
+  {
+    name: 'Program',
+    href: '/program',
+    children: [
+      { name: 'SMA Madani', href: '/sma', icon: 'school' },
+      { name: 'SMP Madani', href: null, comingSoon: true, icon: 'schedule' },
+    ],
+  },
+  {
+    name: 'Akademik',
+    children: [
+      { name: 'Kurikulum', href: '/akademik/kurikulum', icon: 'menu_book' },
+      { name: 'Kalender Akademik', href: '/akademik/kalender', icon: 'calendar_month' },
+    ],
+  },
+  { name: 'Layanan', href: '/layanan' },
+]
+
+export const footerLinks = [
+  { name: 'Beranda', href: '/' },
+  { name: 'Profil Dayah', href: '/tentang' },
+  { name: 'Struktur Organisasi', href: '/struktur' },
+  { name: 'Program', href: '/program' },
+  { name: 'Akademik', href: '/akademik/kurikulum' },
+  { name: 'Layanan', href: '/layanan' },
 ]

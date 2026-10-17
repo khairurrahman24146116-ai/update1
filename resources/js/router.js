@@ -11,6 +11,8 @@ import GuruDashboard from './Pages/Guru/Dashboard.vue'
 import BendaharaDashboard from './Pages/Bendahara/Dashboard.vue'
 import WaliMuridDashboard from './Pages/WaliMurid/Dashboard.vue'
 import AdminSettings from './Pages/Admin/Settings.vue'
+import AdminHomepageSettings from './Pages/Admin/HomepageSettings.vue'
+import AdminOrganization from './Pages/Admin/Organization.vue'
 import AdminStudents from './Pages/Admin/Students.vue'
 import AdminTeachers from './Pages/Admin/Teachers.vue'
 import AdminFinance from './Pages/Admin/Finance.vue'
@@ -33,6 +35,9 @@ import LpiBeranda from './Pages/Lpi/LpiBeranda.vue'
 import LpiTentang from './Pages/Lpi/LpiTentang.vue'
 import LpiProgram from './Pages/Lpi/LpiProgram.vue'
 import LpiLayanan from './Pages/Lpi/LpiLayanan.vue'
+import LpiStruktur from './Pages/Lpi/LpiStruktur.vue'
+import LpiAkademikKurikulum from './Pages/Lpi/LpiAkademikKurikulum.vue'
+import LpiAkademikKalender from './Pages/Lpi/LpiAkademikKalender.vue'
 import NotFound from './Pages/NotFound.vue'
 import { LOGIN_PATH } from './site-paths.js'
 
@@ -45,6 +50,9 @@ const routes = [
     { path: '/', component: LpiBeranda },
     { path: '/tentang', component: LpiTentang },
     { path: '/program', component: LpiProgram },
+    { path: '/akademik/kurikulum', component: LpiAkademikKurikulum },
+    { path: '/akademik/kalender', component: LpiAkademikKalender },
+    { path: '/struktur', component: LpiStruktur },
     { path: '/layanan', component: LpiLayanan },
     { path: '/sma', component: Landing },
     { path: '/sma/profil', component: Profil },
@@ -60,6 +68,7 @@ const routes = [
     { path: '/lpi/tentang', redirect: '/tentang' },
     { path: '/lpi/program', redirect: '/program' },
     { path: '/lpi/layanan', redirect: '/layanan' },
+    { path: '/lpi/struktur', redirect: '/struktur' },
     { path: '/profil', redirect: '/sma/profil' },
     { path: '/fasilitas', redirect: '/sma/fasilitas' },
     { path: '/prestasi', redirect: '/sma/prestasi' },
@@ -74,6 +83,8 @@ const routes = [
     { path: '/app', redirect: () => roleMap[currentRole()] || '/' },
     { path: '/app/admin', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/app/admin/settings', component: AdminSettings, meta: { requiresAuth: true, role: 'admin' } },
+    { path: '/app/admin/homepage', component: AdminHomepageSettings, meta: { requiresAuth: true, role: 'admin' } },
+    { path: '/app/admin/organization', component: AdminOrganization, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/app/admin/students', component: AdminStudents, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/app/admin/teachers', component: AdminTeachers, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/app/admin/finance', component: AdminFinance, meta: { requiresAuth: true, role: 'admin' } },
@@ -102,6 +113,7 @@ const router = createRouter({
   },
 })
 router.beforeEach((to) => {
+  if (to.path === '/tentang' && to.hash === '#struktur') return '/struktur'
   const token = localStorage.getItem('madani_token')
   if (to.meta.requiresAuth && !token) return LOGIN_PATH
   if (to.meta.guestOnly && token) {

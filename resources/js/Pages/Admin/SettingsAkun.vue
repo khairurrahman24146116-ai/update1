@@ -21,7 +21,7 @@
 <div v-if="loading" class="text-center py-6 text-sm text-on-surface-variant">Memuat...</div>
 <div v-else class="space-y-1">
 <div v-for="u in list" :key="u.id" class="p-2 bg-white border border-outline-variant rounded-xl flex items-center justify-between gap-2 transition-transform duration-200 ease-in-out hover:-translate-y-1">
-<div class="min-w-0"><div class="font-bold text-xs truncate">{{ u.name }} <span class="text-on-surface-variant">({{ u.email }})</span> <span v-if="u.is_protected" class="ml-1 px-1.5 py-0.5 bg-primary-container text-white rounded-full text-[10px]">Utama</span></div><div class="text-xs text-on-surface-variant">{{ labelRole(u.role) }} • {{ u.is_active?'aktif':'nonaktif' }}</div></div>
+<div class="min-w-0"><div class="font-bold text-xs truncate">{{ u.name }} <span class="text-on-surface-variant">({{ u.email }})</span> <span v-if="u.is_protected" class="ml-1 px-1.5 py-0.5 bg-primary text-on-primary rounded-full text-[10px]">Utama</span></div><div class="text-xs text-on-surface-variant">{{ labelRole(u.role) }} • {{ u.is_active?'aktif':'nonaktif' }}</div></div>
 <div class="flex gap-1 shrink-0"><button @click="openEdit(u)" class="btn btn--ghost btn--sm">Edit</button><button v-if="!u.is_protected" @click="remove(u)" class="btn btn--destructive btn--sm">Hapus</button><span v-else class="px-3 py-1 text-xs opacity-40" title="Akun utama tidak dapat dihapus"><span class="material-symbols-outlined !w-4 !h-4">lock</span></span></div>
 </div>
 <div v-if="!list.length" class="text-center py-6 text-sm text-on-surface-variant">Belum ada akun.</div>
