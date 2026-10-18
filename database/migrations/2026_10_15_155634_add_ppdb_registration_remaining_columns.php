@@ -74,7 +74,7 @@ return new class extends Migration
 
         Schema::table('p_p_d_b_registrations', function (Blueprint $table) {
             if (! Schema::hasColumn('p_p_d_b_registrations', 'guardian_nationality')) {
-                $table->string('guardian_nationality', 50)->nullable()->after('guardian_birth_date');
+                $table->string('guardian_nationality', 50)->nullable();
             }
             if (! Schema::hasColumn('p_p_d_b_registrations', 'guardian_nationality_other')) {
                 $table->string('guardian_nationality_other', 100)->nullable()->after('guardian_nationality');
@@ -147,7 +147,8 @@ return new class extends Migration
             }
         });
 
-        if (! Schema::hasTable('p_p_d_b_registrations') || ! $this->hasUnique('p_p_d_b_registrations', 'registration_number')) {
+        if (Schema::hasColumn('p_p_d_b_registrations', 'registration_number')
+            && ! $this->hasUnique('p_p_d_b_registrations', 'registration_number')) {
             Schema::table('p_p_d_b_registrations', function (Blueprint $table) {
                 $table->unique('registration_number', 'ppdb_reg_number_unique');
             });
