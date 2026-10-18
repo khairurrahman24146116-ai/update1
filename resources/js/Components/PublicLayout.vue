@@ -1,13 +1,13 @@
 <template>
-  <div class="min-h-screen bg-surface font-body-md text-body-md text-on-surface antialiased overflow-x-hidden">
+  <div class="min-h-screen bg-surface font-body-md text-body-md text-on-surface antialiased overflow-x-clip">
     <header class="fixed top-0 w-full z-50 bg-white/85 backdrop-blur-xl border-b border-outline-variant shadow-sm">
       <div class="h-20 w-full px-gutter-desktop mx-auto flex items-center justify-between gap-space-md">
-        <div class="flex items-center gap-space-md shrink-0">
-          <router-link to="/sma" class="flex items-center gap-space-md">
+        <div class="flex items-center gap-3 min-w-0">
+          <router-link to="/sma" class="flex items-center gap-3 min-w-0" :title="brand">
             <AppLogo :src="logo" :size="34" shape="md" alt="Logo SMA Madani Al Aziziyah" />
-            <div class="flex flex-col">
-              <span class="font-headline-sm text-headline-sm text-on-surface tracking-tight uppercase leading-none">{{ brand }}</span>
-              <span class="font-label-sm text-label-sm text-primary tracking-widest uppercase mt-0.5">Islamic Boarding High School</span>
+            <div class="flex flex-col min-w-0">
+              <span class="font-headline-sm text-headline-sm text-on-surface tracking-tight uppercase leading-none truncate">{{ brand }}</span>
+              <span class="hidden sm:block font-label-sm text-label-sm text-primary tracking-widest uppercase mt-0.5 truncate">Islamic Boarding High School</span>
             </div>
           </router-link>
         </div>
@@ -27,30 +27,37 @@
             ></span>
           </router-link>
         </nav>
-        <div class="flex items-center gap-space-md">
+        <div class="flex items-center gap-2 sm:gap-space-md shrink-0">
           <ThemeToggle />
           <button
-            class="xl:hidden w-9 h-9 rounded-full border border-outline-variant bg-white shadow-sm flex items-center justify-center transition-transform duration-200"
+            type="button"
+            class="xl:hidden h-11 w-11 shrink-0 rounded-full border border-outline-variant bg-white shadow-sm inline-flex items-center justify-center transition-transform duration-200"
             :class="menuOpen ? 'rotate-90' : ''"
             @click="menuOpen = !menuOpen"
             aria-label="Menu"
             :aria-expanded="menuOpen"
+            aria-controls="sma-mobile-nav"
           >
-            <span class="material-symbols-outlined !w-5 !h-5 !text-[22px] transition-opacity duration-150">{{ menuOpen ? 'close' : 'menu' }}</span>
+            <span class="material-symbols-outlined !w-6 !h-6 !text-[24px] transition-opacity duration-150">{{ menuOpen ? 'close' : 'menu' }}</span>
           </button>
         </div>
       </div>
       <Transition name="menu">
-        <div v-if="menuOpen" class="xl:hidden bg-surface-container-lowest border-t border-outline-variant px-gutter-desktop py-space-sm flex flex-col gap-1">
+        <nav
+          id="sma-mobile-nav"
+          v-if="menuOpen"
+          class="xl:hidden bg-surface-container-lowest border-t border-outline-variant px-gutter-desktop flex flex-col divide-y divide-outline-variant/60 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+          aria-label="Navigasi seluler"
+        >
           <router-link
             v-for="item in nav"
             :key="'m-' + item.path"
             :to="item.path"
-            class="py-2 font-body-md text-body-md"
+            class="min-h-11 flex items-center py-2 font-body-md text-body-md"
             :class="isActive(item) ? 'text-primary font-semibold' : 'text-on-surface-variant'"
             @click="menuOpen = false"
           >{{ item.label }}</router-link>
-        </div>
+        </nav>
       </Transition>
     </header>
     <main class="w-full pt-20 bg-surface min-h-screen">
@@ -108,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import AppLogo from './AppLogo.vue'
@@ -118,7 +125,25 @@ const route = useRoute()
 const menuOpen = ref(false)
 const { get, asset, load } = useSiteSettings()
 
-onMounted(() => { load() })
+function onKeydown(event) {
+  if (event.key === 'Escape') menuOpen.value = false
+}
+
+watch(
+  () => route.path,
+  () => {
+    menuOpen.value = false
+  },
+)
+
+onMounted(() => {
+  load()
+  window.addEventListener('keydown', onKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown)
+})
 
 const brand = computed(() => get('app_name', 'SMA MADANI AL AZIZIYAH'))
 const logo = computed(() => asset(get('logo_path', null)))

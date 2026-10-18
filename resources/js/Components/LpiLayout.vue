@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-surface font-body-md text-body-md text-on-surface antialiased overflow-x-hidden">
+  <div class="min-h-screen bg-surface font-body-md text-body-md text-on-surface antialiased overflow-x-clip">
     <AmbientCursorLight />
     <ScrollProgress />
     <header
@@ -7,12 +7,12 @@
       :class="{ 'is-scrolled': scrolled }"
     >
       <div class="h-20 w-full px-gutter-desktop mx-auto flex items-center justify-between gap-space-md">
-        <div class="flex items-center gap-space-md shrink-0">
-          <router-link to="/" class="flex items-center gap-space-md">
+        <div class="flex items-center gap-3 min-w-0">
+          <router-link to="/" class="flex items-center gap-3 min-w-0" :title="brand.short">
             <AppLogo :src="logo" :size="34" shape="md" alt="Logo LPI Dayah Madani Al-Aziziyah" />
-            <div class="flex flex-col">
-              <span class="font-headline-sm text-headline-sm text-on-surface tracking-tight uppercase leading-none">{{ brand.short }}</span>
-              <span class="font-label-sm text-label-sm text-primary tracking-widest uppercase mt-0.5">Lembaga Pendidikan Islam</span>
+            <div class="flex flex-col min-w-0">
+              <span class="font-headline-sm text-headline-sm text-on-surface tracking-tight uppercase leading-none truncate">{{ brand.short }}</span>
+              <span class="hidden sm:block font-label-sm text-label-sm text-primary tracking-widest uppercase mt-0.5 truncate">Lembaga Pendidikan Islam</span>
             </div>
           </router-link>
         </div>
@@ -36,31 +36,21 @@
                 <span class="material-symbols-outlined text-[16px]" :class="openDesktop === item.name ? 'rotate-180' : ''">expand_more</span>
               </button>
               <Transition name="menu">
-                <div v-if="openDesktop === item.name" class="absolute left-0 top-full pt-3 w-72">
+                <div v-if="openDesktop === item.name" class="absolute left-1/2 -translate-x-1/2 top-full pt-3 w-72 max-w-[calc(100vw-2rem)]">
                   <div class="glass-panel glass-sheen rounded-2xl p-2 flex flex-col gap-1">
                     <template v-for="child in item.children" :key="child.name">
                       <router-link
                         v-if="child.href"
                         :to="child.hash ? { path: child.href, hash: child.hash } : child.href"
-                        class="group flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-surface-container-low/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                        class="flex items-center px-3 py-2.5 rounded-xl text-left transition-colors hover:bg-surface-container-low/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                        :class="isActive(child.href) ? 'text-primary font-title-md font-bold' : 'text-on-surface font-body-md'"
                         @click="openDesktop = null"
                       >
-                        <span class="w-9 h-9 rounded-xl bg-primary-fixed text-primary flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
-                          <span class="material-symbols-outlined text-[19px]">{{ child.icon || 'chevron_right' }}</span>
-                        </span>
-                        <span class="flex flex-col">
-                          <span class="font-title-md text-title-md leading-tight">{{ child.name }}</span>
-                          <span class="font-label-sm text-label-sm text-on-surface-variant">Buka halaman</span>
-                        </span>
+                        {{ child.name }}
                       </router-link>
-                      <span v-else aria-disabled="true" class="flex items-center gap-2.5 p-2.5 rounded-xl opacity-60 cursor-not-allowed">
-                        <span class="w-9 h-9 rounded-xl bg-surface-container text-outline flex items-center justify-center shrink-0">
-                          <span class="material-symbols-outlined text-[19px]">{{ child.icon || 'schedule' }}</span>
-                        </span>
-                        <span class="flex flex-col">
-                          <span class="font-title-md text-title-md leading-tight">{{ child.name }}</span>
-                          <span class="font-label-sm text-label-sm">Segera hadir</span>
-                        </span>
+                      <span v-else aria-disabled="true" class="flex items-center gap-2 px-3 py-2.5 rounded-xl opacity-60 cursor-not-allowed">
+                        <span class="font-body-md text-on-surface-variant">{{ child.name }}</span>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant">Segera hadir</span>
                       </span>
                     </template>
                   </div>
@@ -70,7 +60,7 @@
           </template>
         </nav>
 
-        <div class="flex items-center gap-space-md">
+        <div class="flex items-center gap-2 sm:gap-space-md shrink-0">
           <ThemeToggle />
           <router-link
             to="/sma/ppdb"
@@ -81,54 +71,60 @@
           </router-link>
           <router-link
             to="/sma/ppdb"
-            class="btn-skeu xl:hidden inline-flex items-center h-9 px-3 rounded-full bg-primary text-on-primary font-label-sm text-label-sm font-bold uppercase tracking-wide"
+            class="btn-skeu hidden sm:inline-flex xl:hidden items-center h-11 px-4 rounded-full bg-primary text-on-primary font-label-sm text-label-sm font-bold uppercase tracking-wide whitespace-nowrap shrink-0"
           >
             PPDB
           </router-link>
           <button
-            class="control-glass xl:hidden w-9 h-9 rounded-full flex items-center justify-center"
+            type="button"
+            class="control-glass xl:hidden h-11 w-11 shrink-0 rounded-full inline-flex items-center justify-center"
             @click="menuOpen = !menuOpen"
             aria-label="Menu"
             :aria-expanded="menuOpen"
             aria-controls="lpi-mobile-nav"
           >
-            <span class="material-symbols-outlined !w-5 !h-5 !text-[22px]">{{ menuOpen ? 'close' : 'menu' }}</span>
+            <span class="material-symbols-outlined !w-6 !h-6 !text-[24px]">{{ menuOpen ? 'close' : 'menu' }}</span>
           </button>
         </div>
       </div>
 
       <Transition name="menu">
-        <nav id="lpi-mobile-nav" v-if="menuOpen" class="glass-panel xl:hidden border-t border-outline-variant px-gutter-desktop py-space-sm flex flex-col gap-1" aria-label="Navigasi seluler">
-          <template v-for="item in navigation" :key="'m-' + item.name">
-            <router-link v-if="!item.children" :to="item.href" class="py-2 font-body-md" @click="menuOpen = false">{{ item.name }}</router-link>
-            <div v-else class="flex flex-col">
-              <button
-                type="button"
-                class="py-2 font-body-md flex items-center justify-between text-left"
-                :aria-expanded="mobileOpen === item.name"
-                :aria-controls="'m-sub-' + item.name"
-                @click="mobileOpen = mobileOpen === item.name ? null : item.name"
-              >
-                {{ item.name }}
-                <span class="material-symbols-outlined text-[18px]">{{ mobileOpen === item.name ? 'expand_less' : 'expand_more' }}</span>
-              </button>
-              <div :id="'m-sub-' + item.name" v-show="mobileOpen === item.name" class="flex flex-col gap-1 pl-3 border-l-2 border-outline-variant ml-1">
-                <router-link v-if="item.href" :to="item.href" class="py-2 font-body-sm" @click="menuOpen = false">Semua {{ item.name }}</router-link>
-                <template v-for="child in item.children" :key="'m-sub-' + item.name + '-' + child.name">
-                  <router-link v-if="child.href" :to="child.hash ? { path: child.href, hash: child.hash } : child.href" class="py-2 font-body-sm" @click="menuOpen = false">{{ child.name }}</router-link>
-                  <span v-else aria-disabled="true" class="py-2 font-body-sm opacity-60">{{ child.name }} — Segera hadir</span>
-                </template>
-              </div>
-            </div>
-          </template>
+        <nav
+          id="lpi-mobile-nav"
+          v-if="menuOpen"
+          class="glass-panel xl:hidden border-t border-outline-variant px-gutter-desktop flex flex-col divide-y divide-outline-variant/60 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+          aria-label="Navigasi seluler"
+        >
           <router-link
             to="/sma/ppdb"
-            class="mt-2 inline-flex items-center justify-center gap-2 h-11 rounded-full bg-primary text-on-primary font-title-md text-title-md uppercase tracking-wide"
+            class="mt-3 mb-1 inline-flex items-center justify-center gap-2 h-11 rounded-full bg-primary text-on-primary font-title-md text-title-md uppercase tracking-wide shrink-0"
             @click="menuOpen = false"
           >
             <span class="material-symbols-outlined text-[20px]">how_to_reg</span>
             Pendaftaran PPDB
           </router-link>
+          <template v-for="item in navigation" :key="'m-' + item.name">
+            <router-link v-if="!item.children" :to="item.href" class="min-h-11 flex items-center py-2 font-body-md" :class="isActive(item.href) ? 'text-primary font-semibold' : ''" @click="menuOpen = false">{{ item.name }}</router-link>
+            <div v-else class="flex flex-col py-1">
+              <button
+                type="button"
+                class="min-h-11 py-2 font-body-md flex items-center justify-between gap-2 text-left w-full"
+                :aria-expanded="mobileOpen === item.name"
+                :aria-controls="'m-sub-' + item.name"
+                @click="mobileOpen = mobileOpen === item.name ? null : item.name"
+              >
+                <span :class="isActiveGroup(item) ? 'text-primary font-semibold' : ''">{{ item.name }}</span>
+                <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">{{ mobileOpen === item.name ? 'expand_less' : 'expand_more' }}</span>
+              </button>
+              <div :id="'m-sub-' + item.name" v-show="mobileOpen === item.name" class="flex flex-col pl-3 ml-3 border-l border-outline-variant">
+                <router-link v-if="item.href" :to="item.href" class="min-h-11 flex items-center py-2 pl-3 font-body-sm" :class="isActive(item.href) ? 'text-primary font-semibold' : 'text-on-surface-variant'" @click="menuOpen = false">Semua {{ item.name }}</router-link>
+                <template v-for="child in item.children" :key="'m-sub-' + item.name + '-' + child.name">
+                  <router-link v-if="child.href" :to="child.hash ? { path: child.href, hash: child.hash } : child.href" class="min-h-11 flex items-center py-2 pl-3 font-body-sm" :class="isActive(child.href) ? 'text-primary font-semibold' : 'text-on-surface-variant'" @click="menuOpen = false">{{ child.name }}</router-link>
+                  <span v-else aria-disabled="true" class="min-h-11 flex items-center gap-2 py-2 pl-3 font-body-sm text-on-surface-variant/60"><span>{{ child.name }}</span><span class="font-label-sm text-label-sm">Segera hadir</span></span>
+                </template>
+              </div>
+            </div>
+          </template>
         </nav>
       </Transition>
     </header>
@@ -155,7 +151,7 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppLogo from './AppLogo.vue'
 import AmbientCursorLight from './AmbientCursorLight.vue'
@@ -184,15 +180,34 @@ function onScroll() {
   if (scrollFrame == null) scrollFrame = requestAnimationFrame(applyScrolled)
 }
 
+function onKeydown(event) {
+  if (event.key === 'Escape') {
+    menuOpen.value = false
+    openDesktop.value = null
+    mobileOpen.value = null
+  }
+}
+
+watch(
+  () => route.path,
+  () => {
+    menuOpen.value = false
+    openDesktop.value = null
+    mobileOpen.value = null
+  },
+)
+
 onMounted(async () => {
   applyScrolled()
   window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('keydown', onKeydown)
   await load()
   logo.value = asset(get('logo_path', null))
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('keydown', onKeydown)
   if (scrollFrame != null) cancelAnimationFrame(scrollFrame)
 })
 

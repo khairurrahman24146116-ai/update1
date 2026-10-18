@@ -63,23 +63,23 @@ export const navigation = [
     name: 'Profil',
     href: '/tentang',
     children: [
-      { name: 'Profil Dayah', href: '/tentang', icon: 'account_balance' },
-      { name: 'Struktur Organisasi', href: '/struktur', icon: 'account_tree' },
+      { name: 'Profil Dayah', href: '/tentang' },
+      { name: 'Struktur Organisasi', href: '/struktur' },
     ],
   },
   {
     name: 'Program',
     href: '/program',
     children: [
-      { name: 'SMA Madani', href: '/sma', icon: 'school' },
-      { name: 'SMP Madani', href: null, comingSoon: true, icon: 'schedule' },
+      { name: 'SMA Madani', href: '/sma' },
+      { name: 'SMP Madani', href: null, comingSoon: true },
     ],
   },
   {
     name: 'Akademik',
     children: [
-      { name: 'Kurikulum', href: '/akademik/kurikulum', icon: 'menu_book' },
-      { name: 'Kalender Akademik', href: '/akademik/kalender', icon: 'calendar_month' },
+      { name: 'Kurikulum', href: '/akademik/kurikulum' },
+      { name: 'Kalender Akademik', href: '/akademik/kalender' },
     ],
   },
   { name: 'Layanan', href: '/layanan' },
