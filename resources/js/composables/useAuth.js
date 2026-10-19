@@ -10,6 +10,7 @@ try { userInitial = JSON.parse(localStorage.getItem(KEY_USER) || 'null') } catch
 const user = ref(userInitial)
 const loading = ref(false)
 const error = ref('')
+const errorCode = ref('')
 
 function clearSession() {
   token.value = ''; user.value = null
@@ -44,7 +45,7 @@ if (token.value) patchFetch()
 
 export function useAuth() {
   async function doLogin(email, password) {
-    loading.value = true; error.value = ''
+    loading.value = true; error.value = ''; errorCode.value = ''
     try {
       const res = await authApi.login(email, password)
       token.value = res.token
@@ -54,8 +55,9 @@ export function useAuth() {
       patchFetch()
       return res
     } catch (e) {
+      errorCode.value = e.body?.code || ''
       error.value = e.body?.message || 'Gagal login'
-      if (e.body?.errors) error.value = Object.values(e.body.errors).flat().join(', ')
+      if (e.body?.errors) { error.value = Object.values(e.body.errors).flat().join(', '); errorCode.value = 'validation' }
       throw e
     } finally { loading.value = false }
   }
@@ -83,5 +85,5 @@ export function useAuth() {
     return data
   }
 
-  return { token, user, loading, error, doLogin, doLogout, hasRole, permissions, can, canAny, isAdminAreaUser, isFinanceAreaUser, refreshUser }
+  return { token, user, loading, error, errorCode, doLogin, doLogout, hasRole, permissions, can, canAny, isAdminAreaUser, isFinanceAreaUser, refreshUser }
 }

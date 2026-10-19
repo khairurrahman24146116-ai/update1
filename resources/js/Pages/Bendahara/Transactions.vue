@@ -132,9 +132,11 @@ import FinanceShell from '../../Components/FinanceShell.vue'
 import EmptyState from '../../Components/EmptyState.vue'
 import CurrencyInput from '../../Components/CurrencyInput.vue'
 import { formatDate, formatRupiah, normalizeAmount, useFinanceApi } from '../../composables/useFinance.js'
+import { useDialog } from '../../composables/useDialog.js'
 
 const route = useRoute()
 const router = useRouter()
+const dialog = useDialog()
 const isIncome = computed(() => route.name === 'bendahara-pemasukan' || route.path.endsWith('/pemasukan'))
 const type = computed(() => (isIncome.value ? 'income' : 'expense'))
 
@@ -247,16 +249,25 @@ async function submit() {
 }
 
 async function addCategory() {
-  const name = prompt('Nama kategori baru:')
-  if (!name) return
+  const name = await dialog.prompt('Nama kategori baru untuk ' + (isIncome.value ? 'pemasukan' : 'pengeluaran') + '.', {
+    title: 'Tambah Kategori',
+    placeholder: isIncome.value ? 'Mis. Infaq, Donasi' : 'Mis. Listrik, ATK',
+    confirmText: 'Simpan',
+  })
+  if (!name || !name.trim()) return
   try {
-    await request('/api/finance/categories', { method: 'POST', body: { type: type.value, name } })
+    await request('/api/finance/categories', { method: 'POST', body: { type: type.value, name: name.trim() } })
     await loadCategories()
   } catch { /* error ditampilkan */ }
 }
 
 async function remove(t) {
-  if (!confirm(`Hapus transaksi "${t.description}"?`)) return
+  const ok = await dialog.confirm(`Hapus transaksi "${t.description}"? Tindakan ini tidak dapat dibatalkan.`, {
+    title: 'Hapus Transaksi',
+    variant: 'danger',
+    confirmText: 'Hapus',
+  })
+  if (!ok) return
   try {
     await request(`/api/finance/transactions/${t.id}`, { method: 'DELETE' })
     await load()

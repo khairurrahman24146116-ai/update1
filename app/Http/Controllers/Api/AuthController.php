@@ -18,26 +18,50 @@ class AuthController extends Controller
         if (filter_var($identity, FILTER_VALIDATE_EMAIL) === false) {
             $student = Student::where('nisn', $identity)->first();
             if (! $student || ! $student->parent_id) {
-                return response()->json(['message' => 'Kredensial salah'], 401);
+                return response()->json([
+                    'message' => 'Akun belum terdaftar. Periksa kembali NISN Anda.',
+                    'code' => 'account_not_found',
+                ], 401);
             }
             $wali = User::where('id', $student->parent_id)->where('role', 'wali_murid')->where('is_active', true)->first();
-            if (! $wali || ! Hash::check($v['password'], $wali->password)) {
-                return response()->json(['message' => 'Kredensial salah'], 401);
+            if (! $wali) {
+                return response()->json([
+                    'message' => 'Akun belum terdaftar. Periksa kembali NISN Anda.',
+                    'code' => 'account_not_found',
+                ], 401);
+            }
+            if (! Hash::check($v['password'], $wali->password)) {
+                return response()->json([
+                    'message' => 'Username dan password salah.',
+                    'code' => 'invalid_credentials',
+                ], 401);
             }
             auth()->setUser($wali);
 
             return ['token' => $wali->createToken('api')->plainTextToken, 'user' => $this->userPayload($wali)];
         }
-        $attempt = ['email' => $identity, 'password' => $v['password']];
-        if (! auth()->attempt($attempt)) {
-            return response()->json(['message' => 'Kredensial salah'], 401);
-        }
-        $user = $request->user();
-        if (! $user->is_active) {
-            auth()->logout();
 
-            return response()->json(['message' => 'Akun nonaktif'], 403);
+        $user = User::where('email', $identity)->first();
+        if (! $user) {
+            return response()->json([
+                'message' => 'Akun belum terdaftar. Periksa kembali email Anda.',
+                'code' => 'account_not_found',
+            ], 401);
         }
+        if (! Hash::check($v['password'], $user->password)) {
+            return response()->json([
+                'message' => 'Username dan password salah.',
+                'code' => 'invalid_credentials',
+            ], 401);
+        }
+        if (! $user->is_active) {
+            return response()->json([
+                'message' => 'Akun Anda nonaktif. Hubungi administrator.',
+                'code' => 'account_inactive',
+            ], 403);
+        }
+
+        auth()->setUser($user);
 
         return ['token' => $user->createToken('api')->plainTextToken, 'user' => $this->userPayload($user)];
     }

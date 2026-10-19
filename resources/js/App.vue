@@ -4,4 +4,9 @@
       <component :is="Component" :key="route.path" />
     </Transition>
   </router-view>
+  <DialogHost />
 </template>
+
+<script setup>
+import DialogHost from './Components/DialogHost.vue'
+</script>

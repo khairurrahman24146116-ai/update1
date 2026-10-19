@@ -94,10 +94,12 @@ import FinanceShell from '../../Components/FinanceShell.vue'
 import EmptyState from '../../Components/EmptyState.vue'
 import { formatDateTime, formatRupiah, monthLabel, useFinanceApi } from '../../composables/useFinance.js'
 import { useAuth } from '../../composables/useAuth.js'
+import { useDialog } from '../../composables/useDialog.js'
 import { unitLabel } from '../../data/lpi.js'
 
 const { loading, error, request } = useFinanceApi()
 const { user } = useAuth()
+const dialog = useDialog()
 const isAdmin = computed(() => user.value?.role === 'admin')
 
 const list = ref([])
@@ -145,7 +147,12 @@ function printReceipt() {
 }
 
 async function cancel(p) {
-  if (!confirm(`Batalkan pembayaran ${p.receipt_number}? Tindakan ini menghapus pemasukan terkait.`)) return
+  const ok = await dialog.confirm(`Batalkan pembayaran ${p.receipt_number}? Tindakan ini menghapus pemasukan terkait.`, {
+    title: 'Batalkan Pembayaran',
+    variant: 'danger',
+    confirmText: 'Batalkan',
+  })
+  if (!ok) return
   try {
     await request(`/api/finance/spp/payments/${p.id}`, { method: 'DELETE' })
     await load()
