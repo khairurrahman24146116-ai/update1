@@ -11,22 +11,7 @@
             </div>
           </router-link>
         </div>
-        <nav class="hidden xl:flex items-center gap-space-lg">
-          <router-link
-            v-for="item in nav"
-            :key="item.path"
-            :to="item.path"
-            class="relative transition-[transform,opacity] duration-200"
-            :class="isActive(item) ? 'text-primary font-title-md' : 'text-on-surface-variant font-body-md text-body-md hover:text-on-surface'"
-          >
-            {{ item.label }}
-            <span
-              aria-hidden="true"
-              class="absolute left-0 -bottom-1 h-0.5 w-full origin-left bg-primary transition-transform duration-200"
-              :class="isActive(item) ? 'scale-x-100' : 'scale-x-0'"
-            ></span>
-          </router-link>
-        </nav>
+        <NavMenu :items="nav" variant="desktop" id-prefix="sma" :exact-match="['/sma']" />
         <div class="flex items-center gap-space-md">
           <ThemeToggle />
           <button
@@ -41,16 +26,15 @@
         </div>
       </div>
       <Transition name="menu">
-        <div v-if="menuOpen" class="xl:hidden bg-surface-container-lowest border-t border-outline-variant px-gutter-desktop py-space-sm flex flex-col gap-1">
-          <router-link
-            v-for="item in nav"
-            :key="'m-' + item.path"
-            :to="item.path"
-            class="py-2 font-body-md text-body-md"
-            :class="isActive(item) ? 'text-primary font-semibold' : 'text-on-surface-variant'"
-            @click="menuOpen = false"
-          >{{ item.label }}</router-link>
-        </div>
+        <NavMenu
+          v-if="menuOpen"
+          :items="nav"
+          variant="mobile"
+          id-prefix="sma"
+          :exact-match="['/sma']"
+          class="xl:hidden bg-surface-container-lowest border-t border-outline-variant px-gutter-desktop py-space-sm"
+          @navigate="menuOpen = false"
+        />
       </Transition>
     </header>
     <main class="w-full pt-20 bg-surface min-h-screen">
@@ -80,9 +64,11 @@
           <div class="flex flex-col gap-space-sm">
             <h3 class="font-headline-sm text-headline-sm text-on-surface border-b-2 border-primary pb-1 inline-block w-fit">Akses Cepat</h3>
             <nav class="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
-              <router-link to="/sma/profil" class="hover:text-primary transition-colors">Profil &amp; Kurikulum</router-link>
+              <router-link to="/sma/profil" class="hover:text-primary transition-colors">Profil Sekolah</router-link>
+              <router-link to="/sma/visi-misi" class="hover:text-primary transition-colors">Visi &amp; Misi</router-link>
+              <router-link to="/sma/kurikulum" class="hover:text-primary transition-colors">Kurikulum</router-link>
+              <router-link to="/sma/struktur" class="hover:text-primary transition-colors">Struktur Organisasi</router-link>
               <router-link to="/sma/ppdb" class="hover:text-primary transition-colors">Penerimaan Peserta Didik Baru (PPDB)</router-link>
-              <router-link to="/sma/prestasi" class="hover:text-primary transition-colors">Prestasi &amp; Pengakuan Sekolah</router-link>
               <router-link to="/sma/fasilitas" class="hover:text-primary transition-colors">Fasilitas Sekolah</router-link>
             </nav>
           </div>
@@ -109,12 +95,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import AppLogo from './AppLogo.vue'
+import NavMenu from './NavMenu.vue'
 import ThemeToggle from './ThemeToggle.vue'
 
-const route = useRoute()
 const menuOpen = ref(false)
 const { get, asset, load } = useSiteSettings()
 
@@ -130,18 +115,21 @@ const npsn = computed(() => get('npsn', '69986030'))
 const nspp = computed(() => get('nspp', '') || '')
 
 const nav = [
-  { label: 'Beranda', path: '/sma' },
-  { label: 'Profil & Kurikulum', path: '/sma/profil' },
-  { label: 'Fasilitas', path: '/sma/fasilitas' },
-  { label: 'Prestasi', path: '/sma/prestasi' },
-  { label: 'Berita', path: '/sma/berita' },
-  { label: 'Galeri', path: '/sma/galeri' },
-  { label: 'Penerimaan (PPDB)', path: '/sma/ppdb' },
-  { label: 'Kontak', path: '/sma/kontak' },
+  { name: 'Beranda', href: '/sma' },
+  {
+    name: 'Profil & Kurikulum',
+    children: [
+      { name: 'Profil Sekolah', href: '/sma/profil' },
+      { name: 'Visi & Misi', href: '/sma/visi-misi' },
+      { name: 'Kurikulum', href: '/sma/kurikulum' },
+      { name: 'Struktur Organisasi', href: '/sma/struktur' },
+    ],
+  },
+  { name: 'Fasilitas', href: '/sma/fasilitas' },
+  { name: 'Prestasi', href: '/sma/prestasi' },
+  { name: 'Berita', href: '/sma/berita' },
+  { name: 'Galeri', href: '/sma/galeri' },
+  { name: 'Penerimaan (PPDB)', href: '/sma/ppdb' },
+  { name: 'Kontak', href: '/sma/kontak' },
 ]
-
-function isActive(item) {
-  if (item.path === '/sma') return route.path === '/sma'
-  return route.path.startsWith(item.path)
-}
 </script>

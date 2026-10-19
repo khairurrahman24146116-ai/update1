@@ -13,6 +13,7 @@ import WaliMuridDashboard from './Pages/WaliMurid/Dashboard.vue'
 import AdminSettings from './Pages/Admin/Settings.vue'
 import AdminHomepageSettings from './Pages/Admin/HomepageSettings.vue'
 import AdminOrganization from './Pages/Admin/Organization.vue'
+import AdminStructure from './Pages/Admin/Structure.vue'
 import AdminStudents from './Pages/Admin/Students.vue'
 import AdminTeachers from './Pages/Admin/Teachers.vue'
 import AdminFinance from './Pages/Admin/Finance.vue'
@@ -36,6 +37,10 @@ import LpiTentang from './Pages/Lpi/LpiTentang.vue'
 import LpiProgram from './Pages/Lpi/LpiProgram.vue'
 import LpiLayanan from './Pages/Lpi/LpiLayanan.vue'
 import LpiStruktur from './Pages/Lpi/LpiStruktur.vue'
+import SmaStruktur from './Pages/Sma/SmaStruktur.vue'
+import SmpStruktur from './Pages/Sma/SmpStruktur.vue'
+import SmaVisiMisi from './Pages/Sma/SmaVisiMisi.vue'
+import SmaKurikulum from './Pages/Sma/SmaKurikulum.vue'
 import LpiAkademikKurikulum from './Pages/Lpi/LpiAkademikKurikulum.vue'
 import LpiAkademikKalender from './Pages/Lpi/LpiAkademikKalender.vue'
 import NotFound from './Pages/NotFound.vue'
@@ -56,6 +61,10 @@ const routes = [
     { path: '/layanan', component: LpiLayanan },
     { path: '/sma', component: Landing },
     { path: '/sma/profil', component: Profil },
+    { path: '/sma/visi-misi', component: SmaVisiMisi },
+    { path: '/sma/kurikulum', component: SmaKurikulum },
+    { path: '/sma/struktur', component: SmaStruktur },
+    { path: '/smp/struktur', component: SmpStruktur },
     { path: '/sma/fasilitas', component: Fasilitas },
     { path: '/sma/prestasi', component: Prestasi },
     { path: '/sma/kontak', component: Kontak },
@@ -70,6 +79,8 @@ const routes = [
     { path: '/lpi/layanan', redirect: '/layanan' },
     { path: '/lpi/struktur', redirect: '/struktur' },
     { path: '/profil', redirect: '/sma/profil' },
+    { path: '/sma/profil/kurikulum', redirect: '/sma/kurikulum' },
+    { path: '/sma/profil/visi-misi', redirect: '/sma/visi-misi' },
     { path: '/fasilitas', redirect: '/sma/fasilitas' },
     { path: '/prestasi', redirect: '/sma/prestasi' },
     { path: '/kontak', redirect: '/sma/kontak' },
@@ -85,6 +96,7 @@ const routes = [
     { path: '/app/admin/settings', component: AdminSettings, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/app/admin/homepage', component: AdminHomepageSettings, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/app/admin/organization', component: AdminOrganization, meta: { requiresAuth: true, role: 'admin' } },
+    { path: '/app/admin/structure', component: AdminStructure, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/app/admin/students', component: AdminStudents, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/app/admin/teachers', component: AdminTeachers, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/app/admin/finance', component: AdminFinance, meta: { requiresAuth: true, role: 'admin' } },

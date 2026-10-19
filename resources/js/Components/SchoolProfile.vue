@@ -1,6 +1,6 @@
 <template>
   <div>
-    <section class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
+    <section v-if="show('about')" class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
       <div class="bg-surface-container-lowest p-space-lg sm:p-space-xl shadow-md">
         <Reveal slow>
           <div class="border-b border-outline-variant pb-space-lg mb-space-lg">
@@ -40,7 +40,7 @@
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
+    <section v-if="show('history')" class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
       <div class="bg-surface-container-lowest p-space-lg sm:p-space-xl shadow-md">
         <Reveal slow>
           <div class="flex flex-col md:flex-row md:items-end justify-between pb-space-lg gap-space-md border-b border-outline-variant mb-space-lg">
@@ -73,7 +73,7 @@
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
+    <section v-if="show('visi')" class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
       <div class="bg-surface-container-lowest p-space-lg sm:p-space-xl shadow-md">
         <Reveal slow>
           <div class="border-b border-outline-variant pb-space-lg mb-space-lg">
@@ -108,7 +108,7 @@
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
+    <section v-if="show('kurikulum')" class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
       <div class="bg-surface-container-lowest p-space-lg sm:p-space-xl shadow-md">
         <Reveal slow>
           <div class="flex flex-col md:flex-row md:items-end justify-between pb-space-lg gap-space-md border-b border-outline-variant mb-space-lg">
@@ -137,7 +137,7 @@
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
+    <section v-if="show('unit')" class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
       <div class="bg-surface-container-lowest p-space-lg sm:p-space-xl shadow-md">
         <Reveal slow>
           <div class="border-b border-outline-variant pb-space-lg mb-space-lg">
@@ -167,7 +167,7 @@
       </div>
     </section>
 
-    <section class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
+    <section v-if="show('bahasa')" class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
       <div class="bg-surface-container-lowest p-space-lg sm:p-space-xl shadow-md">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-center">
           <Reveal slow class="lg:col-span-8">
@@ -193,6 +193,12 @@
 
 <script setup>
 import Reveal from '../Components/Reveal.vue'
+
+const props = defineProps({
+  only: { type: Array, default: null },
+})
+
+const show = (key) => !props.only || props.only.includes(key)
 
 const identityStats = [
   { label: 'TAHUN BERDIRI', value: '2011', hint: 'Didirikan oleh Abiya Hatta', icon: 'calendar_month', color: 'text-primary' },

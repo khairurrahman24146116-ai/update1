@@ -17,58 +17,7 @@
           </router-link>
         </div>
 
-        <nav class="hidden xl:flex items-center gap-space-lg" aria-label="Navigasi utama">
-          <template v-for="item in navigation" :key="item.name">
-            <router-link v-if="!item.children" :to="item.href" class="lpi-link" :class="isActive(item.href) ? 'text-primary font-title-md' : ''">
-              {{ item.name }}
-            </router-link>
-            <div v-else class="relative" @mouseenter="openDesktop = item.name" @mouseleave="openDesktop = null" @focusin="openDesktop = item.name">
-              <button
-                type="button"
-                class="lpi-link flex items-center gap-1"
-                :class="isActiveGroup(item) ? 'text-primary font-title-md' : ''"
-                :aria-haspopup="true"
-                :aria-expanded="openDesktop === item.name"
-                @click="openDesktop = openDesktop === item.name ? null : item.name"
-                @keydown.escape="openDesktop = null"
-              >
-                {{ item.name }}
-                <span class="material-symbols-outlined text-[16px]" :class="openDesktop === item.name ? 'rotate-180' : ''">expand_more</span>
-              </button>
-              <Transition name="menu">
-                <div v-if="openDesktop === item.name" class="absolute left-0 top-full pt-3 w-72">
-                  <div class="glass-panel glass-sheen rounded-2xl p-2 flex flex-col gap-1">
-                    <template v-for="child in item.children" :key="child.name">
-                      <router-link
-                        v-if="child.href"
-                        :to="child.hash ? { path: child.href, hash: child.hash } : child.href"
-                        class="group flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-surface-container-low/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
-                        @click="openDesktop = null"
-                      >
-                        <span class="w-9 h-9 rounded-xl bg-primary-fixed text-primary flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
-                          <span class="material-symbols-outlined text-[19px]">{{ child.icon || 'chevron_right' }}</span>
-                        </span>
-                        <span class="flex flex-col">
-                          <span class="font-title-md text-title-md leading-tight">{{ child.name }}</span>
-                          <span class="font-label-sm text-label-sm text-on-surface-variant">Buka halaman</span>
-                        </span>
-                      </router-link>
-                      <span v-else aria-disabled="true" class="flex items-center gap-2.5 p-2.5 rounded-xl opacity-60 cursor-not-allowed">
-                        <span class="w-9 h-9 rounded-xl bg-surface-container text-outline flex items-center justify-center shrink-0">
-                          <span class="material-symbols-outlined text-[19px]">{{ child.icon || 'schedule' }}</span>
-                        </span>
-                        <span class="flex flex-col">
-                          <span class="font-title-md text-title-md leading-tight">{{ child.name }}</span>
-                          <span class="font-label-sm text-label-sm">Segera hadir</span>
-                        </span>
-                      </span>
-                    </template>
-                  </div>
-                </div>
-              </Transition>
-            </div>
-          </template>
-        </nav>
+        <NavMenu :items="navigation" variant="desktop" id-prefix="lpi" />
 
         <div class="flex items-center gap-space-md">
           <ThemeToggle />
@@ -98,38 +47,25 @@
       </div>
 
       <Transition name="menu">
-        <nav id="lpi-mobile-nav" v-if="menuOpen" class="glass-panel xl:hidden border-t border-outline-variant px-gutter-desktop py-space-sm flex flex-col gap-1" aria-label="Navigasi seluler">
-          <template v-for="item in navigation" :key="'m-' + item.name">
-            <router-link v-if="!item.children" :to="item.href" class="py-2 font-body-md" @click="menuOpen = false">{{ item.name }}</router-link>
-            <div v-else class="flex flex-col">
-              <button
-                type="button"
-                class="py-2 font-body-md flex items-center justify-between text-left"
-                :aria-expanded="mobileOpen === item.name"
-                :aria-controls="'m-sub-' + item.name"
-                @click="mobileOpen = mobileOpen === item.name ? null : item.name"
-              >
-                {{ item.name }}
-                <span class="material-symbols-outlined text-[18px]">{{ mobileOpen === item.name ? 'expand_less' : 'expand_more' }}</span>
-              </button>
-              <div :id="'m-sub-' + item.name" v-show="mobileOpen === item.name" class="flex flex-col gap-1 pl-3 border-l-2 border-outline-variant ml-1">
-                <router-link v-if="item.href" :to="item.href" class="py-2 font-body-sm" @click="menuOpen = false">Semua {{ item.name }}</router-link>
-                <template v-for="child in item.children" :key="'m-sub-' + item.name + '-' + child.name">
-                  <router-link v-if="child.href" :to="child.hash ? { path: child.href, hash: child.hash } : child.href" class="py-2 font-body-sm" @click="menuOpen = false">{{ child.name }}</router-link>
-                  <span v-else aria-disabled="true" class="py-2 font-body-sm opacity-60">{{ child.name }} — Segera hadir</span>
-                </template>
-              </div>
-            </div>
+        <NavMenu
+          v-if="menuOpen"
+          :items="navigation"
+          variant="mobile"
+          id-prefix="lpi"
+          class="glass-panel xl:hidden border-t border-outline-variant px-gutter-desktop py-space-sm"
+          @navigate="menuOpen = false"
+        >
+          <template #footer>
+            <router-link
+              to="/sma/ppdb"
+              class="mt-2 inline-flex items-center justify-center gap-2 h-11 rounded-full bg-primary text-on-primary font-title-md text-title-md uppercase tracking-wide"
+              @click="menuOpen = false"
+            >
+              <span class="material-symbols-outlined text-[20px]">how_to_reg</span>
+              Pendaftaran PPDB
+            </router-link>
           </template>
-          <router-link
-            to="/sma/ppdb"
-            class="mt-2 inline-flex items-center justify-center gap-2 h-11 rounded-full bg-primary text-on-primary font-title-md text-title-md uppercase tracking-wide"
-            @click="menuOpen = false"
-          >
-            <span class="material-symbols-outlined text-[20px]">how_to_reg</span>
-            Pendaftaran PPDB
-          </router-link>
-        </nav>
+        </NavMenu>
       </Transition>
     </header>
 
@@ -156,21 +92,18 @@
 
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
 import AppLogo from './AppLogo.vue'
 import AmbientCursorLight from './AmbientCursorLight.vue'
+import NavMenu from './NavMenu.vue'
 import ScrollProgress from './ScrollProgress.vue'
 import ThemeToggle from './ThemeToggle.vue'
 import { brand, footerLinks, navigation } from '../data/lpi.js'
 import { useSiteSettings } from '../composables/useSiteSettings.js'
 
-const route = useRoute()
 const { get, asset, load } = useSiteSettings()
 const logo = ref(null)
 
 const menuOpen = ref(false)
-const openDesktop = ref(null)
-const mobileOpen = ref(null)
 
 const scrolled = ref(false)
 let scrollFrame = null
@@ -195,47 +128,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
   if (scrollFrame != null) cancelAnimationFrame(scrollFrame)
 })
-
-function isActive(path) {
-  if (!path) return false
-  if (path === '/') return route.path === '/'
-  return route.path.startsWith(path)
-}
-
-function isActiveGroup(item) {
-  if (isActive(item.href)) return true
-  return (item.children || []).some((child) => isActive(child.href))
-}
 </script>
 
 <style scoped>
-.lpi-link {
-  position: relative;
-  color: var(--color-on-surface-variant);
-  transition: color 0.25s var(--ease-out-soft);
-}
-.lpi-link::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -6px;
-  height: 2px;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary-container));
-  transform: scaleX(0);
-  transform-origin: 0 50%;
-  transition: transform 0.35s var(--ease-out-soft);
-}
-.lpi-link:hover {
-  color: var(--color-on-surface);
-}
-.lpi-link:hover::after {
-  transform: scaleX(1);
-}
-.lpi-link:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 4px;
-  border-radius: 6px;
-}
 </style>
