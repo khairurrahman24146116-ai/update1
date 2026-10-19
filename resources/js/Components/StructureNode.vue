@@ -74,11 +74,11 @@ const photoSrc = computed(() => {
   width: 140px;
   overflow: hidden;
   text-align: center;
-  background: #ffffff;
-  color: #111111;
-  border: 3px solid #111111;
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  border: 2px solid var(--color-primary);
   border-radius: 12px;
-  box-shadow: 0 4px 0 rgba(17, 17, 17, 0.16);
+  box-shadow: var(--shadow-0-hover);
   transition:
     box-shadow 0.25s var(--ease-out-soft),
     transform 0.25s var(--ease-out-soft);
@@ -86,7 +86,7 @@ const photoSrc = computed(() => {
 
 .structure-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 7px 0 rgba(17, 17, 17, 0.22);
+  box-shadow: var(--lift-shadow);
 }
 
 .structure-card__photo {
@@ -96,8 +96,8 @@ const photoSrc = computed(() => {
   width: 100%;
   height: 150px;
   overflow: hidden;
-  background: #ececec;
-  border-bottom: 2px solid #111111;
+  background: var(--color-surface-container-low);
+  border-bottom: 2px solid var(--color-primary);
 }
 
 .structure-card__photo img {
@@ -113,8 +113,7 @@ const photoSrc = computed(() => {
   font-size: 30px;
   font-weight: 800;
   letter-spacing: 0.02em;
-  color: #111111;
-  background: #ececec;
+  color: var(--color-primary);
 }
 
 .structure-card__meta {
@@ -124,8 +123,8 @@ const photoSrc = computed(() => {
   gap: 3px;
   min-height: 66px;
   padding: 8px 7px 10px;
-  background: #fff200;
-  color: #111111;
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
 }
 
 .structure-card__name {

@@ -499,7 +499,7 @@ onBeforeUnmount(() => {
   --org-gap-y: 28px;
   --org-gap-x: 10px;
   --org-line-width: 3px;
-  --org-line: #111111;
+  --org-line: var(--color-outline);
 
   display: flex;
   align-items: flex-start;
@@ -581,10 +581,6 @@ onBeforeUnmount(() => {
 .structure-tree > li::before,
 .structure-tree > li::after {
   display: none;
-}
-
-html[data-theme='dark'] .structure-tree {
-  --org-line: color-mix(in srgb, var(--color-on-surface) 78%, transparent);
 }
 
 /* Panel pembungkus mengikuti tema situs. */
