@@ -123,6 +123,36 @@ const photoSrc = computed(() => {
   font-weight: 500;
   overflow-wrap: anywhere;
 }
+@media (max-width: 640px) {
+  .structure-card {
+    width: 100%;
+    max-width: 240px;
+    margin-inline: auto;
+    border-radius: 14px;
+  }
+  .structure-card__photo {
+    height: 100px;
+  }
+  .structure-card__photo img {
+    object-position: top center;
+  }
+  .structure-card__initials {
+    font-size: 26px;
+  }
+  .structure-card__meta {
+    min-height: 0;
+    padding: 10px 12px;
+    gap: 3px;
+  }
+  .structure-card__name {
+    font-size: 14px;
+    line-height: 1.3;
+  }
+  .structure-card__position {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .structure-card:hover {
     transform: none;
