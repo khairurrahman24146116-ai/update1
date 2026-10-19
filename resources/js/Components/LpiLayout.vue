@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-surface font-body-md text-body-md text-on-surface antialiased overflow-x-hidden">
+  <div class="min-h-screen bg-surface font-body-md text-body-md text-on-surface antialiased overflow-x-clip">
     <AmbientCursorLight />
     <ScrollProgress />
     <header
@@ -7,19 +7,19 @@
       :class="{ 'is-scrolled': scrolled }"
     >
       <div class="h-20 w-full px-gutter-desktop mx-auto flex items-center justify-between gap-space-md">
-        <div class="flex items-center gap-space-md shrink-0">
-          <router-link to="/" class="flex items-center gap-space-md">
+        <div class="flex items-center gap-3 min-w-0">
+          <router-link to="/" class="flex items-center gap-3 min-w-0" :title="brand.short">
             <AppLogo :src="logo" :size="34" shape="md" alt="Logo LPI Dayah Madani Al-Aziziyah" />
-            <div class="flex flex-col">
-              <span class="font-headline-sm text-headline-sm text-on-surface tracking-tight uppercase leading-none">{{ brand.short }}</span>
-              <span class="font-label-sm text-label-sm text-primary tracking-widest uppercase mt-0.5">Lembaga Pendidikan Islam</span>
+            <div class="flex flex-col min-w-0">
+              <span class="font-headline-sm text-headline-sm text-on-surface tracking-tight uppercase leading-none truncate">{{ brand.short }}</span>
+              <span class="hidden sm:block font-label-sm text-label-sm text-primary tracking-widest uppercase mt-0.5 truncate">Lembaga Pendidikan Islam</span>
             </div>
           </router-link>
         </div>
 
         <NavMenu :items="navigation" variant="desktop" id-prefix="lpi" />
 
-        <div class="flex items-center gap-space-md">
+        <div class="flex items-center gap-2 sm:gap-space-md shrink-0">
           <ThemeToggle />
           <router-link
             to="/sma/ppdb"
@@ -30,18 +30,19 @@
           </router-link>
           <router-link
             to="/sma/ppdb"
-            class="btn-skeu xl:hidden inline-flex items-center h-9 px-3 rounded-full bg-primary text-on-primary font-label-sm text-label-sm font-bold uppercase tracking-wide"
+            class="btn-skeu hidden sm:inline-flex xl:hidden items-center h-11 px-4 rounded-full bg-primary text-on-primary font-label-sm text-label-sm font-bold uppercase tracking-wide whitespace-nowrap shrink-0"
           >
             PPDB
           </router-link>
           <button
-            class="control-glass xl:hidden w-9 h-9 rounded-full flex items-center justify-center"
+            type="button"
+            class="control-glass xl:hidden h-11 w-11 shrink-0 rounded-full inline-flex items-center justify-center"
             @click="menuOpen = !menuOpen"
             aria-label="Menu"
             :aria-expanded="menuOpen"
             aria-controls="lpi-mobile-nav"
           >
-            <span class="material-symbols-outlined !w-5 !h-5 !text-[22px]">{{ menuOpen ? 'close' : 'menu' }}</span>
+            <span class="material-symbols-outlined !w-6 !h-6 !text-[24px]">{{ menuOpen ? 'close' : 'menu' }}</span>
           </button>
         </div>
       </div>
@@ -49,10 +50,11 @@
       <Transition name="menu">
         <NavMenu
           v-if="menuOpen"
+          id="lpi-mobile-nav"
           :items="navigation"
           variant="mobile"
           id-prefix="lpi"
-          class="glass-panel xl:hidden border-t border-outline-variant px-gutter-desktop py-space-sm"
+          class="glass-panel xl:hidden border-t border-outline-variant px-gutter-desktop py-space-sm max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           @navigate="menuOpen = false"
         >
           <template #footer>
@@ -83,7 +85,7 @@
           </nav>
         </div>
         <div class="pt-space-md font-label-sm text-label-sm text-on-surface-variant">
-          <p>© {{ new Date().getFullYear() }} {{ brand.name }}.</p>
+          <p>&copy; {{ new Date().getFullYear() }} {{ brand.name }}.</p>
         </div>
       </div>
     </footer>
@@ -91,7 +93,8 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import AppLogo from './AppLogo.vue'
 import AmbientCursorLight from './AmbientCursorLight.vue'
 import NavMenu from './NavMenu.vue'
@@ -100,6 +103,7 @@ import ThemeToggle from './ThemeToggle.vue'
 import { brand, footerLinks, navigation } from '../data/lpi.js'
 import { useSiteSettings } from '../composables/useSiteSettings.js'
 
+const route = useRoute()
 const { get, asset, load } = useSiteSettings()
 const logo = ref(null)
 
@@ -117,18 +121,30 @@ function onScroll() {
   if (scrollFrame == null) scrollFrame = requestAnimationFrame(applyScrolled)
 }
 
+function onKeydown(event) {
+  if (event.key === 'Escape') {
+    menuOpen.value = false
+  }
+}
+
+watch(
+  () => route.path,
+  () => {
+    menuOpen.value = false
+  },
+)
+
 onMounted(async () => {
   applyScrolled()
   window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('keydown', onKeydown)
   await load()
   logo.value = asset(get('logo_path', null))
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('keydown', onKeydown)
   if (scrollFrame != null) cancelAnimationFrame(scrollFrame)
 })
 </script>
-
-<style scoped>
-</style>
