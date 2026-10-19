@@ -64,7 +64,7 @@
         <div class="bg-white rounded-xl border border-outline-variant shadow-card w-full max-w-md p-6 space-y-4" id="receipt-print">
           <div class="text-center border-b border-outline-variant pb-3">
             <p class="font-headline-sm text-headline-sm font-bold uppercase tracking-wide">Kuitansi Pembayaran SPP</p>
-            <p class="text-xs text-on-surface-variant">SMA Madani Al Aziziyah</p>
+            <p class="text-xs text-on-surface-variant">{{ receiptUnitLabel }}</p>
           </div>
           <div class="text-sm space-y-1.5">
             <div class="flex justify-between gap-3"><span class="text-on-surface-variant">No. Kuitansi</span><span class="font-mono font-bold">{{ receipt.receipt_number }}</span></div>
@@ -94,6 +94,7 @@ import FinanceShell from '../../Components/FinanceShell.vue'
 import EmptyState from '../../Components/EmptyState.vue'
 import { formatDateTime, formatRupiah, monthLabel, useFinanceApi } from '../../composables/useFinance.js'
 import { useAuth } from '../../composables/useAuth.js'
+import { unitLabel } from '../../data/lpi.js'
 
 const { loading, error, request } = useFinanceApi()
 const { user } = useAuth()
@@ -108,6 +109,7 @@ const method = ref('')
 const from = ref('')
 const to = ref('')
 const receipt = ref(null)
+const receiptUnitLabel = computed(() => unitLabel(receipt.value?.unit))
 let timer = null
 
 function onSearch() {

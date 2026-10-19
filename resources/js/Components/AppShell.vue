@@ -1,14 +1,14 @@
 <template>
   <div class="min-h-screen bg-surface font-body-md text-body-md text-on-surface" :class="{ 'ui-square': squareShell }">
     <nav class="nav-glass">
-      <div class="max-w-7xl mx-auto px-gutter-mobile md:px-gutter-desktop h-16 flex items-center justify-between gap-space-md">
-        <router-link :to="homePath" class="flex items-center gap-space-md min-w-0" aria-label="Beranda Portal">
-          <AppLogo :src="logo" :size="34" shape="md" alt="Logo SMA Madani Al Aziziyah" />
-          <span class="font-headline-sm text-headline-sm text-on-surface tracking-tight uppercase leading-none truncate">
-            {{ brand }}
+      <div class="max-w-7xl mx-auto px-gutter-mobile md:px-gutter-desktop min-h-16 py-2 sm:h-16 sm:py-0 flex flex-wrap items-center justify-between gap-x-space-md gap-y-1">
+        <router-link :to="homePath" class="flex items-center gap-space-md min-w-0 w-full sm:w-auto sm:flex-1" aria-label="Beranda Portal">
+          <AppLogo :src="logo" :size="34" shape="md" :alt="`Logo ${brandName}`" />
+          <span class="font-headline-sm text-on-surface tracking-tight uppercase leading-tight break-words line-clamp-2 min-w-0 text-[11px] sm:text-headline-sm sm:leading-none sm:truncate">
+            {{ brandName }}
           </span>
         </router-link>
-      <div class="flex items-center gap-space-sm shrink-0">
+      <div class="flex items-center gap-space-sm shrink-0 w-full sm:w-auto justify-end">
         <router-link v-if="showAdminPanel" to="/app/admin" class="btn btn--ghost btn--sm hidden sm:inline-flex">
           <span class="material-symbols-outlined !w-4 !h-4">admin_panel_settings</span>
           Panel
@@ -18,10 +18,10 @@
           Keuangan
         </router-link>
         <ThemeToggle />
-        <span class="badge bg-surface-container-low text-on-surface-variant capitalize">{{ roleLabel }}</span>
+        <span class="badge bg-surface-container-low text-on-surface-variant capitalize whitespace-nowrap">{{ roleLabel }}</span>
           <button type="button" class="btn btn--ghost btn--sm" @click="logout">
             <span class="material-symbols-outlined !w-4 !h-4">logout</span>
-            Keluar
+            <span class="hidden sm:inline">Keluar</span>
           </button>
         </div>
       </div>
@@ -34,22 +34,26 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth.js'
 import { LOGIN_PATH } from '../site-paths.js'
+import { brand } from '../data/lpi.js'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import AppLogo from './AppLogo.vue'
 import ThemeToggle from './ThemeToggle.vue'
 
-defineProps({ title: { type: String, default: '' } })
+const props = defineProps({ title: { type: String, default: '' } })
 const router = useRouter()
 const { user, doLogout, isAdminAreaUser, isFinanceAreaUser, refreshUser } = useAuth()
 const { get, asset, load } = useSiteSettings()
 
-const fallbackBrand = 'SMA MADANI AL AZIZIYAH'
-const brand = computed(() => get('app_name', fallbackBrand) || fallbackBrand)
+const brandName = brand.name
 const logo = computed(() => asset(get('logo_path', null)))
+
+watchEffect(() => {
+  document.title = props.title ? `${props.title} | ${brandName}` : brandName
+})
 
 onMounted(() => { load(); refreshUser().catch(() => {}) })
 

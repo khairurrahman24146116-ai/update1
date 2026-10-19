@@ -1,5 +1,7 @@
-export function useSeo({ title, description, image, url, brand = 'LPI Dayah Madani Al-Aziziyah' }) {
-  if (title) document.title = title + ' — ' + brand
+import { brand } from '../data/lpi.js'
+
+export function useSeo({ title, description, image, url, brand: brandName = brand.name }) {
+  if (title) document.title = title + ' — ' + brandName
   const set = (sel, attr, val) => {
     if (!val) return
     let el = document.querySelector(sel)
@@ -8,7 +10,7 @@ export function useSeo({ title, description, image, url, brand = 'LPI Dayah Mada
     el.setAttribute(k, v); el.setAttribute(attr, val)
   }
   set('meta[name="description"]', 'content', description)
-  set('meta[property="og:title"]', 'content', title ? title + ' — ' + brand : brand)
+  set('meta[property="og:title"]', 'content', title ? title + ' — ' + brandName : brandName)
   set('meta[property="og:description"]', 'content', description)
   set('meta[property="og:image"]', 'content', image)
   set('meta[property="og:url"]', 'content', url)

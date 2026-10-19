@@ -19,11 +19,11 @@ Secure Auth Layer
 <div class="flex flex-col items-center text-center gap-3 pt-1">
 <div class="relative group">
             <div class="w-20 h-20 rounded-full logo-plate p-2.5 group-hover:-translate-y-0.5 transition-transform duration-200">
-              <img :src="logo" alt="Logo SMA Madani Al Aziziyah" width="80" height="80" class="h-full w-full object-contain"/>
+              <img :src="logo" :alt="`Logo ${brandName}`" width="80" height="80" class="h-full w-full object-contain"/>
             </div>
 </div>
 <div>
-<h1 class="font-headline text-lg font-extrabold text-on-surface tracking-tight uppercase leading-none">{{ brand }}</h1>
+<h1 class="font-headline text-lg font-extrabold text-on-surface tracking-tight uppercase leading-none">{{ brandName }}</h1>
 <p class="text-sm text-on-surface-variant mt-1">Sistem Informasi Akademik & Pembelajaran Terpadu</p>
 </div>
 </div>
@@ -84,7 +84,7 @@ Secure Auth Layer
 
 <!-- Bottom links -->
 <div class="w-full mt-4 flex flex-col items-center gap-2.5 px-1">
-<p class="font-code text-[11px] text-on-surface-variant text-center opacity-80">© {{ currentYear }} SMA Madani Al-Aziziyah. Seluruh Hak Cipta Dilindungi.</p>
+<p class="font-code text-[11px] text-on-surface-variant text-center opacity-80">© {{ currentYear }} {{ brandName }}. Seluruh Hak Cipta Dilindungi.</p>
 <router-link to="/" class="text-xs text-primary hover:underline">← Kembali ke Beranda</router-link>
 </div>
 </main>
@@ -108,6 +108,7 @@ Secure Auth Layer
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth.js'
+import { brand } from '../data/lpi.js'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import ThemeToggle from '../Components/ThemeToggle.vue'
 const router = useRouter()
@@ -115,7 +116,7 @@ const { loading, error: authError, doLogin } = useAuth()
 const { get, asset, load } = useSiteSettings()
 load()
 const logo = computed(() => asset(get('logo_path', null)) || '/images/profile/logo-lpi-transparent.png')
-const brand = computed(() => get('app_name', 'SMA Madani Al-Aziziyah'))
+const brandName = brand.name
 const showPwd = ref(false)
 const showRecovery = ref(false)
 const recoveryId = ref('')

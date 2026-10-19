@@ -7,6 +7,16 @@ export const brand = {
   tagline: 'Lembaga Pendidikan Islam terpadu: Dayah Salafiyah dan pendidikan formal yang bermutu.',
 }
 
+export const unitLabels = {
+  lpi: 'LPI Dayah Madani Al-Aziziyah',
+  sma: 'SMA Madani Al-Aziziyah',
+  smp: 'SMP Madani Al-Aziziyah',
+}
+
+export function unitLabel(unit) {
+  return unitLabels[unit] || brand.name
+}
+
 export const visi = 'Visi LPI Dayah Madani Al-Aziziyah akan ditetapkan kemudian.'
 
 export const misi = [

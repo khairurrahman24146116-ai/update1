@@ -17,7 +17,7 @@ import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   src: { type: String, default: '' },
-  alt: { type: String, default: 'Logo SMA Madani Al Aziziyah' },
+  alt: { type: String, default: 'Logo LPI Dayah Madani Al-Aziziyah' },
   size: { type: [Number, String], default: 40 },
   shape: { type: String, default: 'lg' },
 })
