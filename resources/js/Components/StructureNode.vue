@@ -1,21 +1,23 @@
 <template>
   <li class="structure-node">
-    <div class="structure-card">
+    <article class="structure-card">
       <div class="structure-card__photo">
         <img
           v-if="photoSrc && !failed"
           :src="photoSrc"
           :alt="`Foto ${displayName}`"
           loading="lazy"
+          decoding="async"
+          draggable="false"
           @error="failed = true"
         />
         <span v-else class="structure-card__initials" aria-hidden="true">{{ initials }}</span>
       </div>
       <div class="structure-card__meta">
-        <p class="structure-card__name">{{ displayName }}</p>
-        <p class="structure-card__position">{{ node.position }}</p>
+        <p class="structure-card__name" :title="displayName">{{ displayName }}</p>
+        <p class="structure-card__position" :title="positionText">{{ positionText }}</p>
       </div>
-    </div>
+    </article>
     <ul v-if="children.length" class="structure-children">
       <StructureNode v-for="child in children" :key="child.id" :node="child" />
     </ul>
@@ -38,11 +40,14 @@ const children = computed(() => props.node?.children || [])
 
 const displayName = computed(() => (props.node?.name || '').trim() || 'Belum diisi')
 
+const positionText = computed(() => (props.node?.position || '').trim() || '—')
+
 const initials = computed(() => {
   const name = (props.node?.name || '').trim()
   if (!name) {
     return '?'
   }
+
   return name
     .split(/\s+/)
     .slice(0, 2)
@@ -64,98 +69,90 @@ const photoSrc = computed(() => {
 
 <style scoped>
 .structure-card {
-  width: 160px;
-  background: var(--color-surface-container-lowest);
-  border: 2px solid var(--color-primary);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--shadow-0-hover);
   display: flex;
   flex-direction: column;
+  width: 140px;
+  overflow: hidden;
   text-align: center;
+  background: #ffffff;
+  color: #111111;
+  border: 3px solid #111111;
+  border-radius: 12px;
+  box-shadow: 0 4px 0 rgba(17, 17, 17, 0.16);
   transition:
-    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow 0.25s var(--ease-out-soft),
+    transform 0.25s var(--ease-out-soft);
 }
+
 .structure-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--lift-shadow);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 rgba(17, 17, 17, 0.22);
 }
+
 .structure-card__photo {
-  height: 150px;
-  background: var(--color-surface-container-low);
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 150px;
   overflow: hidden;
-  border-bottom: 2px solid var(--color-primary);
+  background: #ececec;
+  border-bottom: 2px solid #111111;
 }
+
 .structure-card__photo img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
+  object-position: center top;
 }
+
 .structure-card__initials {
   font-family: var(--font-headline, inherit);
-  font-size: 34px;
-  font-weight: 700;
-  color: var(--color-primary);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #111111;
+  background: #ececec;
 }
+
 .structure-card__meta {
-  background: var(--color-secondary-fixed);
-  color: var(--color-on-secondary-fixed);
-  padding: 8px 8px 10px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 3px;
-  min-height: 74px;
+  min-height: 66px;
+  padding: 8px 7px 10px;
+  background: #fff200;
+  color: #111111;
 }
+
 .structure-card__name {
-  font-size: 13px;
+  margin: 0;
+  font-family: var(--font-label, inherit);
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.structure-card__position {
+  margin: 0;
+  font-family: var(--font-label, inherit);
+  font-size: 10px;
   font-weight: 700;
   line-height: 1.25;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   overflow-wrap: anywhere;
 }
-.structure-card__position {
-  font-size: 11px;
-  line-height: 1.3;
-  font-weight: 500;
-  overflow-wrap: anywhere;
-}
-@media (max-width: 640px) {
-  .structure-card {
-    width: 100%;
-    max-width: 260px;
-    margin-inline: auto;
-    border-radius: 14px;
-  }
-  .structure-card__photo {
-    height: auto;
-    aspect-ratio: 4 / 3;
-  }
-  .structure-card__photo img {
-    object-fit: cover;
-    object-position: center 15%;
-  }
-  .structure-card__initials {
-    font-size: 26px;
-  }
-  .structure-card__meta {
-    min-height: 0;
-    padding: 10px 12px;
-    gap: 3px;
-  }
-  .structure-card__name {
-    font-size: 14px;
-    line-height: 1.3;
-  }
-  .structure-card__position {
-    font-size: 12px;
-    line-height: 1.3;
-  }
-}
+
 @media (prefers-reduced-motion: reduce) {
+  .structure-card {
+    transition: none;
+  }
+
   .structure-card:hover {
     transform: none;
   }
