@@ -58,7 +58,7 @@
     </section>
 
     <!-- Section 1: Profile Sekolah -->
-    <SchoolProfile />
+    <SchoolProfile :only="['about', 'history', 'unit', 'bahasa']" />
 
     <!-- Section 2: Legalitas & Pimpinan -->
     <section class="max-w-7xl mx-auto w-full px-gutter py-space-lg">
@@ -99,8 +99,6 @@
         </div>
       </div>
     </section>
-
-    <CurriculumSection />
   </PublicLayout>
 </template>
 
@@ -109,8 +107,8 @@ import { ref, onMounted } from 'vue'
 import PublicLayout from '../Components/PublicLayout.vue'
 import PersonCard from '../Components/PersonCard.vue'
 import SchoolProfile from '../Components/SchoolProfile.vue'
-import CurriculumSection from '../Components/CurriculumSection.vue'
 import Reveal from '../Components/Reveal.vue'
+import { useSeo } from '../composables/useSeo.js'
 
 const heroStats = [
   { value: 'B', label: 'AKREDITASI SMP (BAN-S/M)', color: 'text-primary' },
@@ -157,6 +155,12 @@ function photoUrl(path, fbPhoto) {
 }
 
 onMounted(async () => {
+  useSeo({
+    title: 'Profil Sekolah',
+    description: 'Profil SMA Madani Al-Aziziyah: sejarah, identitas lembaga, unit pendidikan, dan pengembangan bahasa.',
+    url: window.location.origin + '/sma/profil',
+    brand: 'SMA Madani Al-Aziziyah',
+  })
   try {
     const r = await fetch('/api/school-principals/current')
     if (!r.ok) return

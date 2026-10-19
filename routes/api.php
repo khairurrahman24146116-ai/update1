@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SchoolPrincipalController;
 use App\Http\Controllers\Api\ScoreController;
 use App\Http\Controllers\Api\SiteSettingController;
+use App\Http\Controllers\Api\StructureMemberController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\StudentImportController;
 use App\Http\Controllers\Api\SubjectController;
@@ -43,6 +44,7 @@ Route::get('/ppdb-waves/public', [PPDBWaveController::class, 'publicIndex']);
 Route::get('/ppdb-waves/public/{id}', [PPDBWaveController::class, 'publicShow']);
 Route::post('/ppdb-registrations', [PPDBRegistrationController::class, 'publicStore'])->middleware('throttle:10,1');
 Route::get('/organization-members/public', [OrganizationMemberController::class, 'publicIndex']);
+Route::get('/structure/{unit}', [StructureMemberController::class, 'publicShow']);
 
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/user', fn (Request $request) => $request->user());
@@ -116,5 +118,12 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/organization-members/upload-photo', [OrganizationMemberController::class, 'uploadPhoto'])->middleware('throttle:20,1');
         Route::put('/organization-members/{organization_member}', [OrganizationMemberController::class, 'update']);
         Route::delete('/organization-members/{organization_member}', [OrganizationMemberController::class, 'destroy']);
+
+        Route::get('/structure-members', [StructureMemberController::class, 'index'])->middleware('throttle:60,1');
+        Route::post('/structure-members', [StructureMemberController::class, 'store'])->middleware('throttle:60,1');
+        Route::post('/structure-members/upload-photo', [StructureMemberController::class, 'uploadPhoto'])->middleware('throttle:20,1');
+        Route::post('/structure-members/{organization_member}/move', [StructureMemberController::class, 'move'])->middleware('throttle:60,1');
+        Route::put('/structure-members/{organization_member}', [StructureMemberController::class, 'update'])->middleware('throttle:60,1');
+        Route::delete('/structure-members/{organization_member}', [StructureMemberController::class, 'destroy'])->middleware('throttle:60,1');
     });
 });
