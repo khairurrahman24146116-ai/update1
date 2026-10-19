@@ -438,7 +438,7 @@ onMounted(load)
   }
   .structure-tree .structure-node > .structure-card {
     width: 100%;
-    max-width: 240px;
+    max-width: 260px;
     margin: 0 auto;
   }
   .structure-tree li + li {

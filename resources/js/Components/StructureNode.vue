@@ -126,15 +126,17 @@ const photoSrc = computed(() => {
 @media (max-width: 640px) {
   .structure-card {
     width: 100%;
-    max-width: 240px;
+    max-width: 260px;
     margin-inline: auto;
     border-radius: 14px;
   }
   .structure-card__photo {
-    height: 100px;
+    height: auto;
+    aspect-ratio: 4 / 3;
   }
   .structure-card__photo img {
-    object-position: top center;
+    object-fit: cover;
+    object-position: center 15%;
   }
   .structure-card__initials {
     font-size: 26px;

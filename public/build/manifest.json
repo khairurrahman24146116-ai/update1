@@ -92,12 +92,12 @@
     "src": "resources/fonts/material-symbols-outlined.woff2"
   },
   "resources/js/app.js": {
-    "file": "assets/app-CiCdaXYJ.js",
+    "file": "assets/app-ysS6TA_n.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "css": [
-      "assets/app-WmXKMj-b.css"
+      "assets/app-CnJsnhyB.css"
     ]
   }
 }
