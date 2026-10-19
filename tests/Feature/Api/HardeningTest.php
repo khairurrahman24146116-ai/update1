@@ -33,6 +33,35 @@ class HardeningTest extends TestCase
         $this->assertArrayNotHasKey('password', $first);
     }
 
+    public function test_admin_can_read_user_stats(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        User::factory()->count(3)->create(['role' => 'guru']);
+        User::factory()->create(['role' => 'wali_murid']);
+
+        $this->actingAs($admin)->getJson('/api/users/stats')
+            ->assertOk()
+            ->assertJsonPath('total', 5)
+            ->assertJsonPath('guru', 3);
+    }
+
+    public function test_non_admin_cannot_read_user_stats(): void
+    {
+        $guru = User::factory()->create(['role' => 'guru']);
+        $this->actingAs($guru)->getJson('/api/users/stats')->assertStatus(403);
+    }
+
+    public function test_users_index_is_paginated(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        User::factory()->count(4)->create(['role' => 'guru']);
+
+        $res = $this->actingAs($admin)->getJson('/api/users?per_page=2')->assertOk();
+        $this->assertCount(2, $res->json('data'));
+        $this->assertEquals(5, $res->json('total'));
+        $this->assertEquals(3, $res->json('last_page'));
+    }
+
     public function test_guru_cannot_create_user(): void
     {
         $guru = User::factory()->create(['role' => 'guru']);

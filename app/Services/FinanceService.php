@@ -6,6 +6,7 @@ use App\Models\FinanceTransaction;
 use App\Models\FinanceUnitSetting;
 use App\Models\SppInvoice;
 use App\Models\SppPayment;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -22,29 +23,35 @@ class FinanceService
     {
         $range = $this->range($from, $to);
 
-        $income = (float) FinanceTransaction::where('unit', $unit)
-            ->where('type', FinanceTransaction::TYPE_INCOME)
-            ->when($range, fn ($q) => $q->whereBetween('transaction_date', $range))
-            ->sum('amount');
+        $totals = $this->transactionRange(FinanceTransaction::query()->where('unit', $unit), $range)
+            ->selectRaw('type, SUM(amount) as total')
+            ->groupBy('type')
+            ->pluck('total', 'type');
 
-        $expense = (float) FinanceTransaction::where('unit', $unit)
-            ->where('type', FinanceTransaction::TYPE_EXPENSE)
-            ->when($range, fn ($q) => $q->whereBetween('transaction_date', $range))
-            ->sum('amount');
+        $income = (float) ($totals[FinanceTransaction::TYPE_INCOME] ?? 0);
+        $expense = (float) ($totals[FinanceTransaction::TYPE_EXPENSE] ?? 0);
 
         $opening = (float) (FinanceUnitSetting::where('unit', $unit)->value('opening_balance') ?? 0);
 
-        $invoiceQuery = SppInvoice::where('unit', $unit);
-        $paymentQuery = SppPayment::where('unit', $unit)
-            ->when($range, fn ($q) => $q->whereBetween(DB::raw('DATE(paid_at)'), $range));
-
-        $invoiceTotal = (float) (clone $invoiceQuery)->sum('amount');
-        $invoicePaid = (float) (clone $invoiceQuery)->sum('paid_amount');
-        $sppReceived = (float) $paymentQuery->sum('amount');
-
-        $recent = FinanceTransaction::with('category')
+        $invoiceStats = SppInvoice::query()
             ->where('unit', $unit)
-            ->when($range, fn ($q) => $q->whereBetween('transaction_date', $range))
+            ->selectRaw(
+                'COALESCE(SUM(amount), 0) as total, COALESCE(SUM(paid_amount), 0) as paid, '
+                .'COUNT(*) as total_count, '
+                .'COALESCE(SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END), 0) as unpaid_count',
+                [SppInvoice::STATUS_UNPAID, SppInvoice::STATUS_PARTIAL],
+            )
+            ->first();
+
+        $paymentRange = $range === null
+            ? null
+            : [Carbon::parse($range[0])->startOfDay(), Carbon::parse($range[1])->endOfDay()];
+
+        $sppReceived = (float) SppPayment::where('unit', $unit)
+            ->when($paymentRange, fn ($q) => $q->whereBetween('paid_at', $paymentRange))
+            ->sum('amount');
+
+        $recent = $this->transactionRange(FinanceTransaction::with('category')->where('unit', $unit), $range)
             ->orderByDesc('transaction_date')
             ->orderByDesc('id')
             ->limit(8)
@@ -58,15 +65,22 @@ class FinanceService
             'total_income' => round($income, 2),
             'total_expense' => round($expense, 2),
             'balance' => round($opening + $income - $expense, 2),
-            'spp_invoice_total' => round($invoiceTotal, 2),
+            'spp_invoice_total' => round((float) $invoiceStats->total, 2),
             'spp_received' => round($sppReceived, 2),
-            'spp_outstanding' => round(max(0, $invoiceTotal - $invoicePaid), 2),
-            'spp_invoice_count' => (clone $invoiceQuery)->count(),
-            'spp_unpaid_count' => (clone $invoiceQuery)->whereIn('status', [SppInvoice::STATUS_UNPAID, SppInvoice::STATUS_PARTIAL])->count(),
+            'spp_outstanding' => round(max(0, (float) $invoiceStats->total - (float) $invoiceStats->paid), 2),
+            'spp_invoice_count' => (int) $invoiceStats->total_count,
+            'spp_unpaid_count' => (int) $invoiceStats->unpaid_count,
             'recent_transactions' => $recent,
             'trend' => $trend,
             'range' => ['from' => $range[0] ?? null, 'to' => $range[1] ?? null],
         ];
+    }
+
+    private function transactionRange(Builder $query, ?array $range): Builder
+    {
+        return $query->when($range, fn ($q) => $q
+            ->where('transaction_date', '>=', $range[0])
+            ->where('transaction_date', '<', Carbon::parse($range[1])->addDay()->startOfDay()));
     }
 
     /**
@@ -92,11 +106,21 @@ class FinanceService
     {
         $start = $range[0] ?? Carbon::now()->subMonths(5)->startOfMonth()->toDateString();
         $end = $range[1] ?? Carbon::now()->endOfMonth()->toDateString();
+        $endExclusive = Carbon::parse($end)->addDay()->startOfDay();
+
+        $periodExpression = match (DB::connection()->getDriverName()) {
+            'sqlite' => "strftime('%Y-%m', transaction_date)",
+            'pgsql' => "to_char(transaction_date, 'YYYY-MM')",
+            default => "DATE_FORMAT(transaction_date, '%Y-%m')",
+        };
 
         $rows = FinanceTransaction::query()
-            ->select(['transaction_date', 'type', 'amount'])
+            ->selectRaw("{$periodExpression} as period, type, SUM(amount) as total")
             ->where('unit', $unit)
-            ->whereBetween('transaction_date', [$start, $end])
+            ->where('transaction_date', '>=', $start)
+            ->where('transaction_date', '<', $endExclusive)
+            ->groupBy('period', 'type')
+            ->orderBy('period')
             ->get();
 
         if ($rows->isEmpty()) {
@@ -104,12 +128,11 @@ class FinanceService
         }
 
         return $rows
-            ->groupBy(fn ($r) => Carbon::parse($r->transaction_date)->format('Y-m'))
-            ->sortKeys()
+            ->groupBy('period')
             ->map(fn ($group, $period) => [
                 'period' => $period,
-                'income' => round((float) $group->where('type', FinanceTransaction::TYPE_INCOME)->sum('amount'), 2),
-                'expense' => round((float) $group->where('type', FinanceTransaction::TYPE_EXPENSE)->sum('amount'), 2),
+                'income' => round((float) $group->where('type', FinanceTransaction::TYPE_INCOME)->sum('total'), 2),
+                'expense' => round((float) $group->where('type', FinanceTransaction::TYPE_EXPENSE)->sum('total'), 2),
             ])
             ->values()
             ->all();

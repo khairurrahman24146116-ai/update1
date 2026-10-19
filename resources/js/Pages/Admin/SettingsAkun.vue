@@ -2,7 +2,7 @@
 <div class="space-y-4">
 <div class="flex flex-wrap gap-2 items-center">
 <input v-model="search" @input="onSearch" placeholder="Cari nama/email" class="input max-w-xs" />
-<select v-model="filterRole" @change="load" class="input"><option value="">Semua role</option><option value="admin">Admin</option><option value="guru">Guru</option><option value="bendahara_lpi">Bendahara LPI</option><option value="bendahara_sma">Bendahara SMA</option><option value="wali_murid">Wali Murid</option></select>
+<select v-model="filterRole" @change="goPage(1)" class="input"><option value="">Semua role</option><option value="admin">Admin</option><option value="guru">Guru</option><option value="bendahara_lpi">Bendahara LPI</option><option value="bendahara_sma">Bendahara SMA</option><option value="wali_murid">Wali Murid</option></select>
 <button @click="openCreate" class="btn btn--primary btn--sm">+ Akun</button>
 </div>
 <Transition name="fade">
@@ -26,6 +26,13 @@
 <div class="flex gap-1 shrink-0"><button v-if="canViewPermissions" @click="openPermissions(u)" class="btn btn--ghost btn--sm" title="Atur hak akses"><span class="material-symbols-outlined !w-4 !h-4">key</span> Akses</button><button @click="openEdit(u)" class="btn btn--ghost btn--sm">Edit</button><button v-if="!u.is_protected" @click="remove(u)" class="btn btn--destructive btn--sm">Hapus</button><span v-else class="px-3 py-1 text-xs opacity-40" title="Akun utama tidak dapat dihapus"><span class="material-symbols-outlined !w-4 !h-4">lock</span></span></div>
 </div>
 <div v-if="!list.length" class="text-center py-6 text-sm text-on-surface-variant">Belum ada akun.</div>
+<div v-if="meta" class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t text-xs">
+<span class="text-on-surface-variant">Total {{ meta.total }} — Hal {{ meta.current_page }} / {{ meta.last_page }}</span>
+<div class="flex gap-2">
+<button @click="goPage(meta.current_page-1)" :disabled="meta.current_page<=1" class="btn btn--ghost btn--sm disabled:opacity-40">‹ Prev</button>
+<button @click="goPage(meta.current_page+1)" :disabled="meta.current_page>=meta.last_page" class="btn btn--ghost btn--sm disabled:opacity-40">Next ›</button>
+</div>
+</div>
 </div>
 <p v-if="msg" class="text-xs font-bold px-2 py-1 rounded-full border border-outline-variant" :class="msgType==='error'?'bg-red-50 text-error':'bg-green-50 text-green-700'">{{ msg }}</p>
 <PermissionsPanel v-if="panelUser" :acc="panelUser" @close="panelUser=null" @saved="onPermissionsSaved" />
@@ -38,7 +45,7 @@ import PermissionsPanel from '../../Components/PermissionsPanel.vue'
 const { can } = useAuth()
 const token=()=>localStorage.getItem('madani_token')
 const auth=()=>({Authorization:`Bearer ${token()}`})
-const list=ref([]), loading=ref(false), search=ref(''), filterRole=ref(''), showForm=ref(false), formError=ref(''), msg=ref(''), msgType=ref('success'), panelUser=ref(null)
+const list=ref([]), loading=ref(false), search=ref(''), filterRole=ref(''), showForm=ref(false), formError=ref(''), msg=ref(''), msgType=ref('success'), panelUser=ref(null), meta=ref(null), page=ref(1)
 const form=ref({name:'',email:'',password:'',role:'guru',unit:'',is_active:true})
 const isProtectedEdit=computed(()=> !!form.value.id && list.value.find(x=>x.id===form.value.id)?.is_protected)
 const isBendaharaRole=computed(()=> ['bendahara_lpi','bendahara_sma'].includes(form.value.role))
@@ -46,13 +53,14 @@ const canViewPermissions=computed(()=> can('permissions.view') || can('permissio
 let timer=null
 function labelRole(r){ return ({admin:'Admin',guru:'Guru',bendahara_lpi:'Bendahara LPI',bendahara_sma:'Bendahara SMA',wali_murid:'Wali Murid'})[r] || r }
 function notify(m,t='success'){msg.value=m;msgType.value=t;setTimeout(()=>msg.value='',3000)}
-function onSearch(){clearTimeout(timer);timer=setTimeout(load,350)}
+function onSearch(){clearTimeout(timer);page.value=1;timer=setTimeout(load,350)}
+function goPage(p){page.value=Math.max(1,p);load()}
 function openCreate(){form.value={name:'',email:'',password:'',role:'guru',unit:'',is_active:true};formError.value='';showForm.value=true}
 function openEdit(u){form.value={id:u.id,name:u.name,email:u.email,password:'',role:u.role,unit:u.unit||'',is_active:!!u.is_active}; if(u.is_protected) form.value.is_active=true; showForm.value=true}
 function openPermissions(u){panelUser.value=u}
 function onPermissionsSaved(){notify('Hak akses diperbarui')}
 async function remove(u){if(!confirm('Hapus akun '+u.name+'?'))return;const r=await fetch('/api/users/'+u.id,{method:'DELETE',headers:auth()});if(!r.ok){const j=await r.json().catch(()=>({}));notify(j.message||'Gagal hapus','error');return}await load();notify('Akun dihapus')}
-async function load(){loading.value=true;try{const q=new URLSearchParams();if(search.value)q.set('search',search.value);if(filterRole.value)q.set('role',filterRole.value);const r=await fetch('/api/users?'+q,{headers:auth()});if(!r.ok)throw new Error('Gagal');list.value=await r.json()}catch(e){notify(e.message,'error')}finally{loading.value=false}}
+async function load(){loading.value=true;try{const q=new URLSearchParams();if(search.value)q.set('search',search.value);if(filterRole.value)q.set('role',filterRole.value);q.set('page',String(page.value));q.set('per_page','50');const r=await fetch('/api/users?'+q,{headers:auth()});if(!r.ok)throw new Error('Gagal');const j=await r.json();if(Array.isArray(j)){list.value=j;meta.value=null}else{list.value=j.data??[];meta.value=j.current_page?{current_page:j.current_page,last_page:j.last_page,total:j.total}:null}}catch(e){notify(e.message,'error')}finally{loading.value=false}}
 async function submit(){formError.value='';if(!form.value.name||!form.value.email){formError.value='Nama dan email wajib';return}const isEdit=!!form.value.id;if(!isEdit&&!form.value.password){formError.value='Password wajib';return}const payload={name:form.value.name,email:form.value.email,role:form.value.role,unit:form.value.unit||null,is_active:!!form.value.is_active};if(form.value.password)payload.password=form.value.password;const url=isEdit?'/api/users/'+form.value.id:'/api/users';const method=isEdit?'PUT':'POST';const r=await fetch(url,{method,headers:{'Content-Type':'application/json',...auth()},body:JSON.stringify(payload)});if(!r.ok){const j=await r.json();formError.value=j.message||Object.values(j.errors||{}).flat().join(', ');return}showForm.value=false;await load();notify(isEdit?'Akun diperbarui':'Akun dibuat')}
 onMounted(load)
 </script>

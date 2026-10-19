@@ -123,25 +123,43 @@ class SppService
     public function generateForUnit(string $unit, string $period, float $amount, ?string $dueDate = null): int
     {
         $created = 0;
+        $now = now();
 
-        Student::where('status', 'aktif')
+        Student::query()
+            ->select('id')
+            ->where('status', 'aktif')
             ->whereHas('classroom', fn ($q) => $q->where('unit', $unit))
-            ->chunkById(200, function ($students) use ($unit, $period, $amount, $dueDate, &$created) {
-                foreach ($students as $student) {
-                    $exists = SppInvoice::where('student_id', $student->id)->where('period', $period)->exists();
-                    if ($exists) {
+            ->chunkById(200, function ($students) use ($unit, $period, $amount, $dueDate, $now, &$created) {
+                $studentIds = $students->pluck('id')->all();
+
+                $existing = SppInvoice::where('period', $period)
+                    ->whereIn('student_id', $studentIds)
+                    ->pluck('student_id')
+                    ->flip()
+                    ->all();
+
+                $rows = [];
+
+                foreach ($studentIds as $studentId) {
+                    if (isset($existing[$studentId])) {
                         continue;
                     }
-                    SppInvoice::create([
+
+                    $rows[] = [
                         'unit' => $unit,
-                        'student_id' => $student->id,
+                        'student_id' => $studentId,
                         'period' => $period,
                         'due_date' => $dueDate,
                         'amount' => $amount,
                         'paid_amount' => 0,
                         'status' => SppInvoice::STATUS_UNPAID,
-                    ]);
-                    $created++;
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+
+                if ($rows !== []) {
+                    $created += SppInvoice::insertOrIgnore($rows);
                 }
             });
 

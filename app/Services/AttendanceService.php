@@ -29,12 +29,27 @@ class AttendanceService
 
     public function upsertMany(int $scheduleId, string $date, array $rows): void
     {
-        foreach ($rows as $row) {
-            Attendance::updateOrCreate(
-                ['schedule_id' => $scheduleId, 'student_id' => $row['student_id'], 'date' => $date],
-                ['status' => $row['status'], 'notes' => $row['notes'] ?? null]
-            );
+        if ($rows === []) {
+            return;
         }
+
+        $values = [];
+
+        foreach ($rows as $row) {
+            $values[] = [
+                'schedule_id' => $scheduleId,
+                'student_id' => $row['student_id'],
+                'date' => $date,
+                'status' => $row['status'],
+                'notes' => $row['notes'] ?? null,
+            ];
+        }
+
+        Attendance::upsert(
+            $values,
+            ['schedule_id', 'student_id', 'date'],
+            ['status', 'notes'],
+        );
     }
 
     public function update(Attendance $attendance, array $data): Attendance

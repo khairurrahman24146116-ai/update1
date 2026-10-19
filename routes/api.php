@@ -123,6 +123,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     });
 
     Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.view');
+    Route::get('/users/stats', [UserController::class, 'stats'])->middleware('permission:users.view');
     Route::post('/users', [UserController::class, 'store'])->middleware('permission:users.create');
     Route::put('/users/{id}', [UserController::class, 'update'])->middleware('permission:users.update');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('permission:users.delete');

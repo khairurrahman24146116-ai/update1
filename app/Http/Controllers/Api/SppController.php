@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Services\ActivityLogger;
 use App\Services\SppService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -150,8 +151,8 @@ class SppController extends Controller
 
         $query = SppPayment::with(['invoice.student:id,nis,nisn,name,classroom_id', 'receiver:id,name'])
             ->where('unit', $unit)
-            ->when($request->from, fn ($q, $v) => $q->whereDate('paid_at', '>=', $v))
-            ->when($request->to, fn ($q, $v) => $q->whereDate('paid_at', '<=', $v))
+            ->when($request->from, fn ($q, $v) => $q->where('paid_at', '>=', Carbon::parse($v)->startOfDay()))
+            ->when($request->to, fn ($q, $v) => $q->where('paid_at', '<', Carbon::parse($v)->addDay()->startOfDay()))
             ->when($request->period, fn ($q, $v) => $q->whereHas('invoice', fn ($q2) => $q2->where('period', $v)))
             ->when($request->method, fn ($q, $v) => $q->where('method', $v))
             ->when($request->search, fn ($q, $v) => $q->where(fn ($q2) => $q2
@@ -205,27 +206,39 @@ class SppController extends Controller
         $from = $request->query('from');
         $to = $request->query('to');
 
-        $invoices = SppInvoice::where('unit', $unit)
-            ->when($from, fn ($q, $v) => $q->whereDate('created_at', '>=', $v))
-            ->when($to, fn ($q, $v) => $q->whereDate('created_at', '<=', $v))
-            ->get();
+        $fromDate = $from ? Carbon::parse($from)->startOfDay() : null;
+        $toDate = $to ? Carbon::parse($to)->addDay()->startOfDay() : null;
 
-        $payments = SppPayment::where('unit', $unit)
-            ->when($from, fn ($q, $v) => $q->whereDate('paid_at', '>=', $v))
-            ->when($to, fn ($q, $v) => $q->whereDate('paid_at', '<=', $v))
-            ->get();
+        $invoiceStats = SppInvoice::where('unit', $unit)
+            ->when($fromDate, fn ($q, $v) => $q->where('created_at', '>=', $v))
+            ->when($toDate, fn ($q, $v) => $q->where('created_at', '<', $v))
+            ->selectRaw(
+                'COALESCE(SUM(amount), 0) as total, COALESCE(SUM(paid_amount), 0) as paid, '
+                .'COALESCE(SUM(CASE WHEN amount > paid_amount THEN amount - paid_amount ELSE 0 END), 0) as outstanding, '
+                .'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as unpaid_count, '
+                .'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as partial_count, '
+                .'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as paid_count',
+                [SppInvoice::STATUS_UNPAID, SppInvoice::STATUS_PARTIAL, SppInvoice::STATUS_PAID],
+            )
+            ->first();
+
+        $paymentStats = SppPayment::where('unit', $unit)
+            ->when($fromDate, fn ($q, $v) => $q->where('paid_at', '>=', $v))
+            ->when($toDate, fn ($q, $v) => $q->where('paid_at', '<', $v))
+            ->selectRaw('COALESCE(SUM(amount), 0) as total, COUNT(*) as total_count')
+            ->first();
 
         return response()->json([
             'unit' => $unit,
-            'invoice_total' => round((float) $invoices->sum('amount'), 2),
-            'invoice_paid' => round((float) $invoices->sum('paid_amount'), 2),
-            'outstanding' => round((float) $invoices->sum(fn ($i) => $i->remainingAmount()), 2),
-            'payments_total' => round((float) $payments->sum('amount'), 2),
-            'payments_count' => $payments->count(),
+            'invoice_total' => round((float) $invoiceStats->total, 2),
+            'invoice_paid' => round((float) $invoiceStats->paid, 2),
+            'outstanding' => round((float) $invoiceStats->outstanding, 2),
+            'payments_total' => round((float) $paymentStats->total, 2),
+            'payments_count' => (int) $paymentStats->total_count,
             'invoices_by_status' => [
-                'unpaid' => $invoices->where('status', SppInvoice::STATUS_UNPAID)->count(),
-                'partial' => $invoices->where('status', SppInvoice::STATUS_PARTIAL)->count(),
-                'paid' => $invoices->where('status', SppInvoice::STATUS_PAID)->count(),
+                'unpaid' => (int) $invoiceStats->unpaid_count,
+                'partial' => (int) $invoiceStats->partial_count,
+                'paid' => (int) $invoiceStats->paid_count,
             ],
         ]);
     }

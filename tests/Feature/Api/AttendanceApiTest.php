@@ -118,6 +118,37 @@ class AttendanceApiTest extends TestCase
         );
     }
 
+    public function test_saving_attendance_twice_updates_without_duplicates(): void
+    {
+        $s1 = $this->student('106');
+        $s2 = $this->student('107');
+
+        $this->actingAs($this->guru)
+            ->postJson("/api/schedules/{$this->schedule->id}/attendances?date=2026-10-02", ['rows' => [
+                ['student_id' => $s1->id, 'status' => 'hadir'],
+                ['student_id' => $s2->id, 'status' => 'hadir'],
+            ]])
+            ->assertNoContent();
+
+        $this->actingAs($this->guru)
+            ->postJson("/api/schedules/{$this->schedule->id}/attendances?date=2026-10-02", ['rows' => [
+                ['student_id' => $s1->id, 'status' => 'sakit', 'notes' => 'demam'],
+                ['student_id' => $s2->id, 'status' => 'alfa'],
+            ]])
+            ->assertNoContent();
+
+        $this->assertDatabaseCount('attendances', 2);
+        $this->assertDatabaseHas('attendances', [
+            'student_id' => $s1->id,
+            'status' => 'sakit',
+            'notes' => 'demam',
+        ]);
+        $this->assertDatabaseHas('attendances', [
+            'student_id' => $s2->id,
+            'status' => 'alfa',
+        ]);
+    }
+
     public function test_guru_bukan_pemilik_tidak_bisa_simpan_absensi(): void
     {
         $s1 = $this->student('104');

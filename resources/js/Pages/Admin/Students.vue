@@ -67,7 +67,7 @@ async function load(){
   } finally{ loading.value=false }
 }
 async function loadClassrooms(){ const r=await fetch('/api/classrooms'); const j=await r.json(); classrooms.value=j.data??j }
-async function loadWali(){ try{ const r=await fetch('/api/users?role=wali_murid'); const j=await r.json(); const arr=Array.isArray(j)?j:(j.data??[]); waliList.value=arr.filter(u=>u.is_active!==false) }catch{} }
+async function loadWali(){ try{ const out=[]; let p=1, last=1; do{ const r=await fetch(`/api/users?role=wali_murid&per_page=200&page=${p}`); const j=await r.json(); out.push(...(Array.isArray(j)?j:(j.data??[]))); last=Array.isArray(j)?1:(j.last_page??1); p++ }while(p<=last); waliList.value=out.filter(u=>u.is_active!==false) }catch{} }
 function edit(s){ editingId.value=s.id; form.value={ nis:s.nis, nisn:s.nisn??'', name:s.name, gender:s.gender??'', classroom_id:s.classroom_id, status:s.status, parent_id: s.parent_id??s.parent?.id??'' }; showForm.value=true }
 function cancelForm(){ showForm.value=false; editingId.value=null; form.value={ nis:'',nisn:'',name:'',gender:'',classroom_id:'',status:'aktif', parent_id:'' } }
 async function toggleStatus(s){ const ns=s.status==='aktif'?'nonaktif':'aktif'; await fetch(`/api/students/${s.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:ns})}); await load() }

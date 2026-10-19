@@ -9,6 +9,7 @@ use App\Models\FinanceTransaction;
 use App\Services\ActivityLogger;
 use App\Services\FinanceService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -27,8 +28,8 @@ class FinanceTransactionController extends Controller
             ->where('unit', $unit)
             ->when($request->type, fn ($q, $v) => $q->where('type', $v))
             ->when($request->category_id, fn ($q, $v) => $q->where('category_id', $v))
-            ->when($request->from, fn ($q, $v) => $q->whereDate('transaction_date', '>=', $v))
-            ->when($request->to, fn ($q, $v) => $q->whereDate('transaction_date', '<=', $v))
+            ->when($request->from, fn ($q, $v) => $q->where('transaction_date', '>=', Carbon::parse($v)->startOfDay()))
+            ->when($request->to, fn ($q, $v) => $q->where('transaction_date', '<', Carbon::parse($v)->addDay()->startOfDay()))
             ->when($request->search, fn ($q, $v) => $q->where(fn ($q2) => $q2
                 ->where('description', 'like', "%{$v}%")
                 ->orWhere('destination', 'like', "%{$v}%")
@@ -54,8 +55,8 @@ class FinanceTransactionController extends Controller
             ->where('unit', $unit)
             ->where('type', $type)
             ->when($request->category_id, fn ($q, $v) => $q->where('category_id', $v))
-            ->when($request->from, fn ($q, $v) => $q->whereDate('transaction_date', '>=', $v))
-            ->when($request->to, fn ($q, $v) => $q->whereDate('transaction_date', '<=', $v))
+            ->when($request->from, fn ($q, $v) => $q->where('transaction_date', '>=', Carbon::parse($v)->startOfDay()))
+            ->when($request->to, fn ($q, $v) => $q->where('transaction_date', '<', Carbon::parse($v)->addDay()->startOfDay()))
             ->when($request->search, fn ($q, $v) => $q->where(fn ($q2) => $q2
                 ->where('description', 'like', "%{$v}%")
                 ->orWhere('destination', 'like', "%{$v}%")
@@ -233,8 +234,8 @@ class FinanceTransactionController extends Controller
 
         $base = FinanceTransaction::query()
             ->where('unit', $unit)
-            ->when($request->from, fn ($q, $v) => $q->whereDate('transaction_date', '>=', $v))
-            ->when($request->to, fn ($q, $v) => $q->whereDate('transaction_date', '<=', $v));
+            ->when($request->from, fn ($q, $v) => $q->where('transaction_date', '>=', Carbon::parse($v)->startOfDay()))
+            ->when($request->to, fn ($q, $v) => $q->where('transaction_date', '<', Carbon::parse($v)->addDay()->startOfDay()));
 
         $byCategory = (clone $base)
             ->selectRaw('type, category_id, SUM(amount) as total, COUNT(*) as count')
@@ -249,21 +250,27 @@ class FinanceTransactionController extends Controller
             ]);
 
         $byDay = (clone $base)
-            ->select(['transaction_date', 'type', 'amount'])
+            ->selectRaw('transaction_date, type, SUM(amount) as total')
+            ->groupBy('transaction_date', 'type')
             ->orderBy('transaction_date')
             ->get()
             ->groupBy(fn ($r) => $r->transaction_date->toDateString())
             ->map(fn ($rows, $date) => [
                 'date' => $date,
-                'income' => round((float) $rows->where('type', FinanceTransaction::TYPE_INCOME)->sum('amount'), 2),
-                'expense' => round((float) $rows->where('type', FinanceTransaction::TYPE_EXPENSE)->sum('amount'), 2),
+                'income' => round((float) $rows->where('type', FinanceTransaction::TYPE_INCOME)->sum('total'), 2),
+                'expense' => round((float) $rows->where('type', FinanceTransaction::TYPE_EXPENSE)->sum('total'), 2),
             ])
             ->values();
 
+        $totals = (clone $base)
+            ->selectRaw('type, SUM(amount) as total')
+            ->groupBy('type')
+            ->pluck('total', 'type');
+
         return response()->json([
             'unit' => $unit,
-            'total_income' => round((float) (clone $base)->where('type', FinanceTransaction::TYPE_INCOME)->sum('amount'), 2),
-            'total_expense' => round((float) (clone $base)->where('type', FinanceTransaction::TYPE_EXPENSE)->sum('amount'), 2),
+            'total_income' => round((float) ($totals[FinanceTransaction::TYPE_INCOME] ?? 0), 2),
+            'total_expense' => round((float) ($totals[FinanceTransaction::TYPE_EXPENSE] ?? 0), 2),
             'by_category' => $byCategory,
             'by_day' => $byDay,
         ]);

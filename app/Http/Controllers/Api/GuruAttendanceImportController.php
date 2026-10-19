@@ -51,22 +51,54 @@ class GuruAttendanceImportController extends Controller
         $skipped = 0;
         $failed = 0;
         $errors = [];
-        DB::transaction(function () use ($result, $schedule, $request, &$imported, &$skipped, &$failed, &$errors) {
+        DB::transaction(function () use ($result, $schedule, $request, &$imported, &$skipped, &$failed) {
+            $passRows = [];
+
             foreach ($result['rows'] as $r) {
                 if ($r['status'] !== 'PASS') {
                     $failed++;
 
                     continue;
                 }
-                $sid = $r['student_id'];
-                $exists = Attendance::where('schedule_id', $schedule->id)->where('student_id', $sid)->where('date', $request->date)->exists();
-                if ($exists) {
+
+                $passRows[] = $r;
+            }
+
+            $studentIds = array_values(array_filter(array_map(fn ($r) => $r['student_id'], $passRows)));
+
+            $existing = $studentIds === []
+                ? []
+                : Attendance::where('schedule_id', $schedule->id)
+                    ->whereDate('date', $request->date)
+                    ->whereIn('student_id', $studentIds)
+                    ->pluck('student_id')
+                    ->flip()
+                    ->all();
+
+            $now = now();
+            $insertRows = [];
+
+            foreach ($passRows as $r) {
+                if (isset($existing[$r['student_id']])) {
                     $skipped++;
 
                     continue;
                 }
-                Attendance::create(['schedule_id' => $schedule->id, 'student_id' => $sid, 'date' => $request->date, 'status' => $r['data']['status'], 'notes' => $r['data']['notes'] ?? null]);
-                $imported++;
+
+                $insertRows[] = [
+                    'schedule_id' => $schedule->id,
+                    'student_id' => $r['student_id'],
+                    'date' => $request->date,
+                    'status' => $r['data']['status'],
+                    'notes' => $r['data']['notes'] ?? null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            foreach (array_chunk($insertRows, 500) as $chunk) {
+                Attendance::insert($chunk);
+                $imported += count($chunk);
             }
         });
 

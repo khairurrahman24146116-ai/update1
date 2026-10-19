@@ -15,12 +15,42 @@ class ScoreService
 
     public function upsertMany(int $classroomId, int $subjectId, int $teacherId, array $rows, ?string $semester = null, ?string $year = null): void
     {
-        foreach ($rows as $r) {
-            Score::updateOrCreate(
-                ['student_id' => $r['student_id'], 'subject_id' => $subjectId, 'semester' => $semester ?? 'ganjil', 'academic_year' => $year],
-                ['classroom_id' => $classroomId, 'teacher_id' => $teacherId, 'value' => $r['value']]
-            );
+        if ($rows === []) {
+            return;
         }
+
+        $semester ??= 'ganjil';
+
+        if ($year === null) {
+            foreach ($rows as $r) {
+                Score::updateOrCreate(
+                    ['student_id' => $r['student_id'], 'subject_id' => $subjectId, 'semester' => $semester, 'academic_year' => null],
+                    ['classroom_id' => $classroomId, 'teacher_id' => $teacherId, 'value' => $r['value']]
+                );
+            }
+
+            return;
+        }
+
+        $values = [];
+
+        foreach ($rows as $r) {
+            $values[] = [
+                'student_id' => $r['student_id'],
+                'subject_id' => $subjectId,
+                'semester' => $semester,
+                'academic_year' => $year,
+                'classroom_id' => $classroomId,
+                'teacher_id' => $teacherId,
+                'value' => $r['value'],
+            ];
+        }
+
+        Score::upsert(
+            $values,
+            ['student_id', 'subject_id', 'semester', 'academic_year'],
+            ['classroom_id', 'teacher_id', 'value'],
+        );
     }
 
     public function forWali(int $parentId)

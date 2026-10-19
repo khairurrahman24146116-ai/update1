@@ -88,6 +88,20 @@ class StudentImportSecurityTest extends TestCase
         $this->assertDatabaseCount('users', 1);
     }
 
+    public function test_import_many_rows_in_batches(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Classroom::create(['name' => 'X-1', 'grade' => 10, 'academic_year' => '2026/2027']);
+        $file = $this->largeExcel(600);
+
+        $this->actingAs($admin)->post('/api/students/import', ['file' => $file, 'gender' => 'L'])
+            ->assertOk()
+            ->assertJsonPath('imported', 600);
+
+        $this->assertDatabaseCount('students', 600);
+        $this->assertDatabaseCount('users', 1);
+    }
+
     public function test_import_does_not_create_user(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

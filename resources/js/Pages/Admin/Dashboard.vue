@@ -85,10 +85,10 @@ onMounted(async () => {
   }
   if (can('users.view')) {
     try {
-      const users = await fetch('/api/users').then((r) => (r.ok ? r.json() : null))
-      if (Array.isArray(users)) {
-        stats.value[2].value = users.length.toLocaleString('id-ID')
-        stats.value[1].value = users.filter((u) => u.role === 'guru').length.toLocaleString('id-ID')
+      const acc = await fetch('/api/users/stats').then((r) => (r.ok ? r.json() : null))
+      if (acc) {
+        stats.value[2].value = Number(acc.total).toLocaleString('id-ID')
+        stats.value[1].value = Number(acc.guru).toLocaleString('id-ID')
       }
     } catch {}
   }

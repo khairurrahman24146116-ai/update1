@@ -73,41 +73,80 @@ class StudentImportController extends Controller
         $path = $request->file('file')->getRealPath();
         $rows = $this->readRows($path);
         $this->assertRowLimit($rows);
-        $result = $this->validateRows($rows, $gender);
+        $classroomMap = $this->classroomMap();
+        $waliMap = $this->waliMap();
+        $result = $this->validateRows($rows, $gender, $classroomMap, $waliMap);
         $imported = 0;
         $skipped = 0;
         $failed = 0;
         $errors = [];
-        $classroomMap = $this->classroomMap();
-        $waliMap = $this->waliMap();
-        DB::transaction(function () use ($result, $gender, $classroomMap, $waliMap, &$imported, &$skipped, &$failed, &$errors) {
+        $now = now();
+        DB::transaction(function () use ($result, $gender, $classroomMap, $waliMap, $now, &$imported, &$skipped, &$failed, &$errors) {
+            $passRows = [];
+
             foreach ($result['rows'] as $r) {
                 if ($r['status'] !== 'PASS') {
                     $failed++;
 
                     continue;
                 }
-                $data = $r['data'];
-                if (Student::where('nisn', $data['nisn'])->exists() || Student::where('nis', $data['nis'])->exists()) {
-                    $skipped++;
 
-                    continue;
-                }
-                $key = strtolower(trim($data['kelas']));
-                $classroom = $classroomMap[$key] ?? null;
-                if (! $classroom) {
+                $key = strtolower(trim($r['data']['kelas']));
+
+                if (! isset($classroomMap[$key])) {
                     $failed++;
                     $errors[] = "Baris {$r['row']}: Kelas tidak ditemukan";
 
                     continue;
                 }
+
+                $passRows[] = $r;
+            }
+
+            $nisList = array_values(array_filter(array_map(fn ($r) => $r['data']['nis'] ?? '', $passRows)));
+            $nisnList = array_values(array_filter(array_map(fn ($r) => $r['data']['nisn'] ?? '', $passRows)));
+
+            $existingNis = $nisList === []
+                ? []
+                : Student::whereIn('nis', $nisList)->pluck('nis')->map(fn ($v) => (string) $v)->flip()->all();
+            $existingNisn = $nisnList === []
+                ? []
+                : Student::whereIn('nisn', $nisnList)->pluck('nisn')->map(fn ($v) => (string) $v)->flip()->all();
+
+            $insertRows = [];
+
+            foreach ($passRows as $r) {
+                $data = $r['data'];
+
+                if (isset($existingNis[$data['nis']]) || isset($existingNisn[$data['nisn']])) {
+                    $skipped++;
+
+                    continue;
+                }
+
                 $parentId = null;
+
                 if (! empty($data['wali_email'])) {
                     $w = $waliMap[strtolower(trim($data['wali_email']))] ?? null;
                     $parentId = $w?->id;
                 }
-                Student::create(['nis' => $data['nis'], 'nisn' => $data['nisn'], 'gender' => $gender, 'name' => $data['nama'], 'classroom_id' => $classroom->id, 'parent_id' => $parentId, 'status' => 'aktif']);
-                $imported++;
+
+                $insertRows[] = [
+                    'nis' => $data['nis'],
+                    'nisn' => $data['nisn'],
+                    'gender' => $gender,
+                    'name' => $data['nama'],
+                    'classroom_id' => $classroomMap[strtolower(trim($data['kelas']))]->id,
+                    'parent_id' => $parentId,
+                    'status' => 'aktif',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            foreach (array_chunk($insertRows, 500) as $chunk) {
+                Student::insert($chunk);
+                $imported += count($chunk);
             }
         });
 
@@ -232,16 +271,16 @@ class StudentImportController extends Controller
         return $rows;
     }
 
-    private function validateRows(array $rows, string $gender, ?array $map = null): array
+    private function validateRows(array $rows, string $gender, ?array $classroomMap = null, ?array $waliMap = null): array
     {
         $valid = 0;
         $invalid = 0;
         $seenNis = [];
         $seenNisn = [];
         $out = [];
-        $map = $map ?? $this->classroomMap();
-        $waliMap = $this->waliMap();
-        $available = $this->availableClassNames();
+        $classroomMap ??= $this->classroomMap();
+        $waliMap ??= $this->waliMap();
+        $available = null;
         $nisList = array_values(array_filter(array_map(fn ($r) => $r['nis'] ?? '', $rows)));
         $nisnList = array_values(array_filter(array_map(fn ($r) => $r['nisn'] ?? '', $rows)));
         $existingNis = $nisList ? Student::whereIn('nis', $nisList)->pluck('nis')->map(fn ($v) => (string) $v)->flip()->toArray() : [];
@@ -260,7 +299,8 @@ class StudentImportController extends Controller
             if (empty($r['kelas'])) {
                 $errs[] = 'Kelas kosong';
             }
-            if (! empty($r['kelas']) && ! isset($map[strtolower(trim($r['kelas']))])) {
+            if (! empty($r['kelas']) && ! isset($classroomMap[strtolower(trim($r['kelas']))])) {
+                $available ??= $this->availableClassNames();
                 $errs[] = "Kelas '{$r['kelas']}' tidak ditemukan. Kelas tersedia: {$available}";
             }
             if (! empty($r['nis']) && isset($seenNis[$r['nis']])) {

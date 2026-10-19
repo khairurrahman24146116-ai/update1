@@ -296,6 +296,114 @@ class FinanceApiTest extends TestCase
             ->assertJsonPath('by_category.0.category', 'Listrik');
     }
 
+    public function test_report_aggregates_by_day_and_dashboard_trend(): void
+    {
+        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 100000, 'transaction_date' => '2026-10-01']);
+        FinanceTransaction::factory()->unit('sma')->expense()->create(['amount' => 40000, 'transaction_date' => '2026-10-01']);
+        FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 50000, 'transaction_date' => '2026-11-02']);
+
+        $report = $this->actingAs($bendahara)->getJson('/api/finance/report?from=2026-10-01&to=2026-11-30')
+            ->assertOk()
+            ->assertJsonPath('total_income', 150000)
+            ->assertJsonPath('total_expense', 40000)
+            ->assertJsonCount(2, 'by_day');
+
+        $this->assertEquals('2026-10-01', $report->json('by_day.0.date'));
+        $this->assertEquals(100000, $report->json('by_day.0.income'));
+        $this->assertEquals(40000, $report->json('by_day.0.expense'));
+        $this->assertEquals('2026-11-02', $report->json('by_day.1.date'));
+        $this->assertEquals(50000, $report->json('by_day.1.income'));
+
+        $this->actingAs($bendahara)->getJson('/api/finance/dashboard?from=2026-10-01&to=2026-11-30')
+            ->assertOk()
+            ->assertJsonPath('trend.0.period', '2026-10')
+            ->assertJsonPath('trend.0.income', 100000)
+            ->assertJsonPath('trend.0.expense', 40000)
+            ->assertJsonPath('trend.1.period', '2026-11')
+            ->assertJsonPath('trend.1.income', 50000);
+    }
+
+    public function test_report_honours_end_date_inclusively(): void
+    {
+        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 10000, 'transaction_date' => '2026-10-31']);
+        FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 90000, 'transaction_date' => '2026-11-01']);
+
+        $this->actingAs($bendahara)->getJson('/api/finance/report?from=2026-10-01&to=2026-10-31')
+            ->assertOk()
+            ->assertJsonPath('total_income', 10000);
+    }
+
+    public function test_spp_report_aggregates_invoices_and_payments(): void
+    {
+        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $student = $this->student('sma');
+
+        $partial = SppInvoice::factory()->create([
+            'unit' => 'sma',
+            'student_id' => $student->id,
+            'period' => '2026-10',
+            'amount' => 500000,
+            'paid_amount' => 200000,
+            'status' => SppInvoice::STATUS_PARTIAL,
+        ]);
+        SppInvoice::factory()->create([
+            'unit' => 'sma',
+            'student_id' => $student->id,
+            'period' => '2026-11',
+            'amount' => 300000,
+            'paid_amount' => 0,
+            'status' => SppInvoice::STATUS_UNPAID,
+        ]);
+        SppPayment::factory()->create([
+            'spp_invoice_id' => $partial->id,
+            'unit' => 'sma',
+            'amount' => 200000,
+        ]);
+
+        $this->actingAs($bendahara)->getJson('/api/finance/spp/report')
+            ->assertOk()
+            ->assertJsonPath('invoice_total', 800000)
+            ->assertJsonPath('invoice_paid', 200000)
+            ->assertJsonPath('outstanding', 600000)
+            ->assertJsonPath('payments_total', 200000)
+            ->assertJsonPath('payments_count', 1)
+            ->assertJsonPath('invoices_by_status.unpaid', 1)
+            ->assertJsonPath('invoices_by_status.partial', 1)
+            ->assertJsonPath('invoices_by_status.paid', 0);
+    }
+
+    public function test_generate_invoices_across_chunks(): void
+    {
+        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $classroom = $this->classroom('sma');
+        $now = now();
+        $rows = [];
+
+        for ($i = 1; $i <= 205; $i++) {
+            $rows[] = [
+                'nis' => 'N'.$i,
+                'nisn' => 'NN'.$i,
+                'name' => 'Siswa '.$i,
+                'gender' => 'L',
+                'classroom_id' => $classroom->id,
+                'status' => 'aktif',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        Student::insert($rows);
+
+        $this->actingAs($bendahara)->postJson('/api/finance/spp/invoices/generate', [
+            'period' => '2026-12',
+            'amount' => 400000,
+        ])->assertOk()->assertJsonPath('created', 205);
+
+        $this->assertDatabaseCount('spp_invoices', 205);
+    }
+
     public function test_preview_returns_only_requested_type_and_total(): void
     {
         $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
