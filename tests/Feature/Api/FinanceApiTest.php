@@ -295,4 +295,58 @@ class FinanceApiTest extends TestCase
             ->assertJsonPath('total_expense', 250000)
             ->assertJsonPath('by_category.0.category', 'Listrik');
     }
+
+    public function test_preview_returns_only_requested_type_and_total(): void
+    {
+        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 100000, 'description' => 'Infaq']);
+        FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 250000, 'description' => 'SPP']);
+        FinanceTransaction::factory()->unit('sma')->expense()->create(['amount' => 99000, 'description' => 'Listrik']);
+        FinanceTransaction::factory()->unit('lpi')->income()->create(['amount' => 500000, 'description' => 'LPI only']);
+
+        $this->actingAs($bendahara)->getJson('/api/finance/transactions/preview?type=income')
+            ->assertOk()
+            ->assertJsonPath('type', 'income')
+            ->assertJsonPath('unit', 'sma')
+            ->assertJsonPath('total', 350000)
+            ->assertJsonCount(2, 'transactions');
+
+        $this->actingAs($bendahara)->getJson('/api/finance/transactions/preview?type=expense')
+            ->assertOk()
+            ->assertJsonPath('total', 99000)
+            ->assertJsonCount(1, 'transactions');
+    }
+
+    public function test_preview_rejects_invalid_type(): void
+    {
+        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+
+        $this->actingAs($bendahara)->getJson('/api/finance/transactions/preview?type=transfer')
+            ->assertStatus(422);
+    }
+
+    public function test_preview_honours_cross_unit_isolation(): void
+    {
+        $lpi = User::factory()->create(['role' => 'bendahara_lpi']);
+        $sma = User::factory()->create(['role' => 'bendahara_sma']);
+        FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 100000, 'description' => 'SMA only']);
+        FinanceTransaction::factory()->unit('lpi')->income()->create(['amount' => 400000, 'description' => 'LPI only']);
+
+        $this->actingAs($lpi)->getJson('/api/finance/transactions/preview?type=income&unit=sma')
+            ->assertOk()
+            ->assertJsonPath('unit', 'lpi')
+            ->assertJsonPath('total', 400000)
+            ->assertJsonCount(1, 'transactions');
+
+        $this->actingAs($sma)->getJson('/api/finance/transactions/preview?type=income')
+            ->assertOk()
+            ->assertJsonPath('total', 100000);
+    }
+
+    public function test_non_finance_roles_cannot_access_preview(): void
+    {
+        $guru = User::factory()->create(['role' => 'guru']);
+
+        $this->actingAs($guru)->getJson('/api/finance/transactions/preview?type=income')->assertStatus(403);
+    }
 }

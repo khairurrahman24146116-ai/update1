@@ -8,10 +8,16 @@
           <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
         </select>
       </div>
-      <button type="button" class="btn btn--primary btn--sm" @click="openCreate">
-        <span class="material-symbols-outlined !w-4 !h-4">add</span>
-        Tambah {{ isIncome ? 'Pemasukan' : 'Pengeluaran' }}
-      </button>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" class="btn btn--ghost btn--sm" @click="openPreview">
+          <span class="material-symbols-outlined !w-4 !h-4">visibility</span>
+          Preview
+        </button>
+        <button type="button" class="btn btn--primary btn--sm" @click="openCreate">
+          <span class="material-symbols-outlined !w-4 !h-4">add</span>
+          Tambah {{ isIncome ? 'Pemasukan' : 'Pengeluaran' }}
+        </button>
+      </div>
     </div>
 
     <div v-if="error" class="p-3 bg-error-container border border-error rounded-xl text-sm text-on-error-container">{{ error }}</div>
@@ -25,7 +31,7 @@
           </div>
           <div class="space-y-1">
             <label class="font-label-sm text-label-sm font-bold">Nominal (Rp) *</label>
-            <input v-model="form.amount" type="number" min="1" step="0.01" class="input" />
+            <CurrencyInput v-model="form.amount" class="input" placeholder="0" />
           </div>
           <div class="space-y-1">
             <label class="font-label-sm text-label-sm font-bold">Kategori</label>
@@ -121,12 +127,14 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import FinanceShell from '../../Components/FinanceShell.vue'
 import EmptyState from '../../Components/EmptyState.vue'
-import { formatDate, formatRupiah, useFinanceApi } from '../../composables/useFinance.js'
+import CurrencyInput from '../../Components/CurrencyInput.vue'
+import { formatDate, formatRupiah, normalizeAmount, useFinanceApi } from '../../composables/useFinance.js'
 
 const route = useRoute()
+const router = useRouter()
 const isIncome = computed(() => route.name === 'bendahara-pemasukan' || route.path.endsWith('/pemasukan'))
 const type = computed(() => (isIncome.value ? 'income' : 'expense'))
 
@@ -191,12 +199,21 @@ function openEdit(t) {
   editingId.value = t.id
   form.value = {
     transaction_date: String(t.transaction_date).slice(0, 10),
-    amount: t.amount,
+    amount: normalizeAmount(t.amount),
     category_id: t.category_id || '',
     description: t.description,
     destination: t.destination || '',
   }
   showForm.value = true
+}
+
+function openPreview() {
+  const q = {}
+  if (from.value) q.from = from.value
+  if (to.value) q.to = to.value
+  if (categoryFilter.value) q.category_id = categoryFilter.value
+  if (search.value) q.search = search.value
+  router.push({ path: `/app/bendahara/preview/${isIncome.value ? 'pemasukan' : 'pengeluaran'}`, query: q })
 }
 
 function closeForm() {

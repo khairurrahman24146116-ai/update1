@@ -13,6 +13,7 @@ import BendaharaTransactions from './Pages/Bendahara/Transactions.vue'
 import BendaharaSpp from './Pages/Bendahara/Spp.vue'
 import BendaharaPayments from './Pages/Bendahara/Payments.vue'
 import BendaharaReports from './Pages/Bendahara/Reports.vue'
+import BendaharaPreview from './Pages/Bendahara/Preview.vue'
 import WaliMuridDashboard from './Pages/WaliMurid/Dashboard.vue'
 import AdminSettings from './Pages/Admin/Settings.vue'
 import AdminHomepageSettings from './Pages/Admin/HomepageSettings.vue'
@@ -124,6 +125,8 @@ const routes = [
     { path: '/app/bendahara/spp', component: BendaharaSpp, meta: { requiresAuth: true, role: financeRoles, permissions: ['spp.view'] } },
     { path: '/app/bendahara/pembayaran', component: BendaharaPayments, meta: { requiresAuth: true, role: financeRoles, permissions: ['spp.view'] } },
     { path: '/app/bendahara/laporan', component: BendaharaReports, meta: { requiresAuth: true, role: financeRoles, permissions: ['reports.finance.view'] } },
+    { path: '/app/bendahara/preview/pemasukan', component: BendaharaPreview, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.transactions.view'], reportType: 'income' } },
+    { path: '/app/bendahara/preview/pengeluaran', component: BendaharaPreview, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.transactions.view'], reportType: 'expense' } },
     { path: '/app/wali-murid', component: WaliMuridDashboard, meta: { requiresAuth: true, role: 'wali_murid' } },
     { path: '/app/wali-murid/nilai', component: WaliNilaiAnak, meta: { requiresAuth: true, role: 'wali_murid' } },
     { path: '/app/wali-murid/surat', component: WaliSurat, meta: { requiresAuth: true, role: 'wali_murid' } },

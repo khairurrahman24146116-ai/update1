@@ -22,6 +22,13 @@
         <div class="flex items-center gap-2 sm:gap-space-md shrink-0">
           <ThemeToggle />
           <router-link
+            :to="LOGIN_PATH"
+            class="btn-skeu hidden xl:inline-flex items-center gap-2 h-11 px-5 rounded-full border border-outline-variant text-on-surface font-title-md text-title-md uppercase tracking-wide whitespace-nowrap"
+          >
+            <span class="material-symbols-outlined text-[20px]">login</span>
+            Masuk
+          </router-link>
+          <router-link
             to="/sma/ppdb"
             class="btn-skeu hidden xl:inline-flex items-center gap-2 px-5 h-11 rounded-full bg-primary text-on-primary font-title-md text-title-md uppercase tracking-wide whitespace-nowrap"
           >
@@ -58,6 +65,14 @@
           @navigate="menuOpen = false"
         >
           <template #footer>
+            <router-link
+              :to="LOGIN_PATH"
+              class="mt-2 inline-flex items-center justify-center gap-2 h-11 rounded-full border border-outline-variant text-on-surface font-title-md text-title-md uppercase tracking-wide"
+              @click="menuOpen = false"
+            >
+              <span class="material-symbols-outlined text-[20px]">login</span>
+              Masuk
+            </router-link>
             <router-link
               to="/sma/ppdb"
               class="mt-2 inline-flex items-center justify-center gap-2 h-11 rounded-full bg-primary text-on-primary font-title-md text-title-md uppercase tracking-wide"
@@ -101,6 +116,7 @@ import NavMenu from './NavMenu.vue'
 import ScrollProgress from './ScrollProgress.vue'
 import ThemeToggle from './ThemeToggle.vue'
 import { brand, footerLinks, navigation } from '../data/lpi.js'
+import { LOGIN_PATH } from '../site-paths.js'
 import { useSiteSettings } from '../composables/useSiteSettings.js'
 
 const route = useRoute()

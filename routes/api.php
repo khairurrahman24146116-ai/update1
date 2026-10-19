@@ -104,6 +104,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/categories', [FinanceTransactionController::class, 'categories'])->middleware('permission:finance.categories.view');
         Route::post('/categories', [FinanceTransactionController::class, 'storeCategory'])->middleware('permission:finance.categories.create');
         Route::get('/transactions', [FinanceTransactionController::class, 'index'])->middleware('permission:finance.transactions.view');
+        Route::get('/transactions/preview', [FinanceTransactionController::class, 'preview'])->middleware('permission:finance.transactions.view');
         Route::post('/transactions', [FinanceTransactionController::class, 'store'])->middleware('permission:finance.transactions.create');
         Route::get('/transactions/{financeTransaction}', [FinanceTransactionController::class, 'show'])->middleware('permission:finance.transactions.view');
         Route::put('/transactions/{financeTransaction}', [FinanceTransactionController::class, 'update'])->middleware('permission:finance.transactions.update');

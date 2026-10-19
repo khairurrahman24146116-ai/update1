@@ -2,6 +2,17 @@
   <FinanceShell title="Laporan Keuangan" :from="from" :to="to" show-period @update:from="from = $event" @update:to="to = $event" @range="load">
     <div v-if="error" class="p-3 bg-error-container border border-error rounded-xl text-sm text-on-error-container">{{ error }}</div>
 
+    <div class="flex flex-wrap items-center gap-2">
+      <button type="button" class="btn btn--ghost btn--sm" @click="openPreview('pemasukan')">
+        <span class="material-symbols-outlined !w-4 !h-4">visibility</span>
+        Preview Pemasukan
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" @click="openPreview('pengeluaran')">
+        <span class="material-symbols-outlined !w-4 !h-4">visibility</span>
+        Preview Pengeluaran
+      </button>
+    </div>
+
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div class="bg-white border border-outline-variant rounded-xl shadow-sm p-4">
         <p class="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">Total Pemasukan</p>
@@ -108,9 +119,11 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import FinanceShell from '../../Components/FinanceShell.vue'
-import { formatDate, formatRupiah, useFinanceApi } from '../../composables/useFinance.js'
+import { formatDate, formatRupiah, periodTag, useFinanceApi } from '../../composables/useFinance.js'
 
+const router = useRouter()
 const { error, request } = useFinanceApi()
 const report = ref(null)
 const spp = ref(null)
@@ -133,6 +146,13 @@ async function load() {
   } catch { /* error ditampilkan */ }
 }
 
+function openPreview(kind) {
+  const q = {}
+  if (from.value) q.from = from.value
+  if (to.value) q.to = to.value
+  router.push({ path: `/app/bendahara/preview/${kind}`, query: q })
+}
+
 function download(name, rows) {
   const csv = rows.map((r) => r.map((c) => `"${String(c ?? '').replaceAll('"', '""')}"`).join(',')).join('\n')
   const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' })
@@ -149,7 +169,7 @@ function exportCategories() {
   for (const r of report.value?.by_category || []) {
     rows.push([r.category, r.type === 'income' ? 'Pemasukan' : 'Pengeluaran', r.count, r.total])
   }
-  download('laporan-kategori.csv', rows)
+  download(`laporan-kategori-${periodTag(from.value, to.value)}.csv`, rows)
 }
 
 function exportDaily() {
@@ -157,12 +177,12 @@ function exportDaily() {
   for (const d of report.value?.by_day || []) {
     rows.push([d.date, d.income, d.expense, d.income - d.expense])
   }
-  download('laporan-harian.csv', rows)
+  download(`laporan-harian-${periodTag(from.value, to.value)}.csv`, rows)
 }
 
 function exportSpp() {
   const s = spp.value || {}
-  download('rekap-spp.csv', [
+  download(`rekap-spp-${periodTag(from.value, to.value)}.csv`, [
     ['Rekap SPP', 'Nilai'],
     ['Total Tagihan', s.invoice_total ?? 0],
     ['Sudah Dibayar', s.invoice_paid ?? 0],

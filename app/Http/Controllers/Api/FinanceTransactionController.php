@@ -38,6 +38,44 @@ class FinanceTransactionController extends Controller
             ->paginate(min((int) $request->query('per_page', 15), 100));
     }
 
+    /**
+     * Data lengkap (tanpa paginasi) untuk halaman preview/cetak pemasukan atau pengeluaran.
+     */
+    public function preview(Request $request)
+    {
+        $unit = $this->resolveUnit($request);
+
+        $type = $request->query('type');
+        if (! in_array($type, [FinanceTransaction::TYPE_INCOME, FinanceTransaction::TYPE_EXPENSE], true)) {
+            throw ValidationException::withMessages(['type' => 'Jenis transaksi tidak valid.']);
+        }
+
+        $rows = FinanceTransaction::with('category:id,name')
+            ->where('unit', $unit)
+            ->where('type', $type)
+            ->when($request->category_id, fn ($q, $v) => $q->where('category_id', $v))
+            ->when($request->from, fn ($q, $v) => $q->whereDate('transaction_date', '>=', $v))
+            ->when($request->to, fn ($q, $v) => $q->whereDate('transaction_date', '<=', $v))
+            ->when($request->search, fn ($q, $v) => $q->where(fn ($q2) => $q2
+                ->where('description', 'like', "%{$v}%")
+                ->orWhere('destination', 'like', "%{$v}%")
+                ->orWhere('reference', 'like', "%{$v}%")))
+            ->orderBy('transaction_date')
+            ->orderBy('id')
+            ->limit(5000)
+            ->get();
+
+        return response()->json([
+            'unit' => $unit,
+            'type' => $type,
+            'from' => $request->query('from'),
+            'to' => $request->query('to'),
+            'count' => $rows->count(),
+            'total' => round((float) $rows->sum('amount'), 2),
+            'transactions' => $rows,
+        ]);
+    }
+
     public function show(Request $request, FinanceTransaction $financeTransaction)
     {
         $this->authorizeUnit($request, $financeTransaction->unit);

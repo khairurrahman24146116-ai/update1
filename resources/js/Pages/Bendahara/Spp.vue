@@ -87,7 +87,7 @@
           <div class="grid grid-cols-1 gap-3">
             <div class="space-y-1">
               <label class="font-label-sm text-label-sm font-bold">Nominal bayar *</label>
-              <input v-model="payForm.amount" type="number" min="1" step="0.01" class="input" />
+              <CurrencyInput v-model="payForm.amount" class="input" placeholder="0" />
             </div>
             <div class="space-y-1">
               <label class="font-label-sm text-label-sm font-bold">Tanggal bayar</label>
@@ -129,7 +129,7 @@
             <p class="text-sm">Siswa: <strong>{{ invoiceStudent.name }}</strong> ({{ invoiceStudent.nis }})</p>
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1"><label class="font-label-sm text-label-sm font-bold">Periode *</label><input v-model="invoiceForm.period" type="month" class="input" /></div>
-              <div class="space-y-1"><label class="font-label-sm text-label-sm font-bold">Nominal *</label><input v-model="invoiceForm.amount" type="number" min="1" class="input" /></div>
+              <div class="space-y-1"><label class="font-label-sm text-label-sm font-bold">Nominal *</label><CurrencyInput v-model="invoiceForm.amount" class="input" placeholder="0" /></div>
               <div class="space-y-1 col-span-2"><label class="font-label-sm text-label-sm font-bold">Jatuh tempo</label><input v-model="invoiceForm.due_date" type="date" class="input" /></div>
             </div>
             <p v-if="invoiceError" class="text-xs text-error">{{ invoiceError }}</p>
@@ -149,7 +149,7 @@
           <p class="text-xs text-on-surface-variant">Membuat tagihan untuk semua siswa aktif di unit ini. Tagihan yang sudah ada dilewati.</p>
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1"><label class="font-label-sm text-label-sm font-bold">Periode *</label><input v-model="generateForm.period" type="month" class="input" /></div>
-            <div class="space-y-1"><label class="font-label-sm text-label-sm font-bold">Nominal *</label><input v-model="generateForm.amount" type="number" min="1" class="input" /></div>
+            <div class="space-y-1"><label class="font-label-sm text-label-sm font-bold">Nominal *</label><CurrencyInput v-model="generateForm.amount" class="input" placeholder="0" /></div>
             <div class="space-y-1 col-span-2"><label class="font-label-sm text-label-sm font-bold">Jatuh tempo</label><input v-model="generateForm.due_date" type="date" class="input" /></div>
           </div>
           <p v-if="generateMsg" class="text-xs font-bold text-success">{{ generateMsg }}</p>
@@ -196,7 +196,8 @@
 import { onMounted, ref } from 'vue'
 import FinanceShell from '../../Components/FinanceShell.vue'
 import EmptyState from '../../Components/EmptyState.vue'
-import { currentPeriod, formatDateTime, formatRupiah, monthLabel, useFinanceApi } from '../../composables/useFinance.js'
+import CurrencyInput from '../../Components/CurrencyInput.vue'
+import { currentPeriod, formatDateTime, formatRupiah, monthLabel, normalizeAmount, useFinanceApi } from '../../composables/useFinance.js'
 
 const { loading, error, request } = useFinanceApi()
 
@@ -292,7 +293,7 @@ function openPay(inv) {
   payTarget.value = inv
   payError.value = ''
   payForm.value = {
-    amount: String(remaining(inv)),
+    amount: normalizeAmount(remaining(inv)),
     paid_at: new Date().toISOString().slice(0, 16),
     method: 'tunai',
     notes: '',
