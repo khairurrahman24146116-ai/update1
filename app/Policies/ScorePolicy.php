@@ -12,28 +12,39 @@ class ScorePolicy
 {
     public function viewAny(User $user, ?Classroom $class = null, ?Subject $subj = null): bool
     {
-        if ($user->role === 'admin') {
+        if (! $user->hasPermission('scores.view')) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
             return true;
         }
-        if ($user->role === 'guru') {
-            // guru boleh akses jika mengampu mapel+kelas (teacher_subjects) — fallback: izinkan jika teacher_subject record ada untuk user
+
+        if ($user->role === User::ROLE_GURU) {
             return TeacherSubject::where('teacher_id', $user->id)->exists()
                 || Schedule::where('teacher_id', $user->id)->exists();
         }
 
-        return false;
+        return true;
     }
 
     public function store(User $user, Classroom $class, Subject $subj): bool
     {
-        if ($user->role === 'admin') {
-            return true;
-        }
-        if ($user->role !== 'guru') {
+        if (! $user->hasPermission('scores.update')) {
             return false;
         }
 
-        return TeacherSubject::where('teacher_id', $user->id)->where('classroom_id', $class->id)->where('subject_id', $subj->id)->exists()
-            || Schedule::where('teacher_id', $user->id)->where('classroom_id', $class->id)->where('subject_id', $subj->id)->exists();
+        if ($user->isAdmin() || $user->role !== User::ROLE_GURU) {
+            return true;
+        }
+
+        return TeacherSubject::where('teacher_id', $user->id)
+            ->where('classroom_id', $class->id)
+            ->where('subject_id', $subj->id)
+            ->exists()
+            || Schedule::where('teacher_id', $user->id)
+                ->where('classroom_id', $class->id)
+                ->where('subject_id', $subj->id)
+                ->exists();
     }
 }

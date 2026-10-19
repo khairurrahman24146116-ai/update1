@@ -15,7 +15,7 @@ class TeacherAttendanceController extends Controller
     {
         $this->authorize('viewAny', TeacherAttendance::class);
 
-        return $this->service->list($request->query('date'), $request->user()->role === 'admin' ? $request->query('teacher_id') : $request->user()->id);
+        return $this->service->list($request->query('date'), $request->user()->isAdmin() ? $request->query('teacher_id') : $request->user()->id);
     }
 
     public function checkIn(Request $request)

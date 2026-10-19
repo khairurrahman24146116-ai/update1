@@ -11,11 +11,15 @@ class RoleMiddleware
     /**
      * Handle an incoming request.
      *
+     * Mendukung beberapa peran sekaligus: role:admin,bendahara_lpi,bendahara_sma
+     *
      * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if ($request->user()?->role !== $role) {
+        $role = $request->user()?->role;
+
+        if (! $role || ! in_array($role, $roles, true)) {
             abort(403, 'Unauthorized');
         }
 

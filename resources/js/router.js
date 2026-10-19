@@ -9,6 +9,10 @@ import PPDB from './Pages/PPDB.vue'
 import AdminDashboard from './Pages/Admin/Dashboard.vue'
 import GuruDashboard from './Pages/Guru/Dashboard.vue'
 import BendaharaDashboard from './Pages/Bendahara/Dashboard.vue'
+import BendaharaTransactions from './Pages/Bendahara/Transactions.vue'
+import BendaharaSpp from './Pages/Bendahara/Spp.vue'
+import BendaharaPayments from './Pages/Bendahara/Payments.vue'
+import BendaharaReports from './Pages/Bendahara/Reports.vue'
 import WaliMuridDashboard from './Pages/WaliMurid/Dashboard.vue'
 import AdminSettings from './Pages/Admin/Settings.vue'
 import AdminHomepageSettings from './Pages/Admin/HomepageSettings.vue'
@@ -45,10 +49,15 @@ import LpiAkademikKurikulum from './Pages/Lpi/LpiAkademikKurikulum.vue'
 import LpiAkademikKalender from './Pages/Lpi/LpiAkademikKalender.vue'
 import NotFound from './Pages/NotFound.vue'
 import { LOGIN_PATH } from './site-paths.js'
+import { ADMIN_MANAGE_PERMISSIONS } from './permissions.js'
 
-const roleMap = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara', wali_murid: '/app/wali-murid' }
+const roleMap = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
+const financeRoles = ['admin', 'bendahara_lpi', 'bendahara_sma']
+function currentUser() {
+  try { return JSON.parse(localStorage.getItem('madani_user') || 'null') } catch { return null }
+}
 function currentRole() {
-  try { return JSON.parse(localStorage.getItem('madani_user') || 'null')?.role || null } catch { return null }
+  return currentUser()?.role || null
 }
 
 const routes = [
@@ -92,24 +101,29 @@ const routes = [
     { path: LOGIN_PATH, component: Login, meta: { guestOnly: true } },
     { path: '/:pathMatch(.*)*', component: NotFound },
     { path: '/app', redirect: () => roleMap[currentRole()] || '/' },
-    { path: '/app/admin', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/settings', component: AdminSettings, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/homepage', component: AdminHomepageSettings, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/organization', component: AdminOrganization, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/structure', component: AdminStructure, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/students', component: AdminStudents, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/teachers', component: AdminTeachers, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/finance', component: AdminFinance, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/kelas', component: AdminKelas, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/mapel', component: AdminMapel, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/schedules', component: AdminSchedules, meta: { requiresAuth: true, role: 'admin' } },
-    { path: '/app/admin/import-siswa', component: ImportSiswa, meta: { requiresAuth: true, role: 'admin' } },
+    { path: '/app/admin', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin', permissions: ADMIN_MANAGE_PERMISSIONS } },
+    { path: '/app/admin/settings', component: AdminSettings, meta: { requiresAuth: true, role: 'admin', permissions: ['users.view', 'permissions.view', 'settings.site.manage', 'settings.landing.manage', 'content.news.view', 'content.gallery.view', 'ppdb.waves.view'] } },
+    { path: '/app/admin/homepage', component: AdminHomepageSettings, meta: { requiresAuth: true, role: 'admin', permissions: ['settings.homepage.view', 'settings.homepage.manage'] } },
+    { path: '/app/admin/organization', component: AdminOrganization, meta: { requiresAuth: true, role: 'admin', permissions: ['content.structure.view'] } },
+    { path: '/app/admin/structure', component: AdminStructure, meta: { requiresAuth: true, role: 'admin', permissions: ['content.structure.view'] } },
+    { path: '/app/admin/students', component: AdminStudents, meta: { requiresAuth: true, role: 'admin', permissions: ['students.view'] } },
+    { path: '/app/admin/teachers', component: AdminTeachers, meta: { requiresAuth: true, role: 'admin', permissions: ['teachers.view'] } },
+    { path: '/app/admin/finance', component: AdminFinance, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.view', 'reports.finance.view'] } },
+    { path: '/app/admin/kelas', component: AdminKelas, meta: { requiresAuth: true, role: 'admin', permissions: ['classrooms.view'] } },
+    { path: '/app/admin/mapel', component: AdminMapel, meta: { requiresAuth: true, role: 'admin', permissions: ['subjects.view'] } },
+    { path: '/app/admin/schedules', component: AdminSchedules, meta: { requiresAuth: true, role: 'admin', permissions: ['schedules.view'] } },
+    { path: '/app/admin/import-siswa', component: ImportSiswa, meta: { requiresAuth: true, role: 'admin', permissions: ['students.import'] } },
     { path: '/app/guru', component: GuruDashboard, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/jadwal', component: GuruJadwal, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/absensi', component: GuruAbsensi, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/import-absensi', component: GuruImportAbsensi, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/nilai', component: GuruNilai, meta: { requiresAuth: true, role: 'guru' } },
-    { path: '/app/bendahara', component: BendaharaDashboard, meta: { requiresAuth: true, role: 'bendahara' } },
+    { path: '/app/bendahara', component: BendaharaDashboard, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.view'] } },
+    { path: '/app/bendahara/pemasukan', component: BendaharaTransactions, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.transactions.view'] } },
+    { path: '/app/bendahara/pengeluaran', component: BendaharaTransactions, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.transactions.view'] } },
+    { path: '/app/bendahara/spp', component: BendaharaSpp, meta: { requiresAuth: true, role: financeRoles, permissions: ['spp.view'] } },
+    { path: '/app/bendahara/pembayaran', component: BendaharaPayments, meta: { requiresAuth: true, role: financeRoles, permissions: ['spp.view'] } },
+    { path: '/app/bendahara/laporan', component: BendaharaReports, meta: { requiresAuth: true, role: financeRoles, permissions: ['reports.finance.view'] } },
     { path: '/app/wali-murid', component: WaliMuridDashboard, meta: { requiresAuth: true, role: 'wali_murid' } },
     { path: '/app/wali-murid/nilai', component: WaliNilaiAnak, meta: { requiresAuth: true, role: 'wali_murid' } },
     { path: '/app/wali-murid/surat', component: WaliSurat, meta: { requiresAuth: true, role: 'wali_murid' } },
@@ -132,9 +146,19 @@ router.beforeEach((to) => {
     const r = currentRole()
     return roleMap[r] || '/'
   }
-  if (to.meta.role && token) {
-    const r = currentRole()
-    if (r && r !== to.meta.role) return roleMap[r] || LOGIN_PATH
+  if (token && (to.meta.role || to.meta.permissions)) {
+    const u = currentUser()
+    const r = u?.role || null
+    const allowedRoles = to.meta.role ? (Array.isArray(to.meta.role) ? to.meta.role : [to.meta.role]) : []
+    const roleOk = Boolean(r) && allowedRoles.includes(r)
+    const perms = Array.isArray(u?.permissions) ? u.permissions : null
+
+    if (to.meta.permissions) {
+      const permOk = perms ? to.meta.permissions.some((p) => perms.includes(p)) : false
+      if (!roleOk && !permOk) return roleMap[r] || LOGIN_PATH
+    } else if (to.meta.role && r && !roleOk) {
+      return roleMap[r] || LOGIN_PATH
+    }
   }
   return true
 })

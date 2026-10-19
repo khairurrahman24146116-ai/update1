@@ -52,6 +52,9 @@ class NewsController extends Controller
             'category_id' => 'nullable|exists:news_categories,id',
             'status' => 'nullable|in:draft,publish',
         ]);
+        if (($v['status'] ?? null) === 'publish' && ! $request->user()->hasPermission('content.news.publish')) {
+            abort(403, 'Anda tidak memiliki izin memublikasikan berita.');
+        }
         $data = collect($v)->except('image')->toArray();
         if ($request->hasFile('image')) {
             $data['image_path'] = $request->file('image')->store('news', 'public');
@@ -76,6 +79,9 @@ class NewsController extends Controller
             'category_id' => 'nullable|exists:news_categories,id',
             'status' => 'nullable|in:draft,publish',
         ]);
+        if (($v['status'] ?? null) === 'publish' && ! $request->user()->hasPermission('content.news.publish')) {
+            abort(403, 'Anda tidak memiliki izin memublikasikan berita.');
+        }
         $data = collect($v)->except('image')->toArray();
         if ($request->hasFile('image')) {
             $data['image_path'] = $request->file('image')->store('news', 'public');

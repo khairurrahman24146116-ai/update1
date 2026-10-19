@@ -24,6 +24,10 @@ class StudentService
                 $ids = TeacherSubject::where('teacher_id', $user->id)->pluck('classroom_id');
                 $q->whereIn('classroom_id', $ids);
             }
+            if ($user->isFinanceRole()) {
+                $unit = $user->financeUnit();
+                $q->whereHas('classroom', fn ($cq) => $cq->where('unit', $unit));
+            }
         }
 
         return $q->orderBy('name')->paginate($perPage);

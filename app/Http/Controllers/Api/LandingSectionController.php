@@ -16,7 +16,7 @@ class LandingSectionController extends Controller
 
     public function store(Request $request)
     {
-        if ($request->user()?->role !== 'admin') {
+        if (! $request->user()?->hasPermission('settings.landing.manage')) {
             abort(403);
         }
         $v = $request->validate(['key' => 'required|string|unique:landing_sections,key', 'title' => 'required|string', 'body' => 'nullable|string', 'image_path' => 'nullable|string', 'order' => 'nullable|integer', 'is_visible' => 'boolean']);
@@ -28,7 +28,7 @@ class LandingSectionController extends Controller
 
     public function update(Request $request, LandingSection $landingSection)
     {
-        if ($request->user()?->role !== 'admin') {
+        if (! $request->user()?->hasPermission('settings.landing.manage')) {
             abort(403);
         }
         $v = $request->validate(['title' => 'sometimes|required|string', 'body' => 'nullable|string', 'image_path' => 'nullable|string', 'order' => 'nullable|integer', 'is_visible' => 'boolean']);
@@ -41,7 +41,7 @@ class LandingSectionController extends Controller
 
     public function destroy(Request $request, LandingSection $landingSection)
     {
-        if ($request->user()?->role !== 'admin') {
+        if (! $request->user()?->hasPermission('settings.landing.manage')) {
             abort(403);
         }
         $id = $landingSection->id;

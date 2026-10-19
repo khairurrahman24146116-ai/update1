@@ -1,6 +1,7 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import * as authApi from '../services/auth.js'
 import { LOGIN_PATH } from '../site-paths.js'
+import { can as canPermission, canAny as canAnyPermission, hasAdminAreaAccess, hasFinanceAccess, permissionsOf } from '../permissions.js'
 const KEY = 'madani_token'
 const KEY_USER = 'madani_user'
 const token = ref(localStorage.getItem(KEY) || '')
@@ -66,5 +67,21 @@ export function useAuth() {
     const role = user.value?.role
     return Boolean(role) && roles.includes(role)
   }
-  return { token, user, loading, error, doLogin, doLogout, hasRole }
+  const permissions = computed(() => permissionsOf(user.value))
+  const can = (permission) => canPermission(user.value, permission)
+  const canAny = (list) => canAnyPermission(user.value, list)
+  const isAdminAreaUser = computed(() => hasAdminAreaAccess(user.value))
+  const isFinanceAreaUser = computed(() => hasFinanceAccess(user.value))
+
+  async function refreshUser() {
+    if (!token.value) return null
+    const res = await fetch('/api/me', { headers: { Authorization: `Bearer ${token.value}`, Accept: 'application/json' } })
+    if (!res.ok) return null
+    const data = await res.json()
+    user.value = data
+    localStorage.setItem(KEY_USER, JSON.stringify(data))
+    return data
+  }
+
+  return { token, user, loading, error, doLogin, doLogout, hasRole, permissions, can, canAny, isAdminAreaUser, isFinanceAreaUser, refreshUser }
 }

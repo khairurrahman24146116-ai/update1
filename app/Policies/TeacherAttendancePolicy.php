@@ -8,16 +8,16 @@ class TeacherAttendancePolicy
 {
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['admin', 'guru']);
+        return $user->hasPermission('attendance.teacher.view');
     }
 
     public function checkIn(User $user): bool
     {
-        return $user->role === 'guru';
+        return $user->hasPermission('attendance.teacher.checkin');
     }
 
     public function checkOut(User $user): bool
     {
-        return $user->role === 'guru';
+        return $user->hasPermission('attendance.teacher.checkin');
     }
 }

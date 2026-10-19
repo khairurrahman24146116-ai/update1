@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\PermissionCatalog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -11,9 +13,24 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'phone', 'password', 'role', 'is_active', 'is_protected'];
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_BENDAHARA_LPI = 'bendahara_lpi';
+
+    public const ROLE_BENDAHARA_SMA = 'bendahara_sma';
+
+    public const ROLE_GURU = 'guru';
+
+    public const ROLE_WALI_MURID = 'wali_murid';
+
+    public const FINANCE_ROLES = [self::ROLE_BENDAHARA_LPI, self::ROLE_BENDAHARA_SMA];
+
+    protected $fillable = ['name', 'email', 'phone', 'password', 'role', 'unit', 'is_active', 'is_protected'];
 
     protected $hidden = ['password', 'remember_token'];
+
+    /** @var list<string>|null */
+    private ?array $effectivePermissionsCache = null;
 
     protected function casts(): array
     {
@@ -22,6 +39,182 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'is_protected' => 'boolean',
+        ];
+    }
+
+    public function permissionOverrides(): HasMany
+    {
+        return $this->hasMany(UserPermission::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    /**
+     * Admin Utama: akun admin yang ditandai proteksi sistem. Akun ini tidak
+     * dapat dihapus, dinonaktifkan, atau diubah hak aksesnya, dan selalu
+     * memiliki seluruh izin agar sistem tidak bisa terkunci.
+     */
+    public function isProtectedAdmin(): bool
+    {
+        return $this->isAdmin() && (bool) $this->is_protected;
+    }
+
+    public function isFinanceRole(): bool
+    {
+        return in_array($this->role, self::FINANCE_ROLES, true);
+    }
+
+    /**
+     * Unit keuangan yang boleh diakses akun ini.
+     * Admin utama memakai `null` yang berarti lintas unit.
+     */
+    public function financeUnit(): ?string
+    {
+        return match ($this->role) {
+            self::ROLE_BENDAHARA_LPI => 'lpi',
+            self::ROLE_BENDAHARA_SMA => 'sma',
+            default => $this->isAdmin() ? null : $this->unit,
+        };
+    }
+
+    /**
+     * Unit yang dipakai untuk pengelompokan data (kelas/siswa).
+     */
+    public function dataUnit(): string
+    {
+        return $this->financeUnit() ?? ($this->unit ?: 'sma');
+    }
+
+    public function canAccessFinanceUnit(string $unit): bool
+    {
+        return $this->isAdmin() || $this->financeUnit() === $unit;
+    }
+
+    /**
+     * Izin bawaan role, tanpa override akun.
+     *
+     * @return list<string>
+     */
+    public function rolePermissions(): array
+    {
+        if ($this->isProtectedAdmin()) {
+            return PermissionCatalog::allPermissions();
+        }
+
+        return PermissionCatalog::forRole($this->role);
+    }
+
+    /**
+     * Override akun: permission => 'allow'|'deny'.
+     *
+     * @return array<string, string>
+     */
+    public function permissionOverridesMap(): array
+    {
+        if ($this->relationLoaded('permissionOverrides')) {
+            return $this->permissionOverrides
+                ->mapWithKeys(fn (UserPermission $row) => [$row->permission => $row->effect])
+                ->all();
+        }
+
+        return $this->permissionOverrides()
+            ->pluck('effect', 'permission')
+            ->all();
+    }
+
+    /**
+     * Izin efektif: (izin role + allow) - deny. Deny selalu menang.
+     *
+     * @return list<string>
+     */
+    public function effectivePermissions(): array
+    {
+        if ($this->isProtectedAdmin()) {
+            return PermissionCatalog::allPermissions();
+        }
+
+        if ($this->effectivePermissionsCache !== null) {
+            return $this->effectivePermissionsCache;
+        }
+
+        $overrides = $this->permissionOverridesMap();
+        $permissions = [];
+
+        foreach (PermissionCatalog::allPermissions() as $permission) {
+            $effect = $overrides[$permission] ?? null;
+
+            if ($effect === UserPermission::EFFECT_DENY) {
+                continue;
+            }
+
+            if (in_array($permission, PermissionCatalog::forRole($this->role), true) || $effect === UserPermission::EFFECT_ALLOW) {
+                $permissions[] = $permission;
+            }
+        }
+
+        return $this->effectivePermissionsCache = $permissions;
+    }
+
+    public function forgetPermissionCache(): void
+    {
+        $this->effectivePermissionsCache = null;
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->isProtectedAdmin()) {
+            return true;
+        }
+
+        return in_array($permission, $this->effectivePermissions(), true);
+    }
+
+    /**
+     * @param  list<string>  $permissions
+     */
+    public function hasAnyPermission(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($this->hasPermission($permission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Ringkasan sumber izin untuk UI: role|allow|deny|none.
+     */
+    public function permissionSource(string $permission): string
+    {
+        if ($this->isProtectedAdmin()) {
+            return 'role';
+        }
+
+        $effect = $this->permissionOverridesMap()[$permission] ?? null;
+
+        if ($effect === UserPermission::EFFECT_ALLOW) {
+            return 'allow';
+        }
+
+        if ($effect === UserPermission::EFFECT_DENY) {
+            return 'deny';
+        }
+
+        return in_array($permission, PermissionCatalog::forRole($this->role), true) ? 'role' : 'none';
+    }
+
+    public function permissionPayload(): array
+    {
+        return [
+            'permissions' => $this->effectivePermissions(),
+            'role_permissions' => PermissionCatalog::forRole($this->role),
+            'permission_overrides' => $this->permissionOverridesMap(),
+            'is_protected_admin' => $this->isProtectedAdmin(),
         ];
     }
 }

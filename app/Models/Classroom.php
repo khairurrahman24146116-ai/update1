@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Classroom extends Model
 {
-    protected $fillable = ['name', 'grade', 'academic_year'];
+    protected $fillable = ['name', 'grade', 'academic_year', 'unit'];
 
     protected function casts(): array
     {

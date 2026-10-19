@@ -124,11 +124,22 @@ class StudentImportController extends Controller
     private function classroomMap(): array
     {
         $map = [];
-        foreach (Classroom::all() as $c) {
+        foreach ($this->scopedClassrooms()->get() as $c) {
             $map[strtolower(trim($c->name))] = $c;
         }
 
         return $map;
+    }
+
+    /**
+     * Akun non-admin yang memiliki unit hanya dapat mengimpor ke kelas unitnya.
+     */
+    private function scopedClassrooms()
+    {
+        $user = request()->user();
+        $unit = $user && ! $user->isAdmin() ? ($user->financeUnit() ?? $user->unit) : null;
+
+        return Classroom::query()->when($unit, fn ($q) => $q->where('unit', $unit));
     }
 
     private function waliMap(): array
@@ -153,7 +164,7 @@ class StudentImportController extends Controller
 
     private function availableClassNames(): string
     {
-        return Classroom::orderBy('name')->pluck('name')->implode(', ') ?: '-';
+        return $this->scopedClassrooms()->orderBy('name')->pluck('name')->implode(', ') ?: '-';
     }
 
     private function readRows(string $path): array

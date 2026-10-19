@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-surface font-body-md text-body-md text-on-surface">
+  <div class="min-h-screen bg-surface font-body-md text-body-md text-on-surface" :class="{ 'ui-square': squareShell }">
     <nav class="nav-glass">
       <div class="max-w-7xl mx-auto px-gutter-mobile md:px-gutter-desktop h-16 flex items-center justify-between gap-space-md">
         <router-link :to="homePath" class="flex items-center gap-space-md min-w-0" aria-label="Beranda Portal">
@@ -9,6 +9,14 @@
           </span>
         </router-link>
       <div class="flex items-center gap-space-sm shrink-0">
+        <router-link v-if="showAdminPanel" to="/app/admin" class="btn btn--ghost btn--sm hidden sm:inline-flex">
+          <span class="material-symbols-outlined !w-4 !h-4">admin_panel_settings</span>
+          Panel
+        </router-link>
+        <router-link v-if="showFinancePanel" to="/app/bendahara" class="btn btn--ghost btn--sm hidden sm:inline-flex">
+          <span class="material-symbols-outlined !w-4 !h-4">account_balance_wallet</span>
+          Keuangan
+        </router-link>
         <ThemeToggle />
         <span class="badge bg-surface-container-low text-on-surface-variant capitalize">{{ roleLabel }}</span>
           <button type="button" class="btn btn--ghost btn--sm" @click="logout">
@@ -36,22 +44,27 @@ import ThemeToggle from './ThemeToggle.vue'
 
 defineProps({ title: { type: String, default: '' } })
 const router = useRouter()
-const { user, doLogout } = useAuth()
+const { user, doLogout, isAdminAreaUser, isFinanceAreaUser, refreshUser } = useAuth()
 const { get, asset, load } = useSiteSettings()
 
 const fallbackBrand = 'SMA MADANI AL AZIZIYAH'
 const brand = computed(() => get('app_name', fallbackBrand) || fallbackBrand)
 const logo = computed(() => asset(get('logo_path', null)))
 
-onMounted(() => { load() })
+onMounted(() => { load(); refreshUser().catch(() => {}) })
 
 const roleLabel = computed(() => {
-  const map = { admin: 'Admin', guru: 'Guru', bendahara: 'Bendahara', wali_murid: 'Wali Murid' }
+  const map = { admin: 'Admin', guru: 'Guru', bendahara: 'Bendahara', bendahara_lpi: 'Bendahara LPI', bendahara_sma: 'Bendahara SMA', wali_murid: 'Wali Murid' }
   return map[user.value?.role] || 'Pengguna'
 })
 
+const squareShell = computed(() => ['admin', 'bendahara', 'bendahara_lpi', 'bendahara_sma'].includes(user.value?.role))
+
+const showAdminPanel = computed(() => user.value?.role !== 'admin' && isAdminAreaUser.value)
+const showFinancePanel = computed(() => !['admin', 'bendahara_lpi', 'bendahara_sma'].includes(user.value?.role) && isFinanceAreaUser.value)
+
 const homePath = computed(() => {
-  const map = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara', wali_murid: '/app/wali-murid' }
+  const map = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
   return map[user.value?.role] || '/'
 })
 

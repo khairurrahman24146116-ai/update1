@@ -125,7 +125,7 @@ const urlParams = new URLSearchParams(location.search)
 urlParams.delete('expired')
 const cleanUrl = urlParams.toString() ? location.pathname + '?' + urlParams.toString() : location.pathname
 const form = ref({ identity: '', password: '', remember: true })
-const map = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara', wali_murid: '/app/wali-murid' }
+const map = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
 async function submit() {
   try {
     const res = await doLogin(form.value.identity, form.value.password)

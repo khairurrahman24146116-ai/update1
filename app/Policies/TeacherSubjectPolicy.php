@@ -9,21 +9,21 @@ class TeacherSubjectPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->hasPermission('subjects.view');
     }
 
     public function view(User $user, TeacherSubject $ts): bool
     {
-        return true;
+        return $user->hasPermission('subjects.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->role === 'admin';
+        return $user->hasPermission('subjects.update');
     }
 
     public function delete(User $user, TeacherSubject $ts): bool
     {
-        return $user->role === 'admin';
+        return $user->hasPermission('subjects.update');
     }
 }

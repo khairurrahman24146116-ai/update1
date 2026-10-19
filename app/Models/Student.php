@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Student extends Model
 {
@@ -17,5 +18,15 @@ class Student extends Model
     public function parent(): BelongsTo
     {
         return $this->belongsTo(User::class, 'parent_id');
+    }
+
+    public function sppInvoices(): HasMany
+    {
+        return $this->hasMany(SppInvoice::class);
+    }
+
+    public function unit(): string
+    {
+        return $this->classroom?->unit ?: 'sma';
     }
 }

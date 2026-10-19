@@ -26,7 +26,7 @@ class AuthController extends Controller
             }
             auth()->setUser($wali);
 
-            return ['token' => $wali->createToken('api')->plainTextToken, 'user' => $wali];
+            return ['token' => $wali->createToken('api')->plainTextToken, 'user' => $this->userPayload($wali)];
         }
         $attempt = ['email' => $identity, 'password' => $v['password']];
         if (! auth()->attempt($attempt)) {
@@ -39,7 +39,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Akun nonaktif'], 403);
         }
 
-        return ['token' => $user->createToken('api')->plainTextToken, 'user' => $user];
+        return ['token' => $user->createToken('api')->plainTextToken, 'user' => $this->userPayload($user)];
     }
 
     public function logout(Request $request)
@@ -53,6 +53,15 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        return $request->user();
+        return $this->userPayload($request->user());
+    }
+
+    /**
+     * Payload akun + izin efektif agar frontend dapat menyembunyikan menu
+     * yang tidak diizinkan. Penegakan tetap dilakukan di backend.
+     */
+    private function userPayload(User $user): array
+    {
+        return array_merge($user->toArray(), $user->permissionPayload());
     }
 }

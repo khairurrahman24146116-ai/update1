@@ -76,10 +76,16 @@ class GuruAttendanceImportController extends Controller
     private function assertAuthorized(Request $request, Schedule $schedule): void
     {
         $user = $request->user();
-        if ($user->role === 'admin') {
+        if ($user->isAdmin()) {
             return;
         }
-        if ($user->role === 'guru' && $schedule->teacher_id === $user->id) {
+        if ($user->role === 'guru') {
+            if ((int) $schedule->teacher_id === (int) $user->id) {
+                return;
+            }
+            abort(403, 'Guru hanya dapat mengimpor absensi jadwal miliknya.');
+        }
+        if ($user->hasPermission('attendance.import')) {
             return;
         }
         abort(403);

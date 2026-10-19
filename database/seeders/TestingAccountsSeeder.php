@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Classroom;
+use App\Models\FinanceUnitSetting;
 use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\Subject;
@@ -17,7 +18,7 @@ class TestingAccountsSeeder extends Seeder
     {
         $password = Hash::make('password123');
 
-        $roles = ['admin', 'guru', 'bendahara', 'wali_murid'];
+        $roles = ['admin', 'guru', 'bendahara_lpi', 'bendahara_sma', 'wali_murid'];
 
         foreach ($roles as $role) {
             User::updateOrCreate(
@@ -26,12 +27,19 @@ class TestingAccountsSeeder extends Seeder
                     'name' => ucfirst($role).' Test Account',
                     'password' => $password,
                     'role' => $role,
+                    'unit' => match ($role) {
+                        'bendahara_lpi' => 'lpi',
+                        'bendahara_sma' => 'sma',
+                        default => null,
+                    },
                     'is_active' => true,
+                    'is_protected' => $role === 'admin',
                 ]
             );
         }
         $guru = User::where('email', 'guru@madani.test')->first();
-        $kelas = Classroom::first() ?? Classroom::create(['name' => 'X-1', 'grade' => 10]);
+        $kelas = Classroom::where('unit', 'sma')->first() ?? Classroom::create(['name' => 'X-1', 'grade' => 10, 'academic_year' => '2026/2027', 'unit' => 'sma']);
+        $kelasLpi = Classroom::where('unit', 'lpi')->first() ?? Classroom::create(['name' => 'LPI-1', 'grade' => 7, 'academic_year' => '2026/2027', 'unit' => 'lpi']);
         $fisika = Subject::where('code', 'FIS')->first() ?? Subject::firstOrCreate(['code' => 'FIS'], ['name' => 'Fisika']);
         if ($guru && $kelas && $fisika) {
             TeacherSubject::firstOrCreate(['teacher_id' => $guru->id, 'classroom_id' => $kelas->id, 'subject_id' => $fisika->id]);
@@ -56,5 +64,20 @@ class TestingAccountsSeeder extends Seeder
                 }
             }
         }
+
+        $lpiStudent = Student::where('name', 'Santri LPI')->first();
+        if (! $lpiStudent) {
+            Student::create([
+                'name' => 'Santri LPI',
+                'nis' => 'LPI'.rand(1000, 9999),
+                'nisn' => '0079990001',
+                'gender' => 'L',
+                'classroom_id' => $kelasLpi->id,
+                'status' => 'aktif',
+            ]);
+        }
+
+        FinanceUnitSetting::firstOrCreate(['unit' => 'sma'], ['opening_balance' => 5000000]);
+        FinanceUnitSetting::firstOrCreate(['unit' => 'lpi'], ['opening_balance' => 2500000]);
     }
 }

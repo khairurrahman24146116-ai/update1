@@ -4,7 +4,7 @@
     <section class="w-full bg-surface border-b border-outline-variant px-gutter-desktop py-space-xl">
       <div class="max-w-7xl mx-auto flex flex-col gap-space-xl">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start">
-          <div class="lg:col-span-7 flex flex-col gap-space-md">
+          <div class="lg:col-span-7 min-w-0 flex flex-col gap-space-md">
             <Reveal slow>
               <div class="landing-float inline-flex items-center gap-space-xs px-space-sm py-1 bg-surface-container-highest border border-outline-variant shadow-sm w-fit">
                 <span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
@@ -18,59 +18,45 @@
               <p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed max-w-2xl">{{ heroBody }}</p>
             </Reveal>
             <Reveal slow :delay="360">
-              <div class="flex flex-wrap items-center gap-space-md pt-space-xs">
-                <router-link to="/sma/ppdb" class="landing-cta landing-glow inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
-                  <span>Daftar PPDB Online</span>
-                  <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-                </router-link>
-                <a href="#pendaftaran" class="landing-cta inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-surface-container-lowest text-on-surface font-title-md text-title-md rounded-full shadow-sm hover:bg-surface-container hover:shadow-md">
-                  <span class="material-symbols-outlined text-[18px]">how_to_reg</span>
-                  <span>Cara Mendaftar</span>
-                </a>
-                <router-link to="/sma/fasilitas" class="inline-flex items-center gap-1 font-title-md text-title-md text-on-surface-variant hover:text-primary transition-colors duration-500 underline decoration-1 underline-offset-4">
-                  <span>Jelajahi Fasilitas</span>
-                  <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </router-link>
-              </div>
-              <div class="pt-space-md flex flex-wrap items-center gap-space-lg">
+              <div class="flex flex-wrap items-center gap-space-md gap-y-space-sm pt-space-xs">
                 <div class="landing-float-slow flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[20px]">menu_book</span><span class="font-label-md text-label-md text-on-surface uppercase">Tahfizhul Qur'an</span></div>
                 <div class="landing-float-slow flex items-center gap-2" style="animation-delay: 1.8s"><span class="material-symbols-outlined text-primary text-[20px]">science</span><span class="font-label-md text-label-md text-on-surface uppercase">Penguatan Sains &amp; Teknologi</span></div>
                 <div class="landing-float-slow flex items-center gap-2" style="animation-delay: 3.2s"><span class="material-symbols-outlined text-primary text-[20px]">translate</span><span class="font-label-md text-label-md text-on-surface uppercase">Arab &amp; Inggris Aktif</span></div>
               </div>
             </Reveal>
           </div>
-          <div class="lg:col-span-5 flex flex-col gap-space-md">
+          <div class="lg:col-span-5 min-w-0 flex flex-col gap-space-md">
             <Reveal slow :delay="200">
               <div class="relative bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-sm p-2 overflow-hidden landing-glow">
-                <div class="w-full h-80 bg-surface-container relative overflow-hidden border border-outline-variant landing-img-wrap">
-                  <img class="w-full h-full object-cover landing-ken" :src="heroImage" alt="Kegiatan belajar santri" />
-                  <div class="absolute bottom-2 left-2 right-2 bg-surface-container-lowest/95 border border-outline-variant p-space-xs flex items-center justify-between">
-                    <div>
-                      <p class="font-label-sm text-label-sm text-on-surface uppercase font-bold">Suasana Belajar Santri</p>
-                      <p class="font-code-md text-code-md text-on-surface-variant">Kegiatan pembelajaran di lingkungan pesantren</p>
+                <div class="image-card w-full aspect-[4/3] bg-surface-container relative overflow-hidden border border-outline-variant rounded-[20px] landing-img-wrap">
+                  <img class="block w-full h-full max-w-full object-cover object-center landing-ken" :src="heroImage" alt="Kegiatan belajar santri" />
+                  <div class="absolute bottom-2 left-2 right-2 z-10 min-w-0 bg-surface-container-lowest/95 border border-outline-variant rounded-xl p-space-xs flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                      <p class="font-label-sm text-label-sm text-on-surface uppercase font-bold truncate">Suasana Belajar Santri</p>
+                      <p class="font-code-md text-code-md text-on-surface-variant line-clamp-2">Kegiatan pembelajaran di lingkungan pesantren</p>
                     </div>
-                    <span class="material-symbols-outlined text-primary landing-float">school</span>
+                    <span class="material-symbols-outlined text-primary landing-float shrink-0" aria-hidden="true">school</span>
                   </div>
                 </div>
               </div>
             </Reveal>
-            <div class="grid grid-cols-2 gap-space-md">
-              <Reveal slow :delay="320" class="h-full">
-                <div class="landing-card h-full bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-sm p-2 flex flex-col gap-1">
-                  <div class="w-full h-28 bg-surface-container overflow-hidden border border-outline-variant landing-img-wrap">
-                    <img class="w-full h-full object-cover" src="/images/landing/achievement.jpeg" alt="Kegiatan santri" />
+            <div class="grid grid-cols-2 gap-space-md min-w-0">
+              <Reveal slow :delay="320" class="h-full min-w-0">
+                <div class="landing-card h-full min-w-0 bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-sm p-2 flex flex-col gap-1 overflow-hidden">
+                  <div class="image-card w-full aspect-[4/3] bg-surface-container overflow-hidden border border-outline-variant rounded-[20px] landing-img-wrap">
+                    <img class="block w-full h-full max-w-full object-cover object-center" src="/images/landing/achievement.jpeg" alt="Kegiatan santri" />
                   </div>
                   <p class="font-label-sm text-label-sm text-on-surface font-semibold truncate pt-1">Halaqah Tahfizh</p>
-                  <span class="font-code-md text-code-md text-primary">Rutinitas harian santri</span>
+                  <span class="font-code-md text-code-md text-primary truncate">Rutinitas harian santri</span>
                 </div>
               </Reveal>
-              <Reveal slow :delay="440" class="h-full">
-                <div class="landing-card h-full bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-sm p-2 flex flex-col gap-1">
-                  <div class="w-full h-28 bg-surface-container overflow-hidden border border-outline-variant landing-img-wrap">
-                    <img class="w-full h-full object-cover" src="/images/landing/hero-campus.jpeg" alt="Eksterior kampus Dayah Madani Al-Aziziyah" />
+              <Reveal slow :delay="440" class="h-full min-w-0">
+                <div class="landing-card h-full min-w-0 bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-sm p-2 flex flex-col gap-1 overflow-hidden">
+                  <div class="image-card w-full aspect-[4/3] bg-surface-container overflow-hidden border border-outline-variant rounded-[20px] landing-img-wrap">
+                    <img class="block w-full h-full max-w-full object-cover object-center" src="/images/landing/hero-campus.jpeg" alt="Eksterior kampus Dayah Madani Al-Aziziyah" />
                   </div>
                   <p class="font-label-sm text-label-sm text-on-surface font-semibold truncate pt-1">Kawasan Kampus</p>
-                  <span class="font-code-md text-code-md text-primary">Dayah Madani Al-Aziziyah</span>
+                  <span class="font-code-md text-code-md text-primary truncate">Dayah Madani Al-Aziziyah</span>
                 </div>
               </Reveal>
             </div>
