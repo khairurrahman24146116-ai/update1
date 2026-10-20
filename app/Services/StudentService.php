@@ -12,8 +12,9 @@ class StudentService
     public function list(array $filters = [], int $perPage = 15, ?User $user = null): LengthAwarePaginator
     {
         $q = Student::query()->with(['classroom', 'parent'])
-            ->when($filters['search'] ?? null, fn ($qq, $v) => $qq->where(fn ($q2) => $q2->where('name', 'like', "%{$v}%")->orWhere('nis', 'like', "%{$v}%")))
+            ->when($filters['search'] ?? null, fn ($qq, $v) => $qq->where(fn ($q2) => $q2->where('name', 'like', "%{$v}%")->orWhere('nis', 'like', "%{$v}%")->orWhere('nisn', 'like', "%{$v}%")))
             ->when($filters['classroom_id'] ?? null, fn ($qq, $v) => $qq->where('classroom_id', $v))
+            ->when(! empty($filters['without_valid_phone']), fn ($qq) => $qq->withoutValidWaliPhone())
             ->when($filters['status'] ?? null, fn ($qq, $v) => $qq->where('status', $v));
 
         if ($user) {

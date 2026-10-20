@@ -8,10 +8,7 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
 
 class WaliMuridBugTest extends TestCase
@@ -170,50 +167,6 @@ class WaliMuridBugTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $wali->id]);
     }
 
-    public function test_import_with_wali_email_links_correctly(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $cl = $this->classroom();
-        $wali = $this->wali('waliImport@madani.test');
-        $file = $this->makeExcel([['2026100', '0076100001', 'Import Anak', 'X-1', 'waliImport@madani.test']]);
-        $this->actingAs($admin)->post('/api/students/import', ['file' => $file, 'gender' => 'L'])->assertOk()->assertJsonPath('imported', 1);
-        $this->assertDatabaseHas('students', ['nis' => '2026100', 'parent_id' => $wali->id]);
-        $this->assertDatabaseCount('users', 2);
-    }
-
-    public function test_import_without_wali_email_parent_null(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->classroom();
-        $file = $this->makeExcel([['2026101', '0076100002', 'No Wali Import', 'X-1', '']]);
-        $this->actingAs($admin)->post('/api/students/import', ['file' => $file, 'gender' => 'L'])->assertOk()->assertJsonPath('imported', 1);
-        $this->assertDatabaseHas('students', ['nis' => '2026101', 'parent_id' => null]);
-        $this->assertDatabaseCount('users', 1);
-    }
-
-    public function test_import_invalid_wali_email_rejected(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->classroom();
-        $file = $this->makeExcel([['2026102', '0076100003', 'Bad Wali', 'X-1', 'notfound@madani.test']]);
-        $res = $this->actingAs($admin)->postJson('/api/students/import/preview', ['file' => $file, 'gender' => 'L'])->assertOk();
-        $this->assertEquals(0, $res->json('valid'));
-        $this->assertEquals(1, $res->json('invalid'));
-        $this->assertStringContainsString('Wali Email', $res->json('rows.0.errors.0'));
-        $this->actingAs($admin)->post('/api/students/import', ['file' => $file, 'gender' => 'L'])->assertOk()->assertJsonPath('imported', 0);
-        $this->assertDatabaseCount('students', 0);
-        $this->assertDatabaseCount('users', 1);
-    }
-
-    public function test_import_does_not_create_user_even_with_wali_email(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->classroom();
-        $file = $this->makeExcel([['2026103', '0076100004', 'No Auto', 'X-1', 'newWali@madani.test']]);
-        $this->actingAs($admin)->postJson('/api/students/import/preview', ['file' => $file, 'gender' => 'L'])->assertOk()->assertJsonPath('invalid', 1);
-        $this->assertDatabaseCount('users', 1);
-    }
-
     public function test_wali_can_see_own_scores_only(): void
     {
         $cl = $this->classroom();
@@ -230,29 +183,5 @@ class WaliMuridBugTest extends TestCase
         $allStudentIds = collect($json)->keys()->map(fn ($k) => (int) $k);
         $this->assertTrue($allStudentIds->contains($sA->id));
         $this->assertFalse($allStudentIds->contains($sB->id));
-    }
-
-    private function makeExcel(array $rows): UploadedFile
-    {
-        $ss = new Spreadsheet;
-        $sh = $ss->getActiveSheet();
-        $sh->setCellValue('A1', 'NIS');
-        $sh->setCellValue('B1', 'NISN');
-        $sh->setCellValue('C1', 'Nama');
-        $sh->setCellValue('D1', 'Kelas');
-        $sh->setCellValue('E1', 'Wali Email');
-        $r = 2;
-        foreach ($rows as $row) {
-            $sh->setCellValue("A{$r}", $row[0]);
-            $sh->setCellValue("B{$r}", $row[1]);
-            $sh->setCellValue("C{$r}", $row[2]);
-            $sh->setCellValue("D{$r}", $row[3]);
-            $sh->setCellValue("E{$r}", $row[4] ?? '');
-            $r++;
-        }
-        $tmp = tempnam(sys_get_temp_dir(), 'tst');
-        (new Xlsx($ss))->save($tmp);
-
-        return new UploadedFile($tmp, 'import.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
     }
 }

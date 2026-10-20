@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Services\ActivityLogger;
 use App\Services\ClassroomService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ClassroomController extends Controller
 {
@@ -17,29 +19,48 @@ class ClassroomController extends Controller
         $this->authorize('viewAny', Classroom::class);
 
         $user = $request->user();
+        $yearId = $request->query('tahun_ajaran_id');
+
         if ($user?->isFinanceRole()) {
             $unit = $user->financeUnit();
             $search = $request->query('search');
 
             return Classroom::withCount('students')
                 ->where('unit', $unit)
+                ->when($yearId, fn ($q) => $q->where('tahun_ajaran_id', $yearId))
                 ->when($search, fn ($q) => $q->where(fn ($q2) => $q2->where('name', 'like', "%{$search}%")->orWhere('academic_year', 'like', "%{$search}%")))
                 ->orderBy('grade')->orderBy('name')
                 ->paginate(100);
         }
 
-        return $this->service->list($request->query('search'));
+        return $this->service->list($request->query('search'), 15, $yearId ? (int) $yearId : null);
     }
 
     public function store(Request $request)
     {
         $this->authorize('create', Classroom::class);
-        $year = $request->input('academic_year', '2026/2027');
-        $v = $request->validate(['name' => 'required|string|max:255', 'grade' => 'required|integer', 'academic_year' => 'sometimes|string|max:20', 'unit' => 'sometimes|in:lpi,sma']);
+        $year = $request->input('academic_year');
+
+        if (! $year && $request->filled('tahun_ajaran_id')) {
+            $year = AcademicYear::find($request->input('tahun_ajaran_id'))?->name;
+        }
+
+        $year ??= '2026/2027';
+        $v = $request->validate([
+            'name' => 'required|string|max:255',
+            'grade' => 'required|integer|between:7,12',
+            'academic_year' => 'sometimes|string|max:20',
+            'unit' => 'sometimes|in:lpi,sma',
+            'jalur' => 'sometimes|in:formal,lpi',
+            'jenjang' => 'sometimes|in:SMP,SMA,Tsanawiyah,Aliyah',
+            'tahun_ajaran_id' => 'sometimes|integer|exists:academic_years,id',
+        ]);
         if ($unit = $this->unitRestriction($request)) {
             $v['unit'] = $unit;
         }
-        $request->validate(['name' => 'unique:classrooms,name,NULL,id,academic_year,'.$year]);
+        $request->validate([
+            'name' => [Rule::unique('classrooms', 'name')->where('academic_year', $year)],
+        ]);
         $c = $this->service->create($v);
         ActivityLogger::log('classroom.create', $request->user(), Classroom::class, $c->id, $v);
 
@@ -58,7 +79,15 @@ class ClassroomController extends Controller
     {
         $c = $this->service->find($id);
         $this->authorize('update', $c);
-        $v = $request->validate(['name' => 'sometimes|string|max:255', 'grade' => 'sometimes|integer', 'academic_year' => 'sometimes|string|max:20', 'unit' => 'sometimes|in:lpi,sma']);
+        $v = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'grade' => 'sometimes|integer|between:7,12',
+            'academic_year' => 'sometimes|string|max:20',
+            'unit' => 'sometimes|in:lpi,sma',
+            'jalur' => 'sometimes|in:formal,lpi',
+            'jenjang' => 'sometimes|in:SMP,SMA,Tsanawiyah,Aliyah',
+            'tahun_ajaran_id' => 'sometimes|integer|exists:academic_years,id',
+        ]);
         if ($unit = $this->unitRestriction($request)) {
             $v['unit'] = $unit;
         }

@@ -47,6 +47,11 @@ class StudentPolicy
         return $user->hasPermission('students.create');
     }
 
+    public function import(User $user): bool
+    {
+        return $user->hasPermission('students.import');
+    }
+
     public function update(User $user, Student $student): bool
     {
         return $user->hasPermission('students.update') && $this->withinUnit($user, $student);

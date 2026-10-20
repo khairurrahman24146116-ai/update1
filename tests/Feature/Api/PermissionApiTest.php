@@ -39,7 +39,7 @@ class PermissionApiTest extends TestCase
             'unit' => 'lpi',
         ]);
 
-        $this->actingAs($bendahara)->getJson('/api/students/template')->assertStatus(403);
+        $this->actingAs($bendahara)->getJson('/api/import-siswa/options')->assertStatus(403);
 
         $this->actingAs($admin)
             ->putJson("/api/users/{$bendahara->id}/permissions", ['allow' => ['students.import']])
@@ -54,7 +54,7 @@ class PermissionApiTest extends TestCase
             'granted_by' => $admin->id,
         ]);
 
-        $this->actingAs($bendahara->fresh())->getJson('/api/students/template')->assertOk();
+        $this->actingAs($bendahara->fresh())->getJson('/api/import-siswa/options')->assertOk();
     }
 
     public function test_admin_utama_can_revoke_role_permission(): void

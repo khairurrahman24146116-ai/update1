@@ -11,7 +11,8 @@
 <input v-model="search" @input="onSearchInput" placeholder="Cari NIS/Nama" class="input w-56" />
 <select v-model="filterKelas" @change="goPage(1)" class="input w-44"><option value="">Semua Kelas</option><option v-for="c in classrooms" :key="c.id" :value="c.id">{{ c.name }}</option></select>
 <select v-model="filterGender" @change="goPage(1)" class="input w-36"><option value="">L/P Semua</option><option value="L">L</option><option value="P">P</option></select>
-<select v-model="filterStatus" @change="goPage(1)" class="input w-40"><option value="">Semua Status</option><option value="aktif">aktif</option><option value="nonaktif">nonaktif</option><option value="lulus">lulus</option></select>
+                <select v-model="filterStatus" @change="goPage(1)" class="input w-40"><option value="">Semua Status</option><option value="aktif">aktif</option><option value="nonaktif">nonaktif</option><option value="lulus">lulus</option></select>
+                <button @click="filterNoPhone=!filterNoPhone; goPage(1)" :class="filterNoPhone ? 'btn btn--primary btn--sm' : 'btn btn--ghost btn--sm'">Tanpa HP Wali Valid</button>
 </div>
 <div v-if="showForm" class="border border-outline-variant rounded-xl p-4 space-y-3 bg-surface-container-low">
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -29,7 +30,7 @@
 </div>
 <div class="bg-white p-4 rounded-xl border border-outline-variant shadow-sm overflow-x-auto">
 <div v-if="loading" class="p-6 text-center text-sm text-on-surface-variant">Memuat...</div>
-<table v-else class="w-full text-sm"><thead class="bg-primary text-on-primary"><tr><th class="p-2 text-left">NIS</th><th class="p-2 text-left">NISN</th><th class="p-2 text-left">Nama</th><th class="p-2">L/P</th><th class="p-2 text-left">Kelas</th><th class="p-2 text-left">Wali</th><th class="p-2 text-left">Status</th><th class="p-2 text-right">Aksi</th></tr></thead><tbody><tr v-for="s in list" :key="s.id" class="border-t"><td class="p-2 text-xs">{{ s.nis }}</td><td class="p-2 text-xs">{{ s.nisn }}</td><td class="p-2">{{ s.name }}</td><td class="p-2 text-center">{{ s.gender }}</td><td class="p-2">{{ s.classroom?.name }}</td><td class="p-2 text-xs">{{ s.parent ? s.parent.name + ' — ' + s.parent.email : '—' }}</td><td class="p-2"><span class="badge">{{ s.status }}</span></td><td class="p-2 text-right"><button @click="edit(s)" class="text-xs underline">Edit</button> <button @click="toggleStatus(s)" class="text-xs underline">{{ s.status==='aktif'?'Nonaktifkan':'Aktifkan' }}</button></td></tr></tbody></table>
+<table v-else class="w-full text-sm"><thead class="bg-primary text-on-primary"><tr><th class="p-2 text-left">NIS</th><th class="p-2 text-left">NISN</th><th class="p-2 text-left">Nama</th><th class="p-2">L/P</th><th class="p-2 text-left">Kelas</th><th class="p-2 text-left">No HP Wali</th><th class="p-2 text-left">Wali</th><th class="p-2 text-left">Status</th><th class="p-2 text-right">Aksi</th></tr></thead><tbody><tr v-for="s in list" :key="s.id" class="border-t"><td class="p-2 text-xs">{{ s.nis }}</td><td class="p-2 text-xs">{{ s.nisn }}</td><td class="p-2">{{ s.name }}</td><td class="p-2 text-center">{{ s.gender }}</td><td class="p-2">{{ s.classroom?.name }}</td><td class="p-2 text-xs">{{ s.no_hp_wali || '-' }}</td><td class="p-2 text-xs">{{ s.parent ? s.parent.name + ' — ' + s.parent.email : '—' }}</td><td class="p-2"><span class="badge">{{ s.status }}</span></td><td class="p-2 text-right"><button @click="edit(s)" class="text-xs underline">Edit</button> <button @click="toggleStatus(s)" class="text-xs underline">{{ s.status==='aktif'?'Nonaktifkan':'Aktifkan' }}</button></td></tr></tbody></table>
 <EmptyState v-if="!loading && !list.length" icon="person_off" title="Tidak ada data" description="Belum ada santri yang cocok dengan filter saat ini." />
 <div v-if="meta" class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t text-xs">
 <span class="text-on-surface-variant">Total {{ meta.total }} — Hal {{ meta.current_page }} / {{ meta.last_page }}</span>
@@ -51,7 +52,7 @@ import AppShell from '../../Components/AppShell.vue'
 const route=useRoute()
 const statusParam=computed(()=>route.query.status||'aktif')
 const labelStatus=computed(()=> statusParam.value==='nonaktif' ? 'Non-Aktif' : statusParam.value==='aktif' ? 'Aktif' : statusParam.value)
-const search=ref(''), filterKelas=ref(''), filterGender=ref(''), filterStatus=ref(''), list=ref([]), classrooms=ref([]), waliList=ref([]), showForm=ref(false), formError=ref(''), editingId=ref(null), loading=ref(false), meta=ref(null), page=ref(1)
+const search=ref(''), filterKelas=ref(''), filterGender=ref(''), filterStatus=ref(''), filterNoPhone=ref(false), list=ref([]), classrooms=ref([]), waliList=ref([]), showForm=ref(false), formError=ref(''), editingId=ref(null), loading=ref(false), meta=ref(null), page=ref(1)
 let searchTimer=null
 const form=ref({ nis:'', nisn:'', name:'', gender:'', classroom_id:'', status:'aktif', parent_id:'' })
 watch(statusParam, ()=>{ filterStatus.value=statusParam.value; goPage(1) })
@@ -60,7 +61,7 @@ function goPage(p){ page.value=Math.max(1,p); load() }
 async function load(){
   loading.value=true
   try{
-    const q=new URLSearchParams(); const st=filterStatus.value || statusParam.value; if(st) q.set('status', st); if(search.value) q.set('search', search.value); if(filterKelas.value) q.set('classroom_id', filterKelas.value); q.set('page', String(page.value))
+    const q=new URLSearchParams(); const st=filterStatus.value || statusParam.value; if(st) q.set('status', st); if(search.value) q.set('search', search.value); if(filterKelas.value) q.set('classroom_id', filterKelas.value); if(filterNoPhone.value) q.set('without_valid_phone', '1'); q.set('page', String(page.value))
     const r=await fetch(`/api/students?${q}`); const j=await r.json()
     if(j.data && j.meta){ let arr=j.data; if(filterGender.value) arr=arr.filter(x=>x.gender===filterGender.value); list.value=arr; meta.value=j.meta }
     else { let arr=j.data??j; if(Array.isArray(arr) && filterGender.value) arr=arr.filter(x=>x.gender===filterGender.value); list.value=Array.isArray(arr)?arr:[]; meta.value=j.meta??null }

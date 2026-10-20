@@ -56,10 +56,15 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/permissions/catalog', [PermissionController::class, 'catalog'])
         ->middleware('permission:permissions.view,permissions.manage');
 
-    Route::middleware('permission:students.import')->group(function () {
-        Route::get('/students/template', [StudentImportController::class, 'template']);
-        Route::post('/students/import/preview', [StudentImportController::class, 'preview']);
-        Route::post('/students/import', [StudentImportController::class, 'import']);
+    Route::middleware('permission:students.import')->prefix('import-siswa')->group(function () {
+        Route::get('/options', [StudentImportController::class, 'options']);
+        Route::get('/batches', [StudentImportController::class, 'index']);
+        Route::get('/template', [StudentImportController::class, 'template']);
+        Route::post('/preview', [StudentImportController::class, 'preview']);
+        Route::get('/batches/{batch}', [StudentImportController::class, 'show']);
+        Route::post('/batches/{batch}/confirm', [StudentImportController::class, 'confirm']);
+        Route::get('/batches/{batch}/errors', [StudentImportController::class, 'errors']);
+        Route::delete('/batches/{batch}', [StudentImportController::class, 'destroy']);
     });
 
     Route::post('/backups', [BackupController::class, 'store'])->middleware('permission:system.backup.create');
