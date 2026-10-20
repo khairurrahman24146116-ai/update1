@@ -49,7 +49,7 @@ class StudentPolicy
 
     public function import(User $user): bool
     {
-        return $user->hasPermission('students.import');
+        return $user->isAdmin() && $user->hasPermission('students.import');
     }
 
     public function update(User $user, Student $student): bool

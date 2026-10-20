@@ -6,6 +6,7 @@ use App\Models\Classroom;
 use App\Models\FinanceTransaction;
 use App\Models\User;
 use App\Models\UserPermission;
+use App\Support\PermissionCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,6 +22,17 @@ class PermissionApiTest extends TestCase
         ]);
     }
 
+    /**
+     * @return list<string>
+     */
+    private function nonPrivilegedPermissions(): array
+    {
+        return array_values(array_filter(
+            PermissionCatalog::allPermissions(),
+            fn (string $permission): bool => ! PermissionCatalog::isPrivileged($permission),
+        ));
+    }
+
     public function test_plain_admin_cannot_manage_permissions(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN, 'is_protected' => false]);
@@ -34,27 +46,48 @@ class PermissionApiTest extends TestCase
     public function test_admin_utama_can_grant_extra_permission(): void
     {
         $admin = $this->protectedAdmin();
-        $bendahara = User::factory()->create([
-            'role' => User::ROLE_BENDAHARA_LPI,
-            'unit' => 'lpi',
-        ]);
-
-        $this->actingAs($bendahara)->getJson('/api/import-siswa/options')->assertStatus(403);
+        $guru = User::factory()->create(['role' => User::ROLE_GURU]);
 
         $this->actingAs($admin)
-            ->putJson("/api/users/{$bendahara->id}/permissions", ['allow' => ['students.import']])
+            ->putJson("/api/users/{$guru->id}/permissions", ['allow' => ['teachers.create']])
             ->assertOk()
             ->assertJsonPath('can_manage', true)
-            ->assertJsonFragment(['students.import']);
+            ->assertJsonFragment(['teachers.create']);
 
         $this->assertDatabaseHas('user_permissions', [
-            'user_id' => $bendahara->id,
-            'permission' => 'students.import',
+            'user_id' => $guru->id,
+            'permission' => 'teachers.create',
             'effect' => UserPermission::EFFECT_ALLOW,
             'granted_by' => $admin->id,
         ]);
+        $this->assertTrue($guru->fresh()->hasPermission('teachers.create'));
+    }
 
-        $this->actingAs($bendahara->fresh())->getJson('/api/import-siswa/options')->assertOk();
+    public function test_import_permission_cannot_be_granted_to_non_admin(): void
+    {
+        $admin = $this->protectedAdmin();
+        $guru = User::factory()->create(['role' => User::ROLE_GURU]);
+
+        $this->actingAs($admin)
+            ->putJson("/api/users/{$guru->id}/permissions", ['allow' => ['students.import']])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Izin sensitif students.import tidak dapat diberikan kepada akun non-admin.');
+
+        $this->assertDatabaseCount('user_permissions', 0);
+        $this->actingAs($guru)->getJson('/api/import-siswa/options')->assertForbidden();
+    }
+
+    public function test_non_admin_with_direct_import_override_cannot_access_import_api(): void
+    {
+        $guru = User::factory()->create(['role' => User::ROLE_GURU]);
+        $guru->permissionOverrides()->create([
+            'permission' => 'students.import',
+            'effect' => UserPermission::EFFECT_ALLOW,
+        ]);
+
+        $this->actingAs($guru->fresh())
+            ->getJson('/api/import-siswa/options')
+            ->assertForbidden();
     }
 
     public function test_admin_utama_can_revoke_role_permission(): void
@@ -122,6 +155,63 @@ class PermissionApiTest extends TestCase
         $this->actingAs($admin)
             ->putJson("/api/users/{$guru->id}/permissions", ['allow' => ['users.create']])
             ->assertStatus(422);
+    }
+
+    public function test_all_non_privileged_permissions_cannot_be_granted_to_non_admin(): void
+    {
+        $admin = $this->protectedAdmin();
+        $guru = User::factory()->create(['role' => User::ROLE_GURU, 'unit' => 'lpi']);
+
+        $this->actingAs($admin)
+            ->putJson("/api/users/{$guru->id}/permissions", [
+                'allow' => $this->nonPrivilegedPermissions(),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.allow.0', 'Semua izin tidak dapat diberikan kepada akun non-admin. Lebih baik buat akun admin baru.');
+
+        $this->assertDatabaseCount('user_permissions', 0);
+    }
+
+    public function test_login_is_rejected_for_non_admin_with_full_access(): void
+    {
+        $guru = User::factory()->create([
+            'role' => User::ROLE_GURU,
+            'email' => 'full-access@madani.test',
+            'password' => 'password123',
+        ]);
+
+        foreach ($this->nonPrivilegedPermissions() as $permission) {
+            $guru->permissionOverrides()->create([
+                'permission' => $permission,
+                'effect' => UserPermission::EFFECT_ALLOW,
+            ]);
+        }
+
+        $this->postJson('/api/login', [
+            'identity' => $guru->email,
+            'password' => 'password123',
+        ])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'all_permissions');
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_me_flags_non_admin_with_full_access(): void
+    {
+        $guru = User::factory()->create(['role' => User::ROLE_GURU]);
+
+        foreach ($this->nonPrivilegedPermissions() as $permission) {
+            $guru->permissionOverrides()->create([
+                'permission' => $permission,
+                'effect' => UserPermission::EFFECT_ALLOW,
+            ]);
+        }
+
+        $this->actingAs($guru)
+            ->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('has_full_permission_access', true);
     }
 
     public function test_finance_permission_requires_unit_on_non_finance_account(): void
@@ -201,13 +291,13 @@ class PermissionApiTest extends TestCase
             'password' => 'password123',
         ])
             ->assertOk()
-            ->assertJsonStructure(['token', 'user' => ['permissions', 'role_permissions', 'permission_overrides']]);
+            ->assertJsonStructure(['token', 'user' => ['permissions', 'permission_labels', 'role_permissions', 'permission_overrides', 'has_full_permission_access']]);
 
         $this->actingAs($guru)
             ->getJson('/api/me')
             ->assertOk()
             ->assertJsonFragment(['role' => User::ROLE_GURU])
-            ->assertJsonStructure(['permissions', 'role_permissions', 'permission_overrides']);
+            ->assertJsonStructure(['permissions', 'permission_labels', 'role_permissions', 'permission_overrides', 'has_full_permission_access']);
     }
 
     public function test_permission_catalog_is_available_to_admin(): void

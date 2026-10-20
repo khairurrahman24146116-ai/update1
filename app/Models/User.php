@@ -173,6 +173,25 @@ class User extends Authenticatable
     }
 
     /**
+     * Akun non-admin tidak boleh memegang seluruh izin yang dapat diberikan.
+     * Izin privileged sudah ditolak terpisah, jadi batasnya adalah seluruh
+     * izin non-privileged di katalog.
+     */
+    public function hasFullPermissionAccess(): bool
+    {
+        if ($this->isAdmin()) {
+            return false;
+        }
+
+        $assignable = array_values(array_filter(
+            PermissionCatalog::allPermissions(),
+            fn (string $permission): bool => ! PermissionCatalog::isPrivileged($permission),
+        ));
+
+        return array_diff($assignable, $this->effectivePermissions()) === [];
+    }
+
+    /**
      * @param  list<string>  $permissions
      */
     public function hasAnyPermission(array $permissions): bool
@@ -212,8 +231,10 @@ class User extends Authenticatable
     {
         return [
             'permissions' => $this->effectivePermissions(),
+            'permission_labels' => PermissionCatalog::labels(),
             'role_permissions' => PermissionCatalog::forRole($this->role),
             'permission_overrides' => $this->permissionOverridesMap(),
+            'has_full_permission_access' => $this->hasFullPermissionAccess(),
             'is_protected_admin' => $this->isProtectedAdmin(),
         ];
     }

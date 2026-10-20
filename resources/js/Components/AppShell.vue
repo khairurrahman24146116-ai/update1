@@ -27,6 +27,12 @@
       </div>
     </nav>
     <main class="max-w-7xl mx-auto px-gutter-mobile md:px-gutter-desktop py-space-lg space-y-6">
+      <PermissionNoticeBanner
+        :notices="notices"
+        :denied="denied"
+        @dismiss="dismissNotice"
+        @dismiss-denied="dismissDenied"
+      />
       <h1 v-if="title" class="font-headline-lg text-headline-lg text-on-surface tracking-tight stagger-item">{{ title }}</h1>
       <slot />
     </main>
@@ -35,18 +41,23 @@
 
 <script setup>
 import { computed, onMounted, watchEffect } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth.js'
+import { usePermissionNotices } from '../composables/usePermissionNotices.js'
 import { LOGIN_PATH } from '../site-paths.js'
 import { brand } from '../data/lpi.js'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import AppLogo from './AppLogo.vue'
+import PermissionNoticeBanner from './PermissionNoticeBanner.vue'
 import ThemeToggle from './ThemeToggle.vue'
 
 const props = defineProps({ title: { type: String, default: '' } })
+const route = useRoute()
 const router = useRouter()
 const { user, doLogout, isAdminAreaUser, isFinanceAreaUser, refreshUser } = useAuth()
+const { notices, dismiss: dismissNotice } = usePermissionNotices(user)
 const { get, asset, load } = useSiteSettings()
+const denied = computed(() => route.query.denied === '1')
 
 const brandName = brand.name
 const logo = computed(() => asset(get('logo_path', null)))
@@ -75,5 +86,11 @@ const homePath = computed(() => {
 function logout() {
   doLogout()
   router.push(LOGIN_PATH)
+}
+
+function dismissDenied() {
+  const query = { ...route.query }
+  delete query.denied
+  router.replace({ query })
 }
 </script>

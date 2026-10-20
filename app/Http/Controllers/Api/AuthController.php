@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -36,6 +37,9 @@ class AuthController extends Controller
                     'code' => 'invalid_credentials',
                 ], 401);
             }
+            if ($response = $this->fullAccessResponse($wali)) {
+                return $response;
+            }
             auth()->setUser($wali);
 
             return ['token' => $wali->createToken('api')->plainTextToken, 'user' => $this->userPayload($wali)];
@@ -59,6 +63,9 @@ class AuthController extends Controller
                 'message' => 'Akun Anda nonaktif. Hubungi administrator.',
                 'code' => 'account_inactive',
             ], 403);
+        }
+        if ($response = $this->fullAccessResponse($user)) {
+            return $response;
         }
 
         auth()->setUser($user);
@@ -87,5 +94,17 @@ class AuthController extends Controller
     private function userPayload(User $user): array
     {
         return array_merge($user->toArray(), $user->permissionPayload());
+    }
+
+    private function fullAccessResponse(User $user): ?JsonResponse
+    {
+        if (! $user->hasFullPermissionAccess()) {
+            return null;
+        }
+
+        return response()->json([
+            'message' => 'Akun ini memiliki seluruh izin. Akun non-admin tidak diizinkan memakai akses penuh. Hubungi admin; lebih baik gunakan akun admin.',
+            'code' => 'all_permissions',
+        ], 403);
     }
 }

@@ -48,6 +48,16 @@ export function useAuth() {
     loading.value = true; error.value = ''; errorCode.value = ''
     try {
       const res = await authApi.login(email, password)
+      if (res.user?.has_full_permission_access) {
+        clearSession()
+        throw {
+          status: 403,
+          body: {
+            code: 'all_permissions',
+            message: 'Akun ini memiliki seluruh izin. Akun non-admin tidak diizinkan memakai akses penuh. Hubungi admin; lebih baik gunakan akun admin.',
+          },
+        }
+      }
       token.value = res.token
       user.value = res.user
       localStorage.setItem(KEY, res.token)
@@ -80,6 +90,11 @@ export function useAuth() {
     const res = await fetch('/api/me', { headers: { Authorization: `Bearer ${token.value}`, Accept: 'application/json' } })
     if (!res.ok) return null
     const data = await res.json()
+    if (data.has_full_permission_access) {
+      clearSession()
+      location.href = `${LOGIN_PATH}?all_permissions=1`
+      return null
+    }
     user.value = data
     localStorage.setItem(KEY_USER, JSON.stringify(data))
     return data

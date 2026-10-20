@@ -215,6 +215,7 @@ class PermissionCatalog
      * @var list<string>
      */
     public const PRIVILEGED = [
+        'students.import',
         'users.view',
         'users.create',
         'users.update',
@@ -329,6 +330,21 @@ class PermissionCatalog
         }
 
         return $all;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function labels(): array
+    {
+        $labels = [];
+        foreach (self::MODULES as $module) {
+            foreach ($module['permissions'] as $permission => $label) {
+                $labels[$permission] = $label;
+            }
+        }
+
+        return $labels;
     }
 
     public static function exists(string $permission): bool

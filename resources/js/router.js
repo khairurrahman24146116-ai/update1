@@ -60,6 +60,9 @@ function currentUser() {
 function currentRole() {
   return currentUser()?.role || null
 }
+function denyAccess() {
+  return { path: roleMap[currentRole()] || LOGIN_PATH, query: { denied: '1' } }
+}
 
 const routes = [
     { path: '/', component: LpiBeranda },
@@ -113,7 +116,7 @@ const routes = [
     { path: '/app/admin/kelas', component: AdminKelas, meta: { requiresAuth: true, role: 'admin', permissions: ['classrooms.view'] } },
     { path: '/app/admin/mapel', component: AdminMapel, meta: { requiresAuth: true, role: 'admin', permissions: ['subjects.view'] } },
     { path: '/app/admin/schedules', component: AdminSchedules, meta: { requiresAuth: true, role: 'admin', permissions: ['schedules.view'] } },
-    { path: '/app/admin/import-siswa', component: ImportSiswa, meta: { requiresAuth: true, role: 'admin', permissions: ['students.import'] } },
+    { path: '/app/admin/import-siswa', component: ImportSiswa, meta: { requiresAuth: true, role: 'admin', permissions: ['students.import'], adminOnly: true } },
     { path: '/app/guru', component: GuruDashboard, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/jadwal', component: GuruJadwal, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/absensi', component: GuruAbsensi, meta: { requiresAuth: true, role: 'guru' } },
@@ -156,11 +159,13 @@ router.beforeEach((to) => {
     const roleOk = Boolean(r) && allowedRoles.includes(r)
     const perms = Array.isArray(u?.permissions) ? u.permissions : null
 
+    if (to.meta.adminOnly && r !== 'admin') return denyAccess()
+
     if (to.meta.permissions) {
       const permOk = perms ? to.meta.permissions.some((p) => perms.includes(p)) : false
-      if (!roleOk && !permOk) return roleMap[r] || LOGIN_PATH
+      if (!roleOk && !permOk) return denyAccess()
     } else if (to.meta.role && r && !roleOk) {
-      return roleMap[r] || LOGIN_PATH
+      return denyAccess()
     }
   }
   return true

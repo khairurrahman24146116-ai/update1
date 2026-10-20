@@ -68,6 +68,7 @@ class PermissionController extends Controller
             abort(403, 'Anda tidak berwenang mencabut izin.');
         }
 
+        $this->assertNotFullAccess($target, $allow, $deny);
         $this->assertUnitAvailable($target, $allow);
         $this->assertNoLockout($target, $allow, $deny);
 
@@ -183,6 +184,38 @@ class PermissionController extends Controller
             if (! $actor->isProtectedAdmin()) {
                 abort(403, "Hanya Admin Utama yang dapat mengatur izin sensitif {$permission}.");
             }
+        }
+    }
+
+    /**
+     * Akun non-admin yang memegang seluruh izin non-privileged praktis menjadi
+     * admin tanpa identitas role admin. Arahkan admin untuk membuat akun admin.
+     *
+     * @param  list<string>  $allow
+     * @param  list<string>  $deny
+     */
+    private function assertNotFullAccess(User $target, array $allow, array $deny): void
+    {
+        if ($target->isAdmin()) {
+            return;
+        }
+
+        $assignable = array_values(array_filter(
+            PermissionCatalog::allPermissions(),
+            fn (string $permission): bool => ! PermissionCatalog::isPrivileged($permission),
+        ));
+
+        $effective = array_values(array_filter(
+            $assignable,
+            fn (string $permission): bool => ! in_array($permission, $deny, true)
+                && (in_array($permission, PermissionCatalog::forRole($target->role), true)
+                    || in_array($permission, $allow, true)),
+        ));
+
+        if (count($effective) === count($assignable)) {
+            throw ValidationException::withMessages([
+                'allow' => 'Semua izin tidak dapat diberikan kepada akun non-admin. Lebih baik buat akun admin baru.',
+            ]);
         }
     }
 

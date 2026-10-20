@@ -27,6 +27,10 @@
           <span class="material-symbols-outlined !w-4 !h-4">lock</span>
           <span>{{ data.cannot_manage_reason || 'Hak akses hanya dapat dilihat.' }}</span>
         </div>
+        <div v-if="allAssignableSelected" class="mx-4 mt-3 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-400 rounded-xl px-3 py-2 flex items-start gap-2">
+          <span class="material-symbols-outlined !w-4 !h-4">warning</span>
+          <span>Semua izin dipilih. Akun non-admin tidak boleh memegang seluruh akses. Lebih baik buat akun admin baru.</span>
+        </div>
 
         <div class="px-4 py-3 flex flex-wrap items-center gap-2 border-b border-outline-variant">
           <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-surface-container-low border border-outline-variant text-[11px] font-bold">
@@ -92,7 +96,7 @@
           <p v-if="msg" class="text-xs font-bold mr-auto" :class="msgType === 'error' ? 'text-error' : 'text-green-700'">{{ msg }}</p>
           <span v-else class="mr-auto"></span>
           <button type="button" class="btn btn--ghost btn--sm" @click="$emit('close')">Tutup</button>
-          <button type="button" class="btn btn--primary btn--sm" :disabled="!data.can_manage || saving || !dirty" @click="save">
+          <button type="button" class="btn btn--primary btn--sm" :disabled="!data.can_manage || saving || !dirty || allAssignableSelected" @click="save">
             <span class="material-symbols-outlined !w-4 !h-4">save</span>
             {{ saving ? 'Menyimpan...' : 'Simpan Hak Akses' }}
           </button>
@@ -129,6 +133,15 @@ const dirty = computed(() => {
   const a = [...allow.value].sort().join(',')
   const d = [...deny.value].sort().join(',')
   return a !== [...initial.value.allow].sort().join(',') || d !== [...initial.value.deny].sort().join(',')
+})
+const allAssignableSelected = computed(() => {
+  if (!data.value || data.value.user?.role === 'admin') return false
+
+  const assignable = data.value.modules
+    .flatMap((m) => m.permissions)
+    .filter((p) => !privileged.value.has(p.key))
+
+  return assignable.length > 0 && assignable.every((p) => isEffective(p.key))
 })
 const filteredModules = computed(() => {
   const q = search.value.trim().toLowerCase()
@@ -185,6 +198,11 @@ async function load() {
   } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 async function save() {
+  if (allAssignableSelected.value) {
+    msgType.value = 'error'
+    msg.value = 'Semua izin tidak dapat diberikan kepada akun non-admin. Lebih baik buat akun admin baru.'
+    return
+  }
   if (dirty.value && !confirm('Simpan perubahan hak akses untuk akun ini?')) return
   saving.value = true; msg.value = ''
   try {

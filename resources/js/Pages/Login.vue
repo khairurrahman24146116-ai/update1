@@ -5,6 +5,7 @@
 
 <main class="w-full max-w-[30rem] relative">
 <div v-if="expiredParam" class="px-4 py-2.5 bg-error-container border border-error rounded-full text-xs font-semibold text-on-error-container text-center mb-3">Sesi login telah berakhir. Silakan login kembali.</div>
+<div v-if="allPermissionsParam" class="px-4 py-2.5 bg-warning-bg border border-warning rounded-xl text-xs font-semibold text-on-surface text-center mb-3">Akses kamu mencakup seluruh izin. Akun non-admin tidak diizinkan memakai akses penuh. Hubungi admin; lebih baik gunakan akun admin.</div>
 <div class="flex items-center justify-between px-1 mb-4">
 <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-on-surface font-code text-[11px] font-semibold shadow-sm border border-outline-variant">
 <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
@@ -177,9 +178,11 @@ const recoveryId = ref('')
 const recoveryError = ref('')
 const recoveryInfo = ref('')
 const expiredParam = new URLSearchParams(location.search).get('expired') === '1'
+const allPermissionsParam = new URLSearchParams(location.search).get('all_permissions') === '1'
 const currentYear = new Date().getFullYear()
 const urlParams = new URLSearchParams(location.search)
 urlParams.delete('expired')
+urlParams.delete('all_permissions')
 const cleanUrl = urlParams.toString() ? location.pathname + '?' + urlParams.toString() : location.pathname
 const form = ref({ identity: '', password: '', remember: true })
 const fieldErrors = ref({ identity: '', password: '' })
@@ -194,6 +197,8 @@ const errorMeta = computed(() => {
       return { icon: 'lock_reset', wrap: 'bg-error-container border-error text-on-error-container', hint: 'Email/NISN atau kata sandi tidak cocok. Coba lagi atau gunakan Lupa Sandi.' }
     case 'account_inactive':
       return { icon: 'block', wrap: 'bg-warning-bg border-warning text-on-surface', hint: 'Hubungi administrator untuk mengaktifkan kembali akun Anda.' }
+    case 'all_permissions':
+      return { icon: 'admin_panel_settings', wrap: 'bg-warning-bg border-warning text-on-surface', hint: 'Hubungi admin. Akses penuh sebaiknya memakai akun admin.' }
     default:
       return { icon: 'error', wrap: 'bg-error-container border-error text-on-error-container', hint: '' }
   }
