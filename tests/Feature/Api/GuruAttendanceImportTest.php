@@ -61,6 +61,8 @@ class GuruAttendanceImportTest extends TestCase
         $this->assertEquals(1, Attendance::where('student_id', $stu->id)->where('schedule_id', $sch->id)->whereDate('date', '2026-09-18')->where('status', 'hadir')->count());
         $this->assertDatabaseCount('students', 1);
         $this->assertDatabaseCount('users', 1);
+        $this->assertDatabaseHas('activity_logs', ['action' => 'attendance.import.preview']);
+        $this->assertDatabaseHas('activity_logs', ['action' => 'attendance.import', 'user_id' => $guru->id]);
     }
 
     public function test_preview_does_not_write(): void

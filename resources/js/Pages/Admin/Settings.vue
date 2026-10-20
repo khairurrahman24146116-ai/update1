@@ -28,9 +28,14 @@
   <section v-if="active==='galeri'" class="bg-white border border-outline-variant rounded-xl shadow-sm p-3 sm:p-6 min-w-0 max-w-full"><SettingsGaleri /></section>
   <section v-if="active==='ppdb'" class="bg-white border border-outline-variant rounded-xl shadow-sm p-6"><SettingsPPDB /></section>
   <section v-if="active==='akun'" class="bg-white border border-outline-variant rounded-xl shadow-sm p-6"><SettingsAkun /></section>
-  <section v-if="active==='keamanan'" class="bg-white border border-outline-variant rounded-xl shadow-sm p-6">
-    <h2 class="font-headline-md text-headline-md">Keamanan & Audit Log — Segera hadir</h2>
-    <p class="text-xs text-on-surface-variant mt-1">Gunakan /api/activity-logs atau panel backup untuk audit.</p>
+  <section v-if="active==='keamanan'" class="space-y-6">
+    <template v-if="canViewLogs">
+      <ActivityLogViewer :key="logVersion" />
+      <ActivityLogRetention @pruned="logVersion++" />
+    </template>
+    <div v-else class="bg-white border border-outline-variant rounded-xl shadow-sm p-6 text-sm text-on-surface-variant">
+      Anda tidak memiliki izin <code class="font-mono">logs.view</code> untuk membuka log aktivitas.
+    </div>
   </section>
   <div v-show="['identitas','logo','kontak','sosial'].includes(active)" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
   <div class="lg:col-span-8 space-y-6">
@@ -135,15 +140,20 @@
 </AppShell>
 </template>
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
+import { useAuth } from '../../composables/useAuth.js'
 import BackButton from '../../Components/BackButton.vue'
 import AppShell from '../../Components/AppShell.vue'
 import SettingsBerita from './SettingsBerita.vue'
 import SettingsGaleri from './SettingsGaleri.vue'
 import SettingsPPDB from './SettingsPPDB.vue'
 import SettingsAkun from './SettingsAkun.vue'
+import ActivityLogViewer from '../../Components/ActivityLogViewer.vue'
+import ActivityLogRetention from '../../Components/ActivityLogRetention.vue'
 import { useSiteSettings } from '../../composables/useSiteSettings'
 const { load: reloadSiteSettings } = useSiteSettings()
+const { can } = useAuth()
+const canViewLogs = computed(() => can('logs.view'))
 const form = ref({ app_name:'', nspp:'', npsn:'', jenjang:'', akreditasi:'', milad:'', tagline:'', vision:'', address:'', logo_path:'', favicon:'', kop_surat:'', hero_image:'', phone:'', pstn:'', wa_helpdesk:'', email:'', map_lat:'', map_lng:'', instagram:'', youtube:'', tiktok:'', facebook:'' })
 const dirty = ref(false)
 const snapshot = ref(JSON.stringify(form.value))
@@ -153,7 +163,7 @@ function syncSnapshot(patch = null) {
   dirty.value = JSON.stringify(form.value) !== snapshot.value
 }
 const loading = ref(false); const lastSave = ref('-'); const active = ref('identitas')
-const backupLoading = ref(false); const backupMsg = ref(''); const backupErr = ref(''); const backupFilename = ref('')
+const backupLoading = ref(false); const backupMsg = ref(''); const backupErr = ref(''); const backupFilename = ref(''); const logVersion = ref(0)
 const toast = ref(''); const toastType = ref('success')
 const landing = ref([])
 const uploading = ref({ active: false, field: null })

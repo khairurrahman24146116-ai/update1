@@ -101,6 +101,7 @@ const manajemen = [
   { to:'/app/bendahara', label:'Keuangan & SPP', desc:'Pemasukan, pengeluaran, tagihan & laporan', icon:'account_balance_wallet', bg:'bg-primary-fixed', permission:'finance.view' },
   { to:'/app/admin/import-siswa', label:'Import Siswa', desc:'Template, preview & import XLSX', icon:'upload_file', bg:'bg-secondary-container', permission:'students.import' },
   { to:'/app/admin/schedules', label:'Jadwal Pelajaran', desc:'Kelola jadwal mengajar harian', icon:'calendar_month', bg:'bg-primary-fixed', permission:'schedules.update' },
+  { to:'/app/admin/activity-logs', label:'Log Aktivitas', desc:'Audit tindakan pengguna & ekspor', icon:'history', bg:'bg-tertiary-fixed', permission:'logs.view' },
 ]
 const konten = [
   { to:'/app/admin/homepage', label:'Pengaturan Beranda', desc:'Hero, logo, media & waktu salat', icon:'home', bg:'bg-secondary-container', permission:'settings.homepage.manage' },

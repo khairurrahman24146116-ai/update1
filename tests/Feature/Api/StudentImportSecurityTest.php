@@ -479,7 +479,7 @@ class StudentImportSecurityTest extends TestCase
         $this->post("/api/import-siswa/batches/{$batchId}/confirm", [], ['Accept' => 'application/json'])
             ->assertOk();
 
-        $payloads = ActivityLog::whereIn('action', ['import.preview', 'import.confirm'])->pluck('payload')->toJson();
+        $payloads = ActivityLog::whereIn('action', ['import.preview', 'import.confirm'])->pluck('metadata')->toJson();
         $this->assertStringNotContainsString('081234567890', $payloads);
     }
 

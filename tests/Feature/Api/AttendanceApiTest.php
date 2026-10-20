@@ -96,6 +96,10 @@ class AttendanceApiTest extends TestCase
             Attendance::where('student_id', $s2->id)->whereDate('date', '2026-10-01')->where('status', 'izin')->where('notes', 'surat dokter')->exists(),
             'Absensi siswa 2 seharusnya tersimpan (izin + catatan)'
         );
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'attendance.store',
+            'user_id' => $this->guru->id,
+        ]);
     }
 
     /**

@@ -84,6 +84,9 @@ class UserController extends Controller
             'is_active' => 'sometimes|boolean',
         ]);
 
+        $before = $u->only(['role', 'unit', 'is_active']);
+        $passwordChanged = isset($v['password']) && $v['password'] !== '';
+
         if (isset($v['role']) || array_key_exists('unit', $v)) {
             $v['unit'] = $this->unitForRole($v['role'] ?? $u->role, $v['unit'] ?? $u->unit);
         }
@@ -128,6 +131,15 @@ class UserController extends Controller
             unset($v['password']);
         }
         $u->update($v);
+        $after = $u->fresh()->only(['role', 'unit', 'is_active']);
+
+        ActivityLogger::log('user.update', $actor, User::class, $u->id, [
+            'changes' => array_keys($v),
+            'role' => ['from' => $before['role'], 'to' => $after['role']],
+            'unit' => ['from' => $before['unit'], 'to' => $after['unit']],
+            'is_active' => ['from' => $before['is_active'], 'to' => $after['is_active']],
+            'password_changed' => $passwordChanged,
+        ]);
 
         return $u->fresh()->only(['id', 'name', 'email', 'role', 'unit', 'is_active', 'is_protected', 'phone', 'created_at']);
     }

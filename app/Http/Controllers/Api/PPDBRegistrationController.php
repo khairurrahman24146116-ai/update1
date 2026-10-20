@@ -49,6 +49,13 @@ class PPDBRegistrationController extends Controller
             return $model;
         });
 
+        ActivityLogger::logGuest('ppdb_registration.create', [
+            'registration_number' => $reg->registration_number,
+            'wave_id' => $wave->id,
+            'wave_name' => $wave->name,
+            'status' => $reg->status,
+        ]);
+
         return response()->json([
             'registration_number' => $reg->registration_number,
             'name' => $reg->name,

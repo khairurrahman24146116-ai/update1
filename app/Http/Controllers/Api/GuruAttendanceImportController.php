@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Schedule;
 use App\Models\Student;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -31,6 +32,13 @@ class GuruAttendanceImportController extends Controller
         $rows = $this->readRows($request->file('file')->getRealPath());
         $this->assertRowLimit($rows);
         $result = $this->validateRows($rows, $schedule, $request->date);
+
+        ActivityLogger::log('attendance.import.preview', $request->user(), Schedule::class, $schedule->id, [
+            'date' => $request->date,
+            'total' => $result['total'],
+            'valid' => $result['valid'],
+            'invalid' => $result['invalid'],
+        ]);
 
         return response()->json(array_merge($result, ['schedule_id' => $schedule->id, 'date' => $request->date]));
     }
@@ -101,6 +109,13 @@ class GuruAttendanceImportController extends Controller
                 $imported += count($chunk);
             }
         });
+
+        ActivityLogger::log('attendance.import', $request->user(), Schedule::class, $schedule->id, [
+            'date' => $request->date,
+            'imported' => $imported,
+            'skipped' => $skipped,
+            'failed' => $failed,
+        ]);
 
         return response()->json(['imported' => $imported, 'skipped' => $skipped, 'failed' => $failed, 'errors' => $errors, 'preview' => $result]);
     }

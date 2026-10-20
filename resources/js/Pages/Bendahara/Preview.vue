@@ -125,7 +125,26 @@ function goBack() {
   else router.push('/app/bendahara/laporan')
 }
 
+function audit(event) {
+  const token = localStorage.getItem('madani_token')
+  if (!token) return
+  fetch('/api/finance/report-audit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      report: 'transactions',
+      event,
+      type: isExpense.value ? 'expense' : 'income',
+      from: from.value || null,
+      to: to.value || null,
+      category_id: categoryId || null,
+      search: search || null,
+    }),
+  }).catch(() => {})
+}
+
 function print() {
+  audit('print')
   window.print()
 }
 
@@ -140,6 +159,7 @@ function downloadCsv() {
   data.push(isExpense.value
     ? ['', '', '', '', 'Total', total.value]
     : ['', '', '', 'Total', total.value])
+  audit('export')
   download(`${isIncome.value ? 'laporan-pemasukan' : 'laporan-pengeluaran'}-${periodTag(from.value, to.value)}.csv`, [header, ...data])
 }
 

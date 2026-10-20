@@ -23,6 +23,7 @@ import AdminStudents from './Pages/Admin/Students.vue'
 import AdminTeachers from './Pages/Admin/Teachers.vue'
 import AdminFinance from './Pages/Admin/Finance.vue'
 import AdminSchedules from './Pages/Admin/Schedules.vue'
+import AdminActivityLogs from './Pages/Admin/ActivityLogs.vue'
 import AdminKelas from './Pages/Admin/Kelas.vue'
 import AdminMapel from './Pages/Admin/Mapel.vue'
 import ImportSiswa from './Pages/Admin/ImportSiswa.vue'
@@ -107,6 +108,7 @@ const routes = [
     { path: '/app', redirect: () => roleMap[currentRole()] || '/' },
     { path: '/app/admin', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin', permissions: ADMIN_MANAGE_PERMISSIONS } },
     { path: '/app/admin/settings', component: AdminSettings, meta: { requiresAuth: true, role: 'admin', permissions: ['users.view', 'permissions.view', 'settings.site.manage', 'settings.landing.manage', 'content.news.view', 'content.gallery.view', 'ppdb.waves.view'] } },
+    { path: '/app/admin/activity-logs', component: AdminActivityLogs, meta: { requiresAuth: true, role: 'admin', permissions: ['logs.view'], adminOnly: true } },
     { path: '/app/admin/homepage', component: AdminHomepageSettings, meta: { requiresAuth: true, role: 'admin', permissions: ['settings.homepage.view', 'settings.homepage.manage'] } },
     { path: '/app/admin/organization', component: AdminOrganization, meta: { requiresAuth: true, role: 'admin', permissions: ['content.structure.view'] } },
     { path: '/app/admin/structure', component: AdminStructure, meta: { requiresAuth: true, role: 'admin', permissions: ['content.structure.view'] } },
@@ -152,21 +154,19 @@ router.beforeEach((to) => {
     const r = currentRole()
     return roleMap[r] || '/'
   }
-  if (token && (to.meta.role || to.meta.permissions)) {
+  if (token && (to.meta.role || to.meta.permissions || to.meta.adminOnly)) {
     const u = currentUser()
     const r = u?.role || null
     const allowedRoles = to.meta.role ? (Array.isArray(to.meta.role) ? to.meta.role : [to.meta.role]) : []
     const roleOk = Boolean(r) && allowedRoles.includes(r)
     const perms = Array.isArray(u?.permissions) ? u.permissions : null
+    const permOk = to.meta.permissions
+      ? Boolean(perms && to.meta.permissions.some((p) => perms.includes(p)))
+      : true
 
     if (to.meta.adminOnly && r !== 'admin') return denyAccess()
-
-    if (to.meta.permissions) {
-      const permOk = perms ? to.meta.permissions.some((p) => perms.includes(p)) : false
-      if (!roleOk && !permOk) return denyAccess()
-    } else if (to.meta.role && r && !roleOk) {
-      return denyAccess()
-    }
+    if (allowedRoles.length && !roleOk) return denyAccess()
+    if (to.meta.permissions && !permOk) return denyAccess()
   }
   return true
 })

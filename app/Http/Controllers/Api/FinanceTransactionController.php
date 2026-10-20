@@ -77,6 +77,34 @@ class FinanceTransactionController extends Controller
         ]);
     }
 
+    public function reportAudit(Request $request)
+    {
+        $data = $request->validate([
+            'report' => 'required|in:transactions,spp',
+            'event' => 'required|in:print,export',
+            'type' => 'nullable|in:income,expense',
+            'from' => 'nullable|date',
+            'to' => 'nullable|date',
+            'category_id' => 'nullable|integer',
+            'search' => 'nullable|string|max:100',
+        ]);
+
+        $unit = $this->resolveUnit($request, $request->input('unit'));
+        $action = 'reports.finance.'.$data['event'];
+
+        ActivityLogger::log($action, $request->user(), null, null, [
+            'report' => $data['report'],
+            'unit' => $unit,
+            'type' => $data['type'] ?? null,
+            'from' => $data['from'] ?? null,
+            'to' => $data['to'] ?? null,
+            'category_id' => $data['category_id'] ?? null,
+            'search' => $data['search'] ?? null,
+        ]);
+
+        return response()->noContent();
+    }
+
     public function show(Request $request, FinanceTransaction $financeTransaction)
     {
         $this->authorizeUnit($request, $financeTransaction->unit);

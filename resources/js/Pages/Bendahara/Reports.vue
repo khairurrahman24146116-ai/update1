@@ -153,6 +153,21 @@ function openPreview(kind) {
   router.push({ path: `/app/bendahara/preview/${kind}`, query: q })
 }
 
+function audit(report) {
+  const token = localStorage.getItem('madani_token')
+  if (!token) return
+  fetch('/api/finance/report-audit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      report,
+      event: 'export',
+      from: from.value || null,
+      to: to.value || null,
+    }),
+  }).catch(() => {})
+}
+
 function download(name, rows) {
   const csv = rows.map((r) => r.map((c) => `"${String(c ?? '').replaceAll('"', '""')}"`).join(',')).join('\n')
   const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' })
@@ -169,6 +184,7 @@ function exportCategories() {
   for (const r of report.value?.by_category || []) {
     rows.push([r.category, r.type === 'income' ? 'Pemasukan' : 'Pengeluaran', r.count, r.total])
   }
+  audit('transactions')
   download(`laporan-kategori-${periodTag(from.value, to.value)}.csv`, rows)
 }
 
@@ -177,11 +193,13 @@ function exportDaily() {
   for (const d of report.value?.by_day || []) {
     rows.push([d.date, d.income, d.expense, d.income - d.expense])
   }
+  audit('transactions')
   download(`laporan-harian-${periodTag(from.value, to.value)}.csv`, rows)
 }
 
 function exportSpp() {
   const s = spp.value || {}
+  audit('spp')
   download(`rekap-spp-${periodTag(from.value, to.value)}.csv`, [
     ['Rekap SPP', 'Nilai'],
     ['Total Tagihan', s.invoice_total ?? 0],

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -23,17 +22,11 @@ class BackupService
 
         $size = Storage::disk('backups')->size($filename);
 
-        try {
-            ActivityLog::create([
-                'user_id' => $userId ?? auth()->id(),
-                'action' => 'backup.create',
-                'model_type' => null,
-                'model_id' => null,
-                'payload' => ['filename' => $filename, 'size' => $size, 'status' => 'success'],
-            ]);
-        } catch (\Throwable $e) {
-            Log::warning('backup activity log failed: '.$e->getMessage());
-        }
+        ActivityLogger::log('backup.create', $userId ?? auth()->id(), null, null, [
+            'filename' => $filename,
+            'size' => $size,
+            'status' => 'success',
+        ]);
 
         return ['filename' => $filename, 'size' => $size];
     }
@@ -132,7 +125,11 @@ class BackupService
         $sql = '';
         $tables = DB::select('SHOW TABLES');
         $key = array_key_first((array) $tables[0] ?? []);
-        $names = array_map(fn ($r) => (array) $r[$key] ?? array_values((array) $r)[0], $tables);
+        $names = array_values(array_filter(array_map(function (object $row) use ($key): ?string {
+            $data = (array) $row;
+
+            return $data[$key] ?? (array_values($data)[0] ?? null);
+        }, $tables)));
         foreach ($names as $name) {
             if ($name === 'migrations') {
                 continue;

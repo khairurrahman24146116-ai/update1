@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\ActivityLog;
 use App\Models\Classroom;
 use App\Models\Score;
 use App\Models\Student;
@@ -59,6 +60,7 @@ class ScoreApiTest extends TestCase
 
         $this->assertDatabaseCount('scores', 1);
         $this->assertEquals(95, (float) Score::first()->value);
+        $this->assertSame(2, ActivityLog::query()->where('action', 'score.update')->count());
     }
 
     public function test_saving_scores_without_academic_year_updates_without_duplicates(): void

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreScheduleRequest;
 use App\Models\Schedule;
+use App\Services\ActivityLogger;
 use App\Services\ScheduleService;
 use Illuminate\Http\Request;
 
@@ -27,8 +28,18 @@ class ScheduleController extends Controller
     public function store(StoreScheduleRequest $request)
     {
         $this->authorize('create', Schedule::class);
+        $schedule = $this->service->create($request->validated());
 
-        return response()->json($this->service->create($request->validated()), 201);
+        ActivityLogger::log('schedule.create', $request->user(), Schedule::class, $schedule->id, [
+            'classroom_id' => $schedule->classroom_id,
+            'subject_id' => $schedule->subject_id,
+            'teacher_id' => $schedule->teacher_id,
+            'day_of_week' => $schedule->day_of_week,
+            'start_time' => $schedule->start_time,
+            'end_time' => $schedule->end_time,
+        ]);
+
+        return response()->json($schedule, 201);
     }
 
     public function show(int $id)
@@ -43,8 +54,13 @@ class ScheduleController extends Controller
     {
         $s = $this->service->find($id);
         $this->authorize('update', $s);
+        $updated = $this->service->update($s, $request->validated());
 
-        return $this->service->update($s, $request->validated());
+        ActivityLogger::log('schedule.update', $request->user(), Schedule::class, $updated->id, [
+            'changes' => array_keys($request->validated()),
+        ]);
+
+        return $updated;
     }
 
     public function destroy(int $id)
@@ -52,6 +68,8 @@ class ScheduleController extends Controller
         $s = $this->service->find($id);
         $this->authorize('delete', $s);
         $this->service->delete($s);
+
+        ActivityLogger::log('schedule.delete', request()->user(), Schedule::class, $id);
 
         return response()->noContent();
     }

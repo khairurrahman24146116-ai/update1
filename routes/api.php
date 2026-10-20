@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BackupController;
@@ -72,6 +73,18 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         ->where('filename', '[A-Za-z0-9._-]+')
         ->middleware('permission:system.backup.download');
 
+    Route::middleware(['role:admin', 'permission:logs.view'])->prefix('activity-logs')->group(function () {
+        Route::get('/', [ActivityLogController::class, 'index']);
+        Route::get('/options', [ActivityLogController::class, 'options']);
+        Route::get('/export', [ActivityLogController::class, 'export']);
+        Route::get('/pdf', [ActivityLogController::class, 'pdf']);
+        Route::get('/retention', [ActivityLogController::class, 'retention']);
+        Route::get('/retention/preview', [ActivityLogController::class, 'retentionPreview']);
+        Route::put('/retention', [ActivityLogController::class, 'updateRetention']);
+        Route::post('/prune', [ActivityLogController::class, 'prune']);
+        Route::get('/{activityLog}', [ActivityLogController::class, 'show'])->whereNumber('activityLog');
+    });
+
     Route::post('/guru/attendance/import/preview', [GuruAttendanceImportController::class, 'preview'])->middleware('permission:attendance.import');
     Route::post('/guru/attendance/import', [GuruAttendanceImportController::class, 'import'])->middleware('permission:attendance.import');
 
@@ -106,6 +119,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::prefix('finance')->group(function () {
         Route::get('/dashboard', [FinanceTransactionController::class, 'dashboard'])->middleware('permission:finance.view');
         Route::get('/report', [FinanceTransactionController::class, 'report'])->middleware('permission:reports.finance.view');
+        Route::post('/report-audit', [FinanceTransactionController::class, 'reportAudit'])->middleware('permission:reports.finance.view');
         Route::get('/categories', [FinanceTransactionController::class, 'categories'])->middleware('permission:finance.categories.view');
         Route::post('/categories', [FinanceTransactionController::class, 'storeCategory'])->middleware('permission:finance.categories.create');
         Route::get('/transactions', [FinanceTransactionController::class, 'index'])->middleware('permission:finance.transactions.view');

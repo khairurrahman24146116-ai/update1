@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpsertAttendanceRequest;
+use App\Models\Attendance;
 use App\Models\Schedule;
+use App\Services\ActivityLogger;
 use App\Services\AttendanceService;
 use Illuminate\Http\Request;
 
@@ -32,7 +34,15 @@ class AttendanceController extends Controller
     {
         $schedule = Schedule::findOrFail($scheduleId);
         $this->authorize('storeAttendance', $schedule);
-        $this->service->upsertMany($scheduleId, $request->query('date', date('Y-m-d')), $request->validated()['rows']);
+        $date = $request->query('date', date('Y-m-d'));
+        $rows = $request->validated()['rows'];
+        $this->service->upsertMany($scheduleId, $date, $rows);
+
+        ActivityLogger::log('attendance.store', $request->user(), Attendance::class, null, [
+            'schedule_id' => $scheduleId,
+            'date' => $date,
+            'rows' => count($rows),
+        ]);
 
         return response()->noContent();
     }

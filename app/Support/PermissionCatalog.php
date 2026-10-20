@@ -198,6 +198,13 @@ class PermissionCatalog
                 'permissions.manage' => 'Mengubah hak akses akun',
             ],
         ],
+        'activity_logs' => [
+            'label' => 'Log Aktivitas',
+            'description' => 'Riwayat aktivitas pengguna, ekspor, dan retensi log.',
+            'permissions' => [
+                'logs.view' => 'Melihat log aktivitas',
+            ],
+        ],
         'system' => [
             'label' => 'Sistem',
             'description' => 'Backup dan pemeliharaan basis data.',
@@ -222,6 +229,7 @@ class PermissionCatalog
         'users.delete',
         'permissions.view',
         'permissions.manage',
+        'logs.view',
         'system.backup.create',
         'system.backup.download',
     ];
@@ -259,6 +267,7 @@ class PermissionCatalog
             'settings.landing.view', 'settings.landing.manage',
             'users.view', 'users.create', 'users.update', 'users.delete',
             'permissions.view',
+            'logs.view',
             'system.backup.create', 'system.backup.download',
         ],
         'guru' => [

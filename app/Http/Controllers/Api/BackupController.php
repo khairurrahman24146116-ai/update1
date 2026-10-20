@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivityLog;
+use App\Services\ActivityLogger;
 use App\Services\BackupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -21,10 +21,7 @@ class BackupController extends Controller
             return response()->json(['message' => 'Backup berhasil dibuat.', 'filename' => $result['filename'], 'size' => $result['size']]);
         } catch (\Throwable $e) {
             Log::error('backup failed', ['error' => $e->getMessage()]);
-            try {
-                ActivityLog::create(['user_id' => $request->user()->id, 'action' => 'backup.failed', 'model_type' => null, 'model_id' => null, 'payload' => ['status' => 'failed']]);
-            } catch (\Throwable) {
-            }
+            ActivityLogger::log('backup.failed', $request->user(), null, null, ['status' => 'failed']);
 
             return response()->json(['message' => 'Backup gagal dibuat. Silakan coba lagi.'], 500);
         }
@@ -39,6 +36,8 @@ class BackupController extends Controller
         if (! Storage::disk('backups')->exists($filename)) {
             abort(404);
         }
+
+        ActivityLogger::log('backup.download', $request->user(), null, null, ['filename' => $filename]);
 
         return Storage::disk('backups')->download($filename, $filename, ['Content-Type' => 'application/gzip']);
     }

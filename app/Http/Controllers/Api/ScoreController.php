@@ -8,6 +8,7 @@ use App\Models\Classroom;
 use App\Models\Score;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Services\ActivityLogger;
 use App\Services\ScoreService;
 use Illuminate\Http\Request;
 
@@ -32,7 +33,16 @@ class ScoreController extends Controller
         $class = Classroom::findOrFail($request->classroom_id);
         $subj = Subject::findOrFail($request->subject_id);
         $this->authorize('store', [Score::class, $class, $subj]);
-        $this->service->upsertMany($class->id, $subj->id, $request->user()->id, $request->validated()['rows'], $request->input('semester'), $request->input('academic_year'));
+        $rows = $request->validated()['rows'];
+        $this->service->upsertMany($class->id, $subj->id, $request->user()->id, $rows, $request->input('semester'), $request->input('academic_year'));
+
+        ActivityLogger::log('score.update', $request->user(), Score::class, null, [
+            'classroom_id' => $class->id,
+            'subject_id' => $subj->id,
+            'semester' => $request->input('semester'),
+            'academic_year' => $request->input('academic_year'),
+            'rows' => count($rows),
+        ]);
 
         return response()->noContent();
     }

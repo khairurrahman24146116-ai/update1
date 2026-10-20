@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\ActivityLog;
 use App\Models\Classroom;
 use App\Models\Student;
 use App\Models\User;
@@ -136,5 +137,62 @@ class AuthLoginTest extends TestCase
         ])
             ->assertStatus(401)
             ->assertJsonPath('code', 'account_not_found');
+    }
+
+    public function test_successful_login_is_logged_without_password(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'log-login@madani.test',
+            'role' => 'guru',
+            'is_active' => true,
+            'password' => 'password123',
+        ]);
+
+        $this->postJson('/api/login', [
+            'identity' => 'log-login@madani.test',
+            'password' => 'password123',
+        ])->assertOk();
+
+        $log = ActivityLog::query()->where('action', 'login')->sole();
+        $this->assertSame($user->id, $log->user_id);
+        $this->assertSame('email', $log->metadata['channel']);
+        $this->assertArrayNotHasKey('password', $log->metadata);
+    }
+
+    public function test_unknown_login_attempt_is_logged_as_guest(): void
+    {
+        $this->postJson('/api/login', [
+            'identity' => 'tidak-dikenal@madani.test',
+            'password' => 'password123',
+        ])->assertStatus(401);
+
+        $log = ActivityLog::query()->where('action', 'login.failed')->sole();
+        $this->assertNull($log->user_id);
+        $this->assertSame('Tamu', $log->user_name);
+        $this->assertSame('account_not_found', $log->metadata['reason']);
+        $this->assertArrayNotHasKey('password', $log->metadata);
+    }
+
+    public function test_logout_is_logged(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'log-logout@madani.test',
+            'role' => 'guru',
+            'is_active' => true,
+            'password' => 'password123',
+        ]);
+        $token = $this->postJson('/api/login', [
+            'identity' => 'log-logout@madani.test',
+            'password' => 'password123',
+        ])->json('token');
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/logout')
+            ->assertNoContent();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'logout',
+            'user_id' => $user->id,
+        ]);
     }
 }
