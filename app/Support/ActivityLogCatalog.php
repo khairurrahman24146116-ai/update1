@@ -53,6 +53,8 @@ class ActivityLogCatalog
         'student.create' => 'Menambah data santri',
         'student.update' => 'Mengubah data santri',
         'student.delete' => 'Menghapus data santri',
+        'student.enrollment.naik_jenjang' => 'Memproses kenaikan jenjang santri',
+        'student.enrollment.manual' => 'Menempatkan santri secara manual',
         'import.preview' => 'Memproses pratinjau impor santri',
         'import.confirm' => 'Mengonfirmasi impor santri',
         'import.failed' => 'Impor santri gagal',

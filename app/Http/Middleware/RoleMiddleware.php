@@ -9,8 +9,6 @@ use Symfony\Component\HttpFoundation\Response;
 class RoleMiddleware
 {
     /**
-     * Handle an incoming request.
-     *
      * Mendukung beberapa peran sekaligus: role:admin,bendahara_lpi,bendahara_sma
      *
      * @param  Closure(Request): (Response)  $next
@@ -19,10 +17,42 @@ class RoleMiddleware
     {
         $role = $request->user()?->role;
 
-        if (! $role || ! in_array($role, $roles, true)) {
+        if (! $role || ! $this->matchesAny($role, $roles)) {
             abort(403, 'Unauthorized');
         }
 
         return $next($request);
+    }
+
+    /**
+     * @param  list<string>  $allowed
+     */
+    private function matchesAny(string $role, array $allowed): bool
+    {
+        foreach ($allowed as $candidate) {
+            if ($role === $candidate) {
+                return true;
+            }
+
+            if (in_array($role, $this->aliases($candidate), true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function aliases(string $role): array
+    {
+        return match ($role) {
+            'admin' => ['admin_utama'],
+            'admin_utama' => ['admin'],
+            'bendahara' => ['bendahara_lpi', 'bendahara_sma'],
+            'bendahara_lpi', 'bendahara_sma' => ['bendahara'],
+            default => [],
+        };
     }
 }

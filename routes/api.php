@@ -26,10 +26,10 @@ use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\StudentImportController;
 use App\Http\Controllers\Api\SubjectController;
 use App\Http\Controllers\Api\TeacherAttendanceController;
+use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\UserController;
 use App\Models\LandingSection;
 use App\Models\SchoolPrincipal;
-use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:60,1');
@@ -109,7 +109,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/teacher-attendances', [TeacherAttendanceController::class, 'index'])->middleware('permission:attendance.teacher.view');
     Route::post('/teacher-attendances/check-in', [TeacherAttendanceController::class, 'checkIn'])->middleware('permission:attendance.teacher.checkin');
     Route::post('/teacher-attendances/check-out', [TeacherAttendanceController::class, 'checkOut'])->middleware('permission:attendance.teacher.checkin');
-    Route::get('/teachers', fn () => User::where('role', 'guru')->select('id', 'name', 'email')->get())
+    Route::get('/teachers', [TeacherController::class, 'index'])
         ->middleware('permission:teachers.view');
 
     Route::get('/scores/sheet', [ScoreController::class, 'sheet'])->middleware('permission:scores.view');
@@ -141,11 +141,11 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/spp/report', [SppController::class, 'report'])->middleware('permission:reports.finance.view');
     });
 
-    Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.view');
-    Route::get('/users/stats', [UserController::class, 'stats'])->middleware('permission:users.view');
-    Route::post('/users', [UserController::class, 'store'])->middleware('permission:users.create');
-    Route::put('/users/{id}', [UserController::class, 'update'])->middleware('permission:users.update');
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
+    Route::get('/users', [UserController::class, 'index'])->middleware(['role:admin,operator', 'permission:users.view']);
+    Route::get('/users/stats', [UserController::class, 'stats'])->middleware(['role:admin,operator', 'permission:users.view']);
+    Route::post('/users', [UserController::class, 'store'])->middleware(['role:admin,operator', 'permission:users.create']);
+    Route::put('/users/{id}', [UserController::class, 'update'])->middleware(['role:admin,operator', 'permission:users.update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware(['role:admin,operator', 'permission:users.delete']);
 
     Route::get('/users/{id}/permissions', [PermissionController::class, 'show'])->middleware('permission:permissions.view,permissions.manage');
     Route::put('/users/{id}/permissions', [PermissionController::class, 'update'])->middleware('permission:permissions.manage');

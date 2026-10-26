@@ -9,6 +9,7 @@ use App\Models\FinanceUnitSetting;
 use App\Models\SppInvoice;
 use App\Models\SppPayment;
 use App\Models\Student;
+use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -39,9 +40,21 @@ class FinanceApiTest extends TestCase
         ]);
     }
 
+    private function bendahara(string $unit): User
+    {
+        $user = User::factory()->create([
+            'role' => $unit === 'lpi' ? 'bendahara_lpi' : 'bendahara_sma',
+            'unit' => null,
+        ]);
+
+        $user->units()->attach(Unit::where('kode', strtoupper($unit))->value('id'));
+
+        return $user;
+    }
+
     public function test_bendahara_unit_is_forced_on_create(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_lpi', 'unit' => 'lpi']);
+        $bendahara = $this->bendahara('lpi');
 
         $this->actingAs($bendahara)->postJson('/api/finance/transactions', [
             'unit' => 'sma',
@@ -57,8 +70,8 @@ class FinanceApiTest extends TestCase
 
     public function test_bendahara_cannot_see_other_unit_transactions(): void
     {
-        $lpi = User::factory()->create(['role' => 'bendahara_lpi']);
-        $sma = User::factory()->create(['role' => 'bendahara_sma']);
+        $lpi = $this->bendahara('lpi');
+        $sma = $this->bendahara('sma');
 
         FinanceTransaction::factory()->unit('lpi')->income()->create(['description' => 'LPI only']);
         FinanceTransaction::factory()->unit('sma')->income()->create(['description' => 'SMA only']);
@@ -76,7 +89,7 @@ class FinanceApiTest extends TestCase
 
     public function test_bendahara_cannot_touch_other_unit_record(): void
     {
-        $lpi = User::factory()->create(['role' => 'bendahara_lpi']);
+        $lpi = $this->bendahara('lpi');
         $trx = FinanceTransaction::factory()->unit('sma')->create();
 
         $this->actingAs($lpi)->deleteJson("/api/finance/transactions/{$trx->id}")->assertStatus(403);
@@ -85,7 +98,7 @@ class FinanceApiTest extends TestCase
 
     public function test_category_must_match_transaction_type(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         $category = FinanceCategory::factory()->income()->unit('sma')->create();
 
         $this->actingAs($bendahara)->postJson('/api/finance/transactions', [
@@ -125,7 +138,7 @@ class FinanceApiTest extends TestCase
 
     public function test_dashboard_includes_opening_balance_and_totals(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         FinanceUnitSetting::create(['unit' => 'sma', 'opening_balance' => 1000000]);
         FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 300000]);
         FinanceTransaction::factory()->unit('sma')->expense()->create(['amount' => 200000]);
@@ -148,7 +161,7 @@ class FinanceApiTest extends TestCase
 
     public function test_paying_spp_updates_invoice_and_records_income_once(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         $invoice = SppInvoice::factory()->create(['unit' => 'sma', 'amount' => 500000]);
 
         $this->actingAs($bendahara)->postJson("/api/finance/spp/invoices/{$invoice->id}/payments", [
@@ -177,7 +190,7 @@ class FinanceApiTest extends TestCase
 
     public function test_spp_payment_cannot_exceed_remaining(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         $invoice = SppInvoice::factory()->create(['unit' => 'sma', 'amount' => 500000]);
 
         $this->actingAs($bendahara)->postJson("/api/finance/spp/invoices/{$invoice->id}/payments", [
@@ -190,7 +203,7 @@ class FinanceApiTest extends TestCase
 
     public function test_partial_payment_marks_invoice_partial(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         $invoice = SppInvoice::factory()->create(['unit' => 'sma', 'amount' => 500000]);
 
         $this->actingAs($bendahara)->postJson("/api/finance/spp/invoices/{$invoice->id}/payments", [
@@ -202,7 +215,7 @@ class FinanceApiTest extends TestCase
 
     public function test_generate_invoices_only_for_unit_and_skips_existing(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         $sma = $this->student('sma');
         $lpi = $this->student('lpi');
         SppInvoice::factory()->create(['unit' => 'sma', 'student_id' => $sma->id, 'period' => '2026-10']);
@@ -225,7 +238,7 @@ class FinanceApiTest extends TestCase
 
     public function test_bendahara_cannot_pay_other_unit_invoice(): void
     {
-        $lpi = User::factory()->create(['role' => 'bendahara_lpi']);
+        $lpi = $this->bendahara('lpi');
         $invoice = SppInvoice::factory()->create(['unit' => 'sma']);
 
         $this->actingAs($lpi)->postJson("/api/finance/spp/invoices/{$invoice->id}/payments", [
@@ -263,7 +276,7 @@ class FinanceApiTest extends TestCase
 
     public function test_bendahara_cannot_cancel_payment(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         $payment = SppPayment::factory()->create(['unit' => 'sma']);
 
         $this->actingAs($bendahara)->deleteJson("/api/finance/spp/payments/{$payment->id}")->assertStatus(403);
@@ -272,7 +285,7 @@ class FinanceApiTest extends TestCase
 
     public function test_spp_student_search_is_unit_scoped(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         $this->student('sma');
         $this->student('lpi');
 
@@ -282,7 +295,7 @@ class FinanceApiTest extends TestCase
 
     public function test_report_groups_by_category(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         $category = FinanceCategory::factory()->expense()->unit('sma')->create(['name' => 'Listrik']);
         FinanceTransaction::factory()->unit('sma')->expense()->create([
             'category_id' => $category->id,
@@ -298,7 +311,7 @@ class FinanceApiTest extends TestCase
 
     public function test_report_aggregates_by_day_and_dashboard_trend(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 100000, 'transaction_date' => '2026-10-01']);
         FinanceTransaction::factory()->unit('sma')->expense()->create(['amount' => 40000, 'transaction_date' => '2026-10-01']);
         FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 50000, 'transaction_date' => '2026-11-02']);
@@ -326,7 +339,7 @@ class FinanceApiTest extends TestCase
 
     public function test_report_honours_end_date_inclusively(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 10000, 'transaction_date' => '2026-10-31']);
         FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 90000, 'transaction_date' => '2026-11-01']);
 
@@ -337,7 +350,7 @@ class FinanceApiTest extends TestCase
 
     public function test_spp_report_aggregates_invoices_and_payments(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         $student = $this->student('sma');
 
         $partial = SppInvoice::factory()->create([
@@ -376,7 +389,7 @@ class FinanceApiTest extends TestCase
 
     public function test_generate_invoices_across_chunks(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         $classroom = $this->classroom('sma');
         $now = now();
         $rows = [];
@@ -406,7 +419,7 @@ class FinanceApiTest extends TestCase
 
     public function test_preview_returns_only_requested_type_and_total(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
         FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 100000, 'description' => 'Infaq']);
         FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 250000, 'description' => 'SPP']);
         FinanceTransaction::factory()->unit('sma')->expense()->create(['amount' => 99000, 'description' => 'Listrik']);
@@ -427,27 +440,25 @@ class FinanceApiTest extends TestCase
 
     public function test_preview_rejects_invalid_type(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara_sma']);
+        $bendahara = $this->bendahara('sma');
 
         $this->actingAs($bendahara)->getJson('/api/finance/transactions/preview?type=transfer')
             ->assertStatus(422);
     }
 
-    public function test_preview_honours_cross_unit_isolation(): void
+    public function test_preview_rejects_cross_unit_request(): void
     {
-        $lpi = User::factory()->create(['role' => 'bendahara_lpi']);
-        $sma = User::factory()->create(['role' => 'bendahara_sma']);
+        $lpi = $this->bendahara('lpi');
+        $sma = $this->bendahara('sma');
         FinanceTransaction::factory()->unit('sma')->income()->create(['amount' => 100000, 'description' => 'SMA only']);
         FinanceTransaction::factory()->unit('lpi')->income()->create(['amount' => 400000, 'description' => 'LPI only']);
 
         $this->actingAs($lpi)->getJson('/api/finance/transactions/preview?type=income&unit=sma')
-            ->assertOk()
-            ->assertJsonPath('unit', 'lpi')
-            ->assertJsonPath('total', 400000)
-            ->assertJsonCount(1, 'transactions');
+            ->assertForbidden();
 
         $this->actingAs($sma)->getJson('/api/finance/transactions/preview?type=income')
             ->assertOk()
+            ->assertJsonPath('unit', 'sma')
             ->assertJsonPath('total', 100000);
     }
 

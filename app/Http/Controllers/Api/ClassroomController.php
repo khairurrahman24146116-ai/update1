@@ -22,11 +22,9 @@ class ClassroomController extends Controller
         $yearId = $request->query('tahun_ajaran_id');
 
         if ($user?->isFinanceRole()) {
-            $unit = $user->financeUnit();
             $search = $request->query('search');
 
             return Classroom::withCount('students')
-                ->where('unit', $unit)
                 ->when($yearId, fn ($q) => $q->where('tahun_ajaran_id', $yearId))
                 ->when($search, fn ($q) => $q->where(fn ($q2) => $q2->where('name', 'like', "%{$search}%")->orWhere('academic_year', 'like', "%{$search}%")))
                 ->orderBy('grade')->orderBy('name')
@@ -50,7 +48,7 @@ class ClassroomController extends Controller
             'name' => 'required|string|max:255',
             'grade' => 'required|integer|between:7,12',
             'academic_year' => 'sometimes|string|max:20',
-            'unit' => 'sometimes|in:lpi,sma',
+            'unit' => 'sometimes|in:lpi,sma,smp',
             'jalur' => 'sometimes|in:formal,lpi',
             'jenjang' => 'sometimes|in:SMP,SMA,Tsanawiyah,Aliyah',
             'tahun_ajaran_id' => 'sometimes|integer|exists:academic_years,id',
@@ -83,7 +81,7 @@ class ClassroomController extends Controller
             'name' => 'sometimes|string|max:255',
             'grade' => 'sometimes|integer|between:7,12',
             'academic_year' => 'sometimes|string|max:20',
-            'unit' => 'sometimes|in:lpi,sma',
+            'unit' => 'sometimes|in:lpi,sma,smp',
             'jalur' => 'sometimes|in:formal,lpi',
             'jenjang' => 'sometimes|in:SMP,SMA,Tsanawiyah,Aliyah',
             'tahun_ajaran_id' => 'sometimes|integer|exists:academic_years,id',
@@ -115,10 +113,22 @@ class ClassroomController extends Controller
     {
         $user = $request->user();
 
-        if (! $user || $user->isAdmin()) {
+        if (! $user || $user->isAdmin() || $user->isOperator()) {
             return null;
         }
 
-        return $user->financeUnit() ?? $user->unit;
+        $codes = $user->effectiveUnitCodes();
+
+        if ($codes === []) {
+            return null;
+        }
+
+        $requested = strtolower(trim((string) $request->input('unit')));
+
+        if ($requested !== '' && in_array($requested, $codes, true)) {
+            return $requested;
+        }
+
+        return $request->isMethod('post') ? $codes[0] : null;
     }
 }

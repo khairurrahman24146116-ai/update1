@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Classroom;
 use App\Models\FinanceTransaction;
+use App\Models\Unit;
 use App\Models\User;
 use App\Models\UserPermission;
 use App\Support\PermissionCatalog;
@@ -251,6 +252,7 @@ class PermissionApiTest extends TestCase
     {
         $admin = $this->protectedAdmin();
         $guru = User::factory()->create(['role' => User::ROLE_GURU, 'unit' => 'lpi']);
+        $guru->units()->attach(Unit::where('kode', 'LPI')->value('id'));
 
         FinanceTransaction::factory()->unit('lpi')->income()->create(['description' => 'LPI only']);
         FinanceTransaction::factory()->unit('sma')->income()->create(['description' => 'SMA only']);

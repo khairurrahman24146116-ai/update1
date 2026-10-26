@@ -24,9 +24,7 @@ class SppService
      */
     public function pay(SppInvoice $invoice, array $data, User $actor): SppPayment
     {
-        $unit = $actor->financeUnit();
-
-        if ($unit !== null && $invoice->unit !== $unit) {
+        if (! $actor->isAdmin() && ! in_array(strtolower($invoice->unit), $actor->effectiveUnitCodes(), true)) {
             abort(403, 'Tagihan bukan milik unit akun ini.');
         }
 

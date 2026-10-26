@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\User;
+
 /**
  * Katalog izin aplikasi.
  *
@@ -270,6 +272,25 @@ class PermissionCatalog
             'logs.view',
             'system.backup.create', 'system.backup.download',
         ],
+        'operator' => [
+            'dashboard.view',
+            'students.view', 'students.create', 'students.update', 'students.delete', 'students.import', 'students.export',
+            'teachers.view', 'teachers.create', 'teachers.update', 'teachers.delete',
+            'classrooms.view',
+            'subjects.view',
+            'schedules.view',
+            'users.view', 'users.create', 'users.update', 'users.delete',
+        ],
+        'kepala_sekolah' => [
+            'dashboard.view',
+            'students.view', 'students.update',
+            'teachers.view',
+            'classrooms.view', 'classrooms.update',
+            'subjects.view',
+            'schedules.view',
+            'attendance.view', 'attendance.teacher.view',
+            'scores.view',
+        ],
         'guru' => [
             'dashboard.view',
             'students.view',
@@ -314,6 +335,11 @@ class PermissionCatalog
             'classrooms.view',
             'subjects.view',
             'schedules.view',
+            'finance.view',
+            'finance.transactions.view', 'finance.transactions.create', 'finance.transactions.update', 'finance.transactions.delete',
+            'finance.categories.view', 'finance.categories.create',
+            'spp.view', 'spp.create', 'spp.update', 'spp.delete',
+            'reports.finance.view', 'reports.finance.export',
         ],
         'wali_murid' => [
             'dashboard.view',
@@ -366,6 +392,11 @@ class PermissionCatalog
      */
     public static function forRole(?string $role): array
     {
+        $role = match ($role) {
+            User::ROLE_ADMIN_UTAMA => User::ROLE_ADMIN,
+            default => $role,
+        };
+
         return self::ROLE_DEFAULTS[$role ?? ''] ?? [];
     }
 

@@ -21,9 +21,13 @@ class PermissionController extends Controller
             'privileged' => PermissionCatalog::PRIVILEGED,
             'roles' => [
                 'admin' => 'Admin',
-                'guru' => 'Guru',
+                'admin_utama' => 'Admin Utama',
+                'operator' => 'Operator',
+                'kepala_sekolah' => 'Kepala Sekolah',
+                'bendahara' => 'Bendahara',
                 'bendahara_lpi' => 'Bendahara LPI',
                 'bendahara_sma' => 'Bendahara SMA',
+                'guru' => 'Guru',
                 'wali_murid' => 'Wali Murid',
             ],
         ]);
@@ -237,7 +241,9 @@ class PermissionController extends Controller
                 || str_starts_with($permission, 'reports.finance'),
         );
 
-        if ($financePermissions !== [] && ! in_array($target->unit, ['lpi', 'sma'], true)) {
+        $financeUnits = array_intersect($target->effectiveUnitCodes(), ['lpi', 'sma']);
+
+        if ($financePermissions !== [] && $financeUnits === []) {
             throw ValidationException::withMessages([
                 'allow' => 'Tetapkan unit LPI/SMA pada akun sebelum memberikan izin keuangan.',
             ]);
@@ -266,7 +272,7 @@ class PermissionController extends Controller
                 || in_array('permissions.manage', $allow, true));
 
         $otherManager = User::query()
-            ->where('role', User::ROLE_ADMIN)
+            ->whereIn('role', [User::ROLE_ADMIN, User::ROLE_ADMIN_UTAMA])
             ->where('is_active', true)
             ->where('id', '!=', $target->id)
             ->where(function ($query) {
@@ -277,7 +283,7 @@ class PermissionController extends Controller
             })
             ->exists();
 
-        $protectedExists = User::where('role', User::ROLE_ADMIN)
+        $protectedExists = User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_ADMIN_UTAMA])
             ->where('is_active', true)
             ->where('is_protected', true)
             ->where('id', '!=', $target->id)

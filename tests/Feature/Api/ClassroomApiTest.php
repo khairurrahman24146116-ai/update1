@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Classroom;
+use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -41,7 +42,8 @@ class ClassroomApiTest extends TestCase
         Classroom::create(['name' => 'X-SMA', 'grade' => 10, 'academic_year' => '2026/2027', 'unit' => 'sma']);
         Classroom::create(['name' => 'X-LPI', 'grade' => 7, 'academic_year' => '2026/2027', 'unit' => 'lpi']);
 
-        $bendahara = User::factory()->create(['role' => 'bendahara_lpi']);
+        $bendahara = User::factory()->create(['role' => 'bendahara_lpi', 'unit' => null]);
+        $bendahara->units()->attach(Unit::where('kode', 'LPI')->value('id'));
 
         $res = $this->actingAs($bendahara)->getJson('/api/classrooms')->assertOk();
         $names = collect($res->json('data'))->pluck('name')->all();
@@ -52,7 +54,8 @@ class ClassroomApiTest extends TestCase
     public function test_bendahara_cannot_view_other_unit_classroom(): void
     {
         $classroom = Classroom::create(['name' => 'X-SMA', 'grade' => 10, 'academic_year' => '2026/2027', 'unit' => 'sma']);
-        $bendahara = User::factory()->create(['role' => 'bendahara_lpi']);
+        $bendahara = User::factory()->create(['role' => 'bendahara_lpi', 'unit' => null]);
+        $bendahara->units()->attach(Unit::where('kode', 'LPI')->value('id'));
 
         $this->actingAs($bendahara)->getJson("/api/classrooms/{$classroom->id}")->assertStatus(403);
     }

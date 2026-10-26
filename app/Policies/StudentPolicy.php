@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Models\Student;
-use App\Models\TeacherSubject;
 use App\Models\User;
 
 class StudentPolicy
@@ -19,27 +18,7 @@ class StudentPolicy
             return false;
         }
 
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        if ($user->isFinanceRole()) {
-            return $student->unit() === $user->financeUnit();
-        }
-
-        if ($user->role === User::ROLE_WALI_MURID) {
-            return (int) $student->parent_id === (int) $user->id;
-        }
-
-        if ($user->role === User::ROLE_GURU) {
-            return TeacherSubject::where('teacher_id', $user->id)
-                ->where('classroom_id', $student->classroom_id)
-                ->exists();
-        }
-
-        $unit = $user->unit;
-
-        return $unit === null || $student->unit() === $unit;
+        return $this->withinAccess($user, $student);
     }
 
     public function create(User $user): bool
@@ -54,22 +33,38 @@ class StudentPolicy
 
     public function update(User $user, Student $student): bool
     {
-        return $user->hasPermission('students.update') && $this->withinUnit($user, $student);
+        return $user->hasPermission('students.update') && $this->withinAccess($user, $student);
     }
 
     public function delete(User $user, Student $student): bool
     {
-        return $user->hasPermission('students.delete') && $this->withinUnit($user, $student);
+        return $user->hasPermission('students.delete') && $this->withinAccess($user, $student);
     }
 
-    private function withinUnit(User $user, Student $student): bool
+    public function promote(User $user): bool
     {
-        if ($user->isAdmin()) {
+        return $user->isAdmin() || $user->isOperator();
+    }
+
+    public function placeManually(User $user): bool
+    {
+        return $user->isAdmin() || $user->isOperator();
+    }
+
+    private function withinAccess(User $user, Student $student): bool
+    {
+        if ($user->isAdmin() || $user->isOperator()) {
             return true;
         }
 
-        $unit = $user->financeUnit() ?? $user->unit;
+        if ($user->isWaliMurid()) {
+            return (int) $student->parent_id === (int) $user->id;
+        }
 
-        return $unit === null || $student->unit() === $unit;
+        if ($user->isGuru()) {
+            return $user->teachesClassroom($student->classroom_id);
+        }
+
+        return $user->canAccessDataUnit($student->unit());
     }
 }

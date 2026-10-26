@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Student;
+use App\Models\Unit;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
@@ -11,10 +12,22 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    private const ROLES = ['admin', 'guru', 'bendahara_lpi', 'bendahara_sma', 'wali_murid'];
+    private const ROLES = [
+        'admin',
+        'admin_utama',
+        'operator',
+        'kepala_sekolah',
+        'bendahara',
+        'bendahara_lpi',
+        'bendahara_sma',
+        'guru',
+        'wali_murid',
+    ];
 
     public function index(Request $request)
     {
+        $this->authorize('viewAny', User::class);
+
         $perPage = min(max((int) $request->query('per_page', 50), 1), 200);
 
         $q = User::query()->select(['id', 'name', 'email', 'phone', 'role', 'unit', 'is_active', 'is_protected', 'created_at'])
@@ -27,6 +40,8 @@ class UserController extends Controller
 
     public function stats()
     {
+        $this->authorize('viewAny', User::class);
+
         $row = User::query()->selectRaw(
             'COUNT(*) as total, COALESCE(SUM(CASE WHEN role = ? THEN 1 ELSE 0 END), 0) as total_guru',
             [User::ROLE_GURU],
@@ -40,22 +55,25 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', User::class);
+
         $v = $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6',
             'role' => 'required|in:'.implode(',', self::ROLES),
-            'unit' => 'nullable|in:lpi,sma',
+            'unit' => 'nullable|in:lpi,sma,smp',
             'is_active' => 'boolean',
         ]);
 
-        if ($v['role'] === User::ROLE_ADMIN && ! $request->user()->isProtectedAdmin()) {
+        if (in_array($v['role'], [User::ROLE_ADMIN, User::ROLE_ADMIN_UTAMA], true) && ! $request->user()->isProtectedAdmin()) {
             abort(403, 'Hanya Admin Utama yang dapat membuat akun admin.');
         }
 
         $v['password'] = Hash::make($v['password']);
         $v['unit'] = $this->unitForRole($v['role'], $v['unit'] ?? null);
         $u = User::create($v);
+        $this->syncUserUnits($u, $u->unit);
 
         ActivityLogger::log('user.create', $request->user(), User::class, $u->id, [
             'role' => $u->role,
@@ -71,6 +89,8 @@ class UserController extends Controller
         $actor = $request->user();
         $u = User::findOrFail($id);
 
+        $this->authorize('update', $u);
+
         if ($u->isProtectedAdmin() && ! $actor->isProtectedAdmin()) {
             abort(403, 'Akun Admin Utama hanya dapat diubah oleh Admin Utama.');
         }
@@ -80,7 +100,7 @@ class UserController extends Controller
             'email' => 'sometimes|email|unique:users,email,'.$id,
             'password' => 'sometimes|nullable|string|min:6',
             'role' => 'sometimes|in:'.implode(',', self::ROLES),
-            'unit' => 'nullable|in:lpi,sma',
+            'unit' => 'nullable|in:lpi,sma,smp',
             'is_active' => 'sometimes|boolean',
         ]);
 
@@ -101,6 +121,12 @@ class UserController extends Controller
             if ($newUnit !== $u->unit) {
                 abort(403, 'Hanya Admin Utama yang dapat mengubah unit akun.');
             }
+        }
+
+        if (in_array($newRole, [User::ROLE_ADMIN, User::ROLE_ADMIN_UTAMA], true)
+            && $newRole !== $u->role
+            && ! $actor->isProtectedAdmin()) {
+            abort(403, 'Hanya Admin Utama yang dapat memberikan role admin.');
         }
 
         if ($u->isProtectedAdmin() && ($newRole !== User::ROLE_ADMIN || $newUnit !== $u->unit)) {
@@ -130,7 +156,14 @@ class UserController extends Controller
         } else {
             unset($v['password']);
         }
+
+        $syncUnits = isset($v['role']) || array_key_exists('unit', $v);
         $u->update($v);
+
+        if ($syncUnits) {
+            $this->syncUserUnits($u, $newUnit);
+        }
+
         $after = $u->fresh()->only(['role', 'unit', 'is_active']);
 
         ActivityLogger::log('user.update', $actor, User::class, $u->id, [
@@ -149,6 +182,8 @@ class UserController extends Controller
         /** @var User $actor */
         $actor = $request->user();
         $u = User::findOrFail($id);
+
+        $this->authorize('delete', $u);
 
         if ($u->is_protected) {
             abort(403, 'Akun utama tidak dapat dihapus');
@@ -182,5 +217,32 @@ class UserController extends Controller
             User::ROLE_BENDAHARA_SMA => 'sma',
             default => $unit,
         };
+    }
+
+    private function syncUserUnits(User $user, ?string $unit): void
+    {
+        if ($user->isAccountManager()) {
+            $user->units()->detach();
+
+            return;
+        }
+
+        if ($unit === null || trim($unit) === '') {
+            $user->units()->detach();
+
+            return;
+        }
+
+        $unitId = Unit::query()
+            ->whereRaw('LOWER(kode) = ?', [strtolower(trim($unit))])
+            ->value('id');
+
+        if ($unitId === null) {
+            $user->units()->detach();
+
+            return;
+        }
+
+        $user->units()->sync([$unitId]);
     }
 }

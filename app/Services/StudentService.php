@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Scopes\BerdasarkanUnit;
 use App\Models\Student;
-use App\Models\TeacherSubject;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -17,26 +17,17 @@ class StudentService
             ->when(! empty($filters['without_valid_phone']), fn ($qq) => $qq->withoutValidWaliPhone())
             ->when($filters['status'] ?? null, fn ($qq, $v) => $qq->where('status', $v));
 
-        if ($user) {
-            if ($user->role === 'wali_murid') {
-                $q->where('parent_id', $user->id);
-            }
-            if ($user->role === 'guru') {
-                $ids = TeacherSubject::where('teacher_id', $user->id)->pluck('classroom_id');
-                $q->whereIn('classroom_id', $ids);
-            }
-            if ($user->isFinanceRole()) {
-                $unit = $user->financeUnit();
-                $q->whereHas('classroom', fn ($cq) => $cq->where('unit', $unit));
-            }
-        }
-
         return $q->orderBy('name')->paginate($perPage);
     }
 
     public function find(int $id): Student
     {
-        return Student::with(['classroom', 'parent'])->findOrFail($id);
+        return Student::withoutGlobalScope(BerdasarkanUnit::class)
+            ->with([
+                'classroom' => fn ($query) => $query->withoutGlobalScope(BerdasarkanUnit::class),
+                'parent',
+            ])
+            ->findOrFail($id);
     }
 
     public function create(array $data): Student

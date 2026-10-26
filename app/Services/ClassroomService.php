@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AcademicYear;
 use App\Models\Classroom;
+use App\Models\Scopes\BerdasarkanUnit;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -11,7 +12,7 @@ class ClassroomService
 {
     public function list(?string $search = null, int $perPage = 15, ?int $yearId = null): LengthAwarePaginator
     {
-        return Classroom::query()->withCount('students')->with('academicYear:id,name')
+        return Classroom::query()->withCount('students')
             ->when($yearId, fn ($q) => $q->where('tahun_ajaran_id', $yearId))
             ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%")->orWhere('academic_year', 'like', "%{$search}%"))
             ->orderBy('grade')->orderBy('name')
@@ -25,7 +26,7 @@ class ClassroomService
 
     public function find(int $id): Classroom
     {
-        return Classroom::findOrFail($id);
+        return Classroom::withoutGlobalScope(BerdasarkanUnit::class)->findOrFail($id);
     }
 
     public function create(array $data): Classroom

@@ -7,6 +7,7 @@ use App\Models\Classroom;
 use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -40,8 +41,17 @@ class GuruAttendanceImportTest extends TestCase
         return new UploadedFile($tmp, 'abs.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
     }
 
+    private function guru(): User
+    {
+        $user = User::factory()->create(['role' => 'guru', 'unit' => null]);
+        $user->units()->attach(Unit::where('kode', 'SMA')->value('id'));
+
+        return $user;
+    }
+
     private function seedSchedule(User $guru): Schedule
     {
+
         $cl = Classroom::create(['name' => 'X-1', 'grade' => 10, 'academic_year' => '2026/2027']);
         $sub = Subject::create(['name' => 'Matematika', 'code' => 'MTK']);
 
@@ -50,7 +60,7 @@ class GuruAttendanceImportTest extends TestCase
 
     public function test_guru_preview_and_import(): void
     {
-        $guru = User::factory()->create(['role' => 'guru']);
+        $guru = $this->guru();
         $sch = $this->seedSchedule($guru);
         $stu = Student::create(['nis' => '2026001', 'nisn' => '0071234567', 'name' => 'Andi', 'gender' => 'L', 'classroom_id' => $sch->classroom_id, 'status' => 'aktif']);
         $file = $this->makeExcel([['2026001', '', 'hadir', '']]);
@@ -67,7 +77,7 @@ class GuruAttendanceImportTest extends TestCase
 
     public function test_preview_does_not_write(): void
     {
-        $guru = User::factory()->create(['role' => 'guru']);
+        $guru = $this->guru();
         $sch = $this->seedSchedule($guru);
         Student::create(['nis' => '2026002', 'nisn' => '0071234568', 'name' => 'Budi', 'gender' => 'L', 'classroom_id' => $sch->classroom_id, 'status' => 'aktif']);
         $file = $this->makeExcel([['2026002', '', 'izin', '']]);
@@ -77,8 +87,8 @@ class GuruAttendanceImportTest extends TestCase
 
     public function test_unauthorized_guru_cannot_import_other_schedule(): void
     {
-        $guru1 = User::factory()->create(['role' => 'guru']);
-        $guru2 = User::factory()->create(['role' => 'guru']);
+        $guru1 = $this->guru();
+        $guru2 = $this->guru();
         $sch = $this->seedSchedule($guru1);
         Student::create(['nis' => '2026003', 'nisn' => '0071234569', 'name' => 'Cici', 'gender' => 'P', 'classroom_id' => $sch->classroom_id, 'status' => 'aktif']);
         $file = $this->makeExcel([['2026003', '', 'hadir', '']]);
@@ -88,7 +98,7 @@ class GuruAttendanceImportTest extends TestCase
 
     public function test_wali_cannot_import(): void
     {
-        $guru = User::factory()->create(['role' => 'guru']);
+        $guru = $this->guru();
         $wali = User::factory()->create(['role' => 'wali_murid']);
         $sch = $this->seedSchedule($guru);
         Student::create(['nis' => '2026004', 'nisn' => '0071234570', 'name' => 'Dedi', 'gender' => 'L', 'classroom_id' => $sch->classroom_id, 'status' => 'aktif']);
@@ -98,7 +108,7 @@ class GuruAttendanceImportTest extends TestCase
 
     public function test_bendahara_cannot_import(): void
     {
-        $guru = User::factory()->create(['role' => 'guru']);
+        $guru = $this->guru();
         $bend = User::factory()->create(['role' => 'bendahara']);
         $sch = $this->seedSchedule($guru);
         Student::create(['nis' => '2026005', 'nisn' => '0071234571', 'name' => 'Eka', 'gender' => 'P', 'classroom_id' => $sch->classroom_id, 'status' => 'aktif']);
@@ -108,7 +118,7 @@ class GuruAttendanceImportTest extends TestCase
 
     public function test_invalid_status_rejected(): void
     {
-        $guru = User::factory()->create(['role' => 'guru']);
+        $guru = $this->guru();
         $sch = $this->seedSchedule($guru);
         Student::create(['nis' => '2026006', 'nisn' => '0071234572', 'name' => 'Fani', 'gender' => 'P', 'classroom_id' => $sch->classroom_id, 'status' => 'aktif']);
         $file = $this->makeExcel([['2026006', '', 'ngantuk', '']]);
@@ -121,7 +131,7 @@ class GuruAttendanceImportTest extends TestCase
 
     public function test_invalid_student_rejected(): void
     {
-        $guru = User::factory()->create(['role' => 'guru']);
+        $guru = $this->guru();
         $sch = $this->seedSchedule($guru);
         $file = $this->makeExcel([['9999999', '', 'hadir', '']]);
         $this->actingAs($guru)->post('/api/guru/attendance/import/preview', ['file' => $file, 'schedule_id' => $sch->id, 'date' => '2026-09-18'])->assertOk()->assertJsonPath('invalid', 1);
@@ -130,7 +140,7 @@ class GuruAttendanceImportTest extends TestCase
 
     public function test_duplicate_attendance_skipped(): void
     {
-        $guru = User::factory()->create(['role' => 'guru']);
+        $guru = $this->guru();
         $sch = $this->seedSchedule($guru);
         $stu = Student::create(['nis' => '2026007', 'nisn' => '0071234573', 'name' => 'Gina', 'gender' => 'P', 'classroom_id' => $sch->classroom_id, 'status' => 'aktif']);
         Attendance::create(['schedule_id' => $sch->id, 'student_id' => $stu->id, 'date' => '2026-09-18', 'status' => 'hadir']);
@@ -143,7 +153,7 @@ class GuruAttendanceImportTest extends TestCase
 
     public function test_no_student_created_on_attendance_import(): void
     {
-        $guru = User::factory()->create(['role' => 'guru']);
+        $guru = $this->guru();
         $sch = $this->seedSchedule($guru);
         Student::create(['nis' => '2026008', 'nisn' => '0071234574', 'name' => 'Hani', 'gender' => 'P', 'classroom_id' => $sch->classroom_id, 'status' => 'aktif']);
         $before = Student::count();

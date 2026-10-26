@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ActivityLog;
+use App\Models\Unit;
 use App\Models\User;
 use App\Support\ActivityLogCatalog;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +56,7 @@ class ActivityLogger
 
             return ActivityLog::create([
                 'user_id' => $actor?->id,
+                'unit_id' => self::resolveUnitId($actor, $metadata),
                 'user_name' => $actor?->name ?? $actorName,
                 'user_role' => $actor?->role,
                 'action' => $action,
@@ -75,6 +77,26 @@ class ActivityLogger
 
             return null;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $metadata
+     */
+    private static function resolveUnitId(?User $actor, ?array $metadata): ?int
+    {
+        $code = $metadata['unit'] ?? null;
+
+        if ($code === null && $actor !== null && ! $actor->isAdmin()) {
+            $code = $actor->effectiveUnitCodes()[0] ?? null;
+        }
+
+        if (! is_string($code) || trim($code) === '') {
+            return null;
+        }
+
+        return Unit::query()
+            ->whereRaw('LOWER(kode) = ?', [strtolower(trim($code))])
+            ->value('id');
     }
 
     private static function resolveActor(User|int|null $user): ?User

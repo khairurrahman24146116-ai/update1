@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Classroom;
+use App\Models\Scopes\BerdasarkanUnit;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\ActivityLogger;
@@ -50,6 +52,7 @@ class StudentController extends Controller
             }],
             'status' => 'in:aktif,nonaktif,lulus',
         ]);
+        $this->ensureClassroomAccess($request->user(), (int) $v['classroom_id']);
         $s = $this->service->create($v);
         ActivityLogger::log('student.create', $request->user(), Student::class, $s->id, $v);
 
@@ -79,10 +82,40 @@ class StudentController extends Controller
             }],
             'status' => 'sometimes|in:aktif,nonaktif,lulus',
         ]);
+
+        if (isset($v['classroom_id'])) {
+            $this->ensureClassroomAccess($request->user(), (int) $v['classroom_id']);
+        }
+
         $updated = $this->service->update($s, $v);
         ActivityLogger::log('student.update', $request->user(), Student::class, $id, $v);
 
         return $updated;
+    }
+
+    private function ensureClassroomAccess(?User $user, int $classroomId): void
+    {
+        if (! $user || $user->isAdmin() || $user->isOperator()) {
+            return;
+        }
+
+        $classroom = Classroom::withoutGlobalScope(BerdasarkanUnit::class)->find($classroomId);
+
+        if (! $classroom) {
+            return;
+        }
+
+        if ($user->isGuru()) {
+            if (! $user->teachesClassroom($classroom->id)) {
+                abort(403, 'Guru hanya dapat mengelola santri pada kelas yang diampu.');
+            }
+
+            return;
+        }
+
+        if (! $user->canAccessDataUnit($classroom->unit)) {
+            abort(403, 'Kelas berada di luar unit akun ini.');
+        }
     }
 
     public function destroy(int $id, Request $request)

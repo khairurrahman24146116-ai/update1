@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopedByUnit;
 use Database\Factories\StudentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Student extends Model
 {
     /** @use HasFactory<StudentFactory> */
-    use HasFactory;
+    use HasFactory, ScopedByUnit;
 
     protected $fillable = [
         'nis',
@@ -24,6 +25,7 @@ class Student extends Model
         'status',
         'tanggal_lahir',
         'asal_siswa',
+        'asal',
         'nama_ayah',
         'nama_ibu',
         'nama_wali',
@@ -50,6 +52,11 @@ class Student extends Model
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
+    }
+
+    public function studentEnrollments(): HasMany
+    {
+        return $this->hasMany(StudentEnrollment::class);
     }
 
     public function sppInvoices(): HasMany

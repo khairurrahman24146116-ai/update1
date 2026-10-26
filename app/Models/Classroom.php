@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopedByUnit;
 use Database\Factories\ClassroomFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Classroom extends Model
 {
     /** @use HasFactory<ClassroomFactory> */
-    use HasFactory;
+    use HasFactory, ScopedByUnit;
 
     public const JALUR_FORMAL = 'formal';
 
@@ -30,6 +31,8 @@ class Classroom extends Model
         'grade',
         'academic_year',
         'unit',
+        'unit_id',
+        'wali_kelas_id',
         'jalur',
         'jenjang',
         'tahun_ajaran_id',
@@ -39,8 +42,20 @@ class Classroom extends Model
     {
         return [
             'grade' => 'integer',
+            'unit_id' => 'integer',
+            'wali_kelas_id' => 'integer',
             'tahun_ajaran_id' => 'integer',
         ];
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    public function waliKelas(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class, 'wali_kelas_id');
     }
 
     public function students(): HasMany
@@ -61,6 +76,11 @@ class Classroom extends Model
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class, 'class_id');
+    }
+
+    public function studentEnrollments(): HasMany
+    {
+        return $this->hasMany(StudentEnrollment::class, 'class_id');
     }
 
     public function isFormalSmaGradeTen(): bool

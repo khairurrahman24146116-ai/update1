@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckActiveUser;
+use App\Http\Middleware\EnsureUnitAccess;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Foundation\Application;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'active' => CheckActiveUser::class,
+            'unit' => EnsureUnitAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

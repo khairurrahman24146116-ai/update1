@@ -12,13 +12,17 @@ class ClassroomPolicy
         return $user->hasPermission('classrooms.view');
     }
 
-    public function view(User $user, Classroom $c): bool
+    public function view(User $user, Classroom $classroom): bool
     {
         if (! $user->hasPermission('classrooms.view')) {
             return false;
         }
 
-        return $this->withinUnit($user, $c->unit);
+        if ($user->isGuru()) {
+            return $user->teachesClassroom($classroom->id);
+        }
+
+        return $user->canAccessDataUnit($classroom->unit);
     }
 
     public function create(User $user): bool
@@ -26,28 +30,31 @@ class ClassroomPolicy
         return $user->hasPermission('classrooms.create');
     }
 
-    public function update(User $user, Classroom $c): bool
+    public function update(User $user, Classroom $classroom): bool
     {
-        return $user->hasPermission('classrooms.update') && $this->withinUnit($user, $c->unit);
+        return $user->hasPermission('classrooms.update') && $this->withinAccess($user, $classroom);
     }
 
-    public function delete(User $user, Classroom $c): bool
+    public function delete(User $user, Classroom $classroom): bool
     {
-        return $user->hasPermission('classrooms.delete') && $this->withinUnit($user, $c->unit);
+        return $user->hasPermission('classrooms.delete') && $this->withinAccess($user, $classroom);
     }
 
-    /**
-     * Admin lintas unit. Akun yang memiliki unit hanya boleh menyentuh unitnya.
-     * Akun tanpa unit (mis. guru) tidak dibatasi oleh policy.
-     */
-    private function withinUnit(User $user, string $unit): bool
+    public function assignWaliKelas(User $user, Classroom $classroom): bool
     {
-        if ($user->isAdmin()) {
+        return $user->hasPermission('classrooms.update') && $this->withinAccess($user, $classroom);
+    }
+
+    private function withinAccess(User $user, Classroom $classroom): bool
+    {
+        if ($user->isAdmin() || $user->isOperator()) {
             return true;
         }
 
-        $restricted = $user->financeUnit() ?? $user->unit;
+        if ($user->isGuru()) {
+            return $user->teachesClassroom($classroom->id);
+        }
 
-        return $restricted === null || $restricted === $unit;
+        return $user->canAccessDataUnit($classroom->unit);
     }
 }
