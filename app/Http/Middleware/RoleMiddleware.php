@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 class RoleMiddleware
 {
     /**
-     * Mendukung beberapa peran sekaligus: role:admin,bendahara_lpi,bendahara_sma
+     * Mendukung beberapa peran sekaligus: role:admin_utama,bendahara_lpi
      *
      * @param  Closure(Request): (Response)  $next
      */
@@ -48,8 +48,6 @@ class RoleMiddleware
     private function aliases(string $role): array
     {
         return match ($role) {
-            'admin' => ['admin_utama'],
-            'admin_utama' => ['admin'],
             'bendahara' => ['bendahara_lpi', 'bendahara_sma'],
             'bendahara_lpi', 'bendahara_sma' => ['bendahara'],
             default => [],

@@ -126,62 +126,6 @@ class ActivityLogController extends Controller
         ])->setPaper('a4', 'landscape')->download('log-aktivitas-'.$printedAt->format('Ymd-His').'.pdf');
     }
 
-    public function retention()
-    {
-        $this->authorize('manageRetention', ActivityLog::class);
-
-        return response()->json($this->service->retentionPreview());
-    }
-
-    public function retentionPreview(Request $request)
-    {
-        $this->authorize('manageRetention', ActivityLog::class);
-        $data = $request->validate(['months' => 'nullable|integer|min:1|max:120']);
-
-        return response()->json($this->service->retentionPreview(isset($data['months']) ? (int) $data['months'] : null));
-    }
-
-    public function updateRetention(Request $request)
-    {
-        $this->authorize('manageRetention', ActivityLog::class);
-        $data = $request->validate(['months' => 'required|integer|min:1|max:120']);
-        $old = $this->service->retentionMonths();
-        $months = $this->service->updateRetention((int) $data['months']);
-
-        ActivityLogger::log('activity_log.retention.update', $request->user(), null, null, [
-            'old_months' => $old,
-            'new_months' => $months,
-        ]);
-
-        return response()->json($this->service->retentionPreview($months));
-    }
-
-    public function prune(Request $request)
-    {
-        $this->authorize('prune', ActivityLog::class);
-        $data = $request->validate([
-            'confirm' => 'required|accepted',
-            'months' => 'nullable|integer|min:1|max:120',
-        ]);
-
-        $months = $this->service->clampMonths((int) ($data['months'] ?? $this->service->retentionMonths()));
-        $cutoff = now()->subMonths($months)->startOfDay();
-        $deleted = $this->service->prune($months);
-
-        ActivityLogger::log('activity_log.prune', $request->user(), null, null, [
-            'months' => $months,
-            'cutoff' => $cutoff->toDateString(),
-            'deleted' => $deleted,
-        ]);
-
-        return response()->json([
-            'message' => "{$deleted} log lebih lama dari {$cutoff->toDateString()} dihapus.",
-            'deleted' => $deleted,
-            'months' => $months,
-            'cutoff' => $cutoff->toDateString(),
-        ]);
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -192,13 +136,20 @@ class ActivityLogController extends Controller
             'module' => 'nullable|string|max:50',
             'action' => 'nullable|string|max:100',
             'user_id' => 'nullable|integer|min:1',
+            'role' => 'nullable|string|max:50',
+            'unit' => 'nullable|string|max:10',
+            'only_operators' => 'nullable|boolean',
             'from' => 'nullable|date',
             'to' => 'nullable|date|after_or_equal:from',
         ]);
 
         return collect($data)
             ->reject(fn ($value): bool => $value === null || $value === '')
-            ->map(fn ($value, string $key) => $key === 'user_id' ? (int) $value : $value)
+            ->map(fn ($value, string $key) => match ($key) {
+                'user_id' => (int) $value,
+                'only_operators' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+                default => $value,
+            })
             ->all();
     }
 
@@ -214,6 +165,7 @@ class ActivityLogController extends Controller
         return [
             'id' => $log->id,
             'user_id' => $log->user_id,
+            'unit_id' => $log->unit_id,
             'user_name' => $log->user_name ?: 'Sistem',
             'user_role' => $log->user_role,
             'action' => $log->action,

@@ -61,7 +61,8 @@
 import { ref, computed, onMounted } from 'vue'
 import AppShell from '../../Components/AppShell.vue'
 import { useAuth } from '../../composables/useAuth.js'
-const { can } = useAuth()
+import { canAccessAdminModule } from '../../permissions.js'
+const { user, can } = useAuth()
 const query = ref('')
 const stats = ref([
   { code:'SANTRI TERDAFTAR', value:'—', label:'Santri', desc:'Terdaftar di SIA' },
@@ -98,6 +99,7 @@ const manajemen = [
   { to:'/app/admin/kelas', label:'Kelas', desc:'Master kelas & tahun ajaran', icon:'meeting_room', bg:'bg-surface-container', permission:'classrooms.update' },
   { to:'/app/admin/mapel', label:'Mata Pelajaran', desc:'Master mapel & kode', icon:'menu_book', bg:'bg-surface-container-low', permission:'subjects.update' },
   { to:'/app/admin/teachers', label:'Data Guru', desc:'Kelola Asatidz & status akun', icon:'person', bg:'bg-secondary-container', permission:'teachers.update' },
+  { to:'/app/operator/akun', label:'Akun & Hak Akses', desc:'Peran, unit, jabatan & status akun', icon:'manage_accounts', bg:'bg-tertiary-fixed', permission:'users.update' },
   { to:'/app/bendahara', label:'Keuangan & SPP', desc:'Pemasukan, pengeluaran, tagihan & laporan', icon:'account_balance_wallet', bg:'bg-primary-fixed', permission:'finance.view' },
   { to:'/app/admin/import-siswa', label:'Import Siswa', desc:'Template, preview & import XLSX', icon:'upload_file', bg:'bg-secondary-container', permission:'students.import' },
   { to:'/app/admin/schedules', label:'Jadwal Pelajaran', desc:'Kelola jadwal mengajar harian', icon:'calendar_month', bg:'bg-primary-fixed', permission:'schedules.update' },
@@ -110,14 +112,14 @@ const konten = [
   { to:'/app/admin/settings?tab=berita', label:'Berita & Kategori', desc:'Artikel publish/draft', icon:'newspaper', bg:'bg-primary-fixed', permission:'content.news.update' },
   { to:'/app/admin/settings?tab=galeri', label:'Galeri & Album', desc:'Foto & video per album', icon:'photo_library', bg:'bg-tertiary-fixed', permission:'content.gallery.update' },
   { to:'/app/admin/settings?tab=ppdb', label:'PPDB & Pendaftar', desc:'Gelombang & status seleksi', icon:'edit_note', bg:'bg-primary-fixed', permission:'ppdb.waves.update' },
-  { to:'/app/admin/settings?tab=akun', label:'Portal / Akun', desc:'Kelola akun lintas peran', icon:'group', bg:'bg-surface-container-high', permission:'users.update' },
+  { to:'/app/admin/settings?tab=keamanan', label:'Keamanan', desc:'Audit log & keamanan akses', icon:'security', bg:'bg-primary-fixed', permission:'logs.view', adminOnly:true },
 ]
 const filteredManajemen = computed(() => filterModules(manajemen))
 const filteredKonten = computed(() => filterModules(konten))
 function filterModules(list) {
   const q = query.value.trim().toLowerCase()
   return list
-    .filter((m) => !m.permission || can(m.permission))
+    .filter((m) => canAccessAdminModule(user.value, m))
     .filter((m) => !q || m.label.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q))
 }
 </script>

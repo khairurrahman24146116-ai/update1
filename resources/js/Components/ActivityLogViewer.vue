@@ -24,7 +24,15 @@
         </select>
         <select v-model="filters.user_id" class="input">
           <option value="">Semua pengguna</option>
-          <option v-for="u in options.users" :key="u.id" :value="u.id">{{ u.name }}{{ u.role ? ` · ${roleLabel(u.role)}` : '' }}</option>
+          <option v-for="u in options.users" :key="u.id" :value="u.id">{{ u.name }}{{ u.role ? ` A� ${roleLabel(u.role)}` : '' }}</option>
+        </select>
+        <select v-model="filters.role" class="input">
+          <option value="">Semua peran</option>
+          <option v-for="r in options.roles" :key="r.value" :value="r.value">{{ r.label }}</option>
+        </select>
+        <select v-model="filters.unit" class="input">
+          <option value="">Semua unit</option>
+          <option v-for="u in options.units" :key="u.value" :value="u.value">{{ u.label }}</option>
         </select>
         <div class="flex items-center gap-2">
           <input v-model="filters.from" type="date" class="input min-w-0" title="Dari tanggal" />
@@ -148,8 +156,8 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 defineProps({ heading: { type: Boolean, default: true } })
 
-const filters = reactive({ search: '', module: '', action: '', user_id: '', from: '', to: '' })
-const options = ref({ actions: [], modules: [], users: [] })
+const filters = reactive({ search: '', module: '', action: '', user_id: '', role: '', unit: '', from: '', to: '' })
+const options = ref({ actions: [], modules: [], users: [], roles: [], units: [] })
 const logs = ref([])
 const meta = ref({ total: 0, current_page: 1, last_page: 1 })
 const perPage = ref(25)
@@ -167,7 +175,7 @@ const filteredActions = computed(() =>
 )
 
 function roleLabel(role) {
-  return ({ admin: 'Admin', guru: 'Guru', bendahara: 'Bendahara', bendahara_lpi: 'Bendahara LPI', bendahara_sma: 'Bendahara SMA', wali_murid: 'Wali Murid' })[role] || role || '-'
+  return ({ admin_utama: 'Admin Utama', admin: 'Admin', operator: 'Operator', pending: 'Menunggu Hak Akses', kepala_sekolah: 'Kepala Sekolah', guru: 'Guru', bendahara: 'Bendahara', bendahara_lpi: 'Bendahara LPI', bendahara_sma: 'Bendahara SMA', wali_murid: 'Wali Murid' })[role] || role || '-'
 }
 
 function notify(text, type = 'success') {
@@ -191,7 +199,7 @@ function apply() {
 }
 
 function reset() {
-  Object.assign(filters, { search: '', module: '', action: '', user_id: '', from: '', to: '' })
+  Object.assign(filters, { search: '', module: '', action: '', user_id: '', role: '', unit: '', from: '', to: '' })
   goPage(1)
 }
 
@@ -290,3 +298,4 @@ onMounted(async () => {
   await Promise.all([loadOptions(), load()])
 })
 </script>
+

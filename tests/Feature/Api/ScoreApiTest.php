@@ -27,7 +27,7 @@ class ScoreApiTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->admin = User::factory()->create(['role' => 'admin_utama']);
         $this->classroom = Classroom::create(['name' => 'X-1', 'grade' => 10, 'academic_year' => '2026/2027']);
         $this->subject = Subject::create(['name' => 'Fisika', 'code' => 'FIS']);
         $this->student = Student::create([

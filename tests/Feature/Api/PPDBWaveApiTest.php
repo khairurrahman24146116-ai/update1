@@ -14,7 +14,7 @@ class PPDBWaveApiTest extends TestCase
 
     public function test_delete_removes_wave_from_database(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $wave = $this->createWave();
 
         $this->actingAs($admin)
@@ -26,7 +26,7 @@ class PPDBWaveApiTest extends TestCase
 
     public function test_delete_returns_409_when_wave_has_registrations(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $wave = $this->createWave();
         PPDBRegistration::create(['wave_id' => $wave->id, 'name' => 'Siswa Uji']);
 
@@ -40,7 +40,7 @@ class PPDBWaveApiTest extends TestCase
 
     public function test_update_persists_changes_without_creating_a_second_row(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $wave = $this->createWave();
 
         $this->actingAs($admin)
@@ -55,7 +55,7 @@ class PPDBWaveApiTest extends TestCase
 
     public function test_show_returns_404_when_wave_is_missing(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
 
         $this->actingAs($admin)
             ->getJson('/api/ppdb-waves/999999')
@@ -64,7 +64,7 @@ class PPDBWaveApiTest extends TestCase
 
     public function test_create_returns_201_and_persists_wave(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
 
         $this->actingAs($admin)
             ->postJson('/api/ppdb-waves', ['name' => 'Gelombang Baru', 'status' => 'buka'])

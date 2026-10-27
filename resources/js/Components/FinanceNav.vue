@@ -60,7 +60,7 @@ const route = useRoute()
 const { user } = useAuth()
 const from = ref(props.from)
 const to = ref(props.to)
-const isAdmin = computed(() => user.value?.role === 'admin')
+const isAdmin = computed(() => ['admin_utama', 'admin'].includes(user.value?.role))
 const selectedUnit = ref(financeUnit())
 
 watch(() => props.from, (v) => { from.value = v })
@@ -105,3 +105,4 @@ function resetRange() {
   emitRange()
 }
 </script>
+

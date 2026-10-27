@@ -28,6 +28,6 @@ class ImportBatchPolicy
             return false;
         }
 
-        return $user->isAdmin() || (int) $batch->diimport_oleh === (int) $user->id;
+        return $user->isAdminUtama() || (int) $batch->diimport_oleh === (int) $user->id;
     }
 }

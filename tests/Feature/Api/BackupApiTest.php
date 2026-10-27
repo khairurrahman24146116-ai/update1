@@ -14,7 +14,7 @@ class BackupApiTest extends TestCase
     public function test_admin_can_backup(): void
     {
         Storage::fake('backups');
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $res = $this->actingAs($admin)->postJson('/api/backups')->assertOk()->assertJsonStructure(['filename', 'size']);
         $fn = $res->json('filename');
         Storage::disk('backups')->assertExists($fn);
@@ -24,7 +24,7 @@ class BackupApiTest extends TestCase
     public function test_backup_file_private(): void
     {
         Storage::fake('backups');
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $res = $this->actingAs($admin)->postJson('/api/backups')->assertOk();
         $fn = $res->json('filename');
         $this->assertTrue((bool) preg_match('/^madani-\d{8}-\d{6}\.sql\.gz$/', $fn));
@@ -54,7 +54,7 @@ class BackupApiTest extends TestCase
     public function test_path_traversal_rejected(): void
     {
         Storage::fake('backups');
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $this->actingAs($admin)->getJson('/api/backups/download/madani-evil.sql.gz')->assertStatus(404);
         $this->actingAs($admin)->getJson('/api/backups/download/madani-20260101-120000.sql')->assertStatus(404);
         $this->actingAs($admin)->getJson('/api/backups/download/notmadani-20260101-120000.sql.gz')->assertStatus(404);
@@ -63,7 +63,7 @@ class BackupApiTest extends TestCase
     public function test_backup_download_admin_only(): void
     {
         Storage::fake('backups');
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $res = $this->actingAs($admin)->postJson('/api/backups')->assertOk();
         $fn = $res->json('filename');
         $this->actingAs($admin)->get('/api/backups/download/'.$fn)->assertOk();

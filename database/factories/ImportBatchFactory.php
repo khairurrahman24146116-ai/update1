@@ -19,7 +19,7 @@ class ImportBatchFactory extends Factory
     {
         return [
             'file_name' => 'import-siswa.xlsx',
-            'diimport_oleh' => User::factory()->state(['role' => 'admin']),
+            'diimport_oleh' => User::factory()->state(['role' => 'admin_utama']),
             'tahun_ajaran_id' => AcademicYear::factory(),
             'total_baris' => 0,
             'berhasil' => 0,

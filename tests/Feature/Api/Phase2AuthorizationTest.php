@@ -70,16 +70,73 @@ class Phase2AuthorizationTest extends TestCase
             ->assertStatus(403);
     }
 
+    public function test_kepala_sekolah_can_create_student_and_class_in_own_unit_but_cannot_delete(): void
+    {
+        $kepala = $this->userForUnit('kepala_sekolah', 'SMA');
+
+        $classroomId = $this->actingAs($kepala)->postJson('/api/classrooms', [
+            'name' => 'X-Baru',
+            'grade' => 10,
+            'academic_year' => '2026/2027',
+            'unit' => 'sma',
+        ])->assertCreated()->json('id');
+
+        $student = $this->actingAs($kepala)->postJson('/api/students', [
+            'nis' => 'NIS-BARU',
+            'name' => 'Siswa Baru',
+            'gender' => 'L',
+            'classroom_id' => $classroomId,
+            'status' => 'aktif',
+        ])->assertCreated()->json();
+
+        $this->actingAs($kepala)
+            ->deleteJson("/api/students/{$student['id']}")
+            ->assertStatus(403);
+
+        $this->actingAs($kepala)
+            ->deleteJson("/api/classrooms/{$classroomId}")
+            ->assertStatus(403);
+    }
+
+    public function test_only_admin_utama_can_permanently_delete_student_or_classroom(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin_utama', 'is_protected' => false]);
+        $classroom = $this->classroom('SMA', 10, 'X-Hapus');
+        $student = $this->student($classroom, 'Siswa Hapus');
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/students/{$student->id}")
+            ->assertNoContent();
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/classrooms/{$classroom->id}")
+            ->assertNoContent();
+    }
+
+    public function test_kepala_sekolah_class_is_forced_to_own_unit(): void
+    {
+        $kepala = $this->userForUnit('kepala_sekolah', 'SMA');
+
+        $this->actingAs($kepala)->postJson('/api/classrooms', [
+            'name' => 'VII-Luar',
+            'grade' => 7,
+            'academic_year' => '2026/2027',
+            'unit' => 'smp',
+        ])->assertCreated()
+            ->assertJsonPath('unit', 'sma');
+    }
+
     public function test_kepala_sekolah_cannot_access_account_management(): void
     {
         $kepala = $this->userForUnit('kepala_sekolah', 'SMA');
 
-        $this->actingAs($kepala)->getJson('/api/users')->assertStatus(403);
-        $this->actingAs($kepala)->postJson('/api/users', [
+        $this->actingAs($kepala)->getJson('/api/accounts')->assertStatus(403);
+        $this->actingAs($kepala)->postJson('/api/accounts', [
             'name' => 'Akun Baru',
             'email' => 'akun-baru@madani.test',
             'password' => 'password123',
             'role' => 'guru',
+            'units' => [['code' => 'SMA', 'jabatan' => 'Guru']],
         ])->assertStatus(403);
     }
 
@@ -102,17 +159,18 @@ class Phase2AuthorizationTest extends TestCase
         $operator = User::factory()->create(['role' => 'operator']);
         $otherOperator = User::factory()->create(['role' => 'operator']);
         $guru = User::factory()->create(['role' => 'guru']);
+        $guru->units()->attach(Unit::where('kode', 'SMA')->value('id'));
 
         $this->actingAs($operator)
-            ->putJson("/api/users/{$operator->id}", ['name' => 'Ubah Sendiri'])
+            ->putJson("/api/accounts/{$operator->id}", ['name' => 'Ubah Sendiri'])
             ->assertStatus(403);
 
         $this->actingAs($operator)
-            ->putJson("/api/users/{$otherOperator->id}", ['name' => 'Ubah Operator'])
+            ->putJson("/api/accounts/{$otherOperator->id}", ['name' => 'Ubah Operator'])
             ->assertStatus(403);
 
         $this->actingAs($operator)
-            ->putJson("/api/users/{$guru->id}", ['name' => 'Ubah Guru'])
+            ->putJson("/api/accounts/{$guru->id}", ['name' => 'Ubah Guru'])
             ->assertOk();
     }
 

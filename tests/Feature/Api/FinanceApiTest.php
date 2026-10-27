@@ -112,7 +112,7 @@ class FinanceApiTest extends TestCase
 
     public function test_admin_can_query_specific_unit(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         FinanceTransaction::factory()->unit('lpi')->income()->create(['description' => 'LPI']);
         FinanceTransaction::factory()->unit('sma')->income()->create(['description' => 'SMA']);
 
@@ -124,7 +124,7 @@ class FinanceApiTest extends TestCase
 
     public function test_admin_can_create_transaction_for_selected_unit(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
 
         $this->actingAs($admin)->postJson('/api/finance/transactions?unit=lpi', [
             'type' => 'income',
@@ -248,7 +248,7 @@ class FinanceApiTest extends TestCase
 
     public function test_cancelling_payment_removes_income_and_reverts_invoice(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $invoice = SppInvoice::factory()->create(['unit' => 'sma', 'amount' => 500000]);
         $payment = SppPayment::factory()->create([
             'spp_invoice_id' => $invoice->id,

@@ -47,6 +47,7 @@ class PermissionCatalog
                 'teachers.create' => 'Menambah guru',
                 'teachers.update' => 'Mengedit guru',
                 'teachers.delete' => 'Menghapus guru',
+                'teachers.assignments' => 'Mengatur penugasan & wali kelas guru',
             ],
         ],
         'classrooms' => [
@@ -88,6 +89,7 @@ class PermissionCatalog
                 'attendance.import' => 'Mengimpor absensi (XLSX)',
                 'attendance.teacher.view' => 'Melihat absensi guru',
                 'attendance.teacher.checkin' => 'Check-in / check-out guru',
+                'attendance.teacher.manage' => 'Mengelola rekap & absensi guru',
             ],
         ],
         'scores' => [
@@ -202,7 +204,7 @@ class PermissionCatalog
         ],
         'activity_logs' => [
             'label' => 'Log Aktivitas',
-            'description' => 'Riwayat aktivitas pengguna, ekspor, dan retensi log.',
+            'description' => 'Riwayat aktivitas pengguna dan ekspor log.',
             'permissions' => [
                 'logs.view' => 'Melihat log aktivitas',
             ],
@@ -246,11 +248,11 @@ class PermissionCatalog
         'admin' => [
             'dashboard.view',
             'students.view', 'students.create', 'students.update', 'students.delete', 'students.import', 'students.export',
-            'teachers.view', 'teachers.create', 'teachers.update', 'teachers.delete',
+            'teachers.view', 'teachers.create', 'teachers.update', 'teachers.delete', 'teachers.assignments',
             'classrooms.view', 'classrooms.create', 'classrooms.update', 'classrooms.delete',
             'subjects.view', 'subjects.create', 'subjects.update', 'subjects.delete',
             'schedules.view', 'schedules.create', 'schedules.update', 'schedules.delete',
-            'attendance.view', 'attendance.import', 'attendance.teacher.view',
+            'attendance.view', 'attendance.import', 'attendance.teacher.view', 'attendance.teacher.manage',
             'scores.view', 'scores.update',
             'finance.view',
             'finance.transactions.view', 'finance.transactions.create', 'finance.transactions.update', 'finance.transactions.delete',
@@ -274,21 +276,19 @@ class PermissionCatalog
         ],
         'operator' => [
             'dashboard.view',
-            'students.view', 'students.create', 'students.update', 'students.delete', 'students.import', 'students.export',
-            'teachers.view', 'teachers.create', 'teachers.update', 'teachers.delete',
-            'classrooms.view',
+            'teachers.view', 'teachers.create', 'teachers.update',
             'subjects.view',
             'schedules.view',
-            'users.view', 'users.create', 'users.update', 'users.delete',
+            'users.view', 'users.create', 'users.update',
         ],
         'kepala_sekolah' => [
             'dashboard.view',
-            'students.view', 'students.update',
-            'teachers.view',
-            'classrooms.view', 'classrooms.update',
+            'students.view', 'students.create', 'students.update',
+            'teachers.view', 'teachers.assignments',
+            'classrooms.view', 'classrooms.create', 'classrooms.update',
             'subjects.view',
             'schedules.view',
-            'attendance.view', 'attendance.teacher.view',
+            'attendance.view', 'attendance.teacher.view', 'attendance.teacher.manage',
             'scores.view',
         ],
         'guru' => [

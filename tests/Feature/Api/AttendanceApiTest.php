@@ -44,7 +44,7 @@ class AttendanceApiTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->admin = User::factory()->create(['role' => 'admin_utama']);
         $this->guru = User::factory()->create(['role' => 'guru']);
         $this->guruLain = User::factory()->create(['role' => 'guru']);
         $this->wali = User::factory()->create(['role' => 'wali_murid']);

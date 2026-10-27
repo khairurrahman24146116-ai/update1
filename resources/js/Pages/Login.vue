@@ -187,7 +187,7 @@ const cleanUrl = urlParams.toString() ? location.pathname + '?' + urlParams.toSt
 const form = ref({ identity: '', password: '', remember: true })
 const fieldErrors = ref({ identity: '', password: '' })
 const attemptKey = ref(0)
-const map = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
+const map = { admin_utama: '/app/admin', operator: '/app/operator/akun', pending: '/app/pending', kepala_sekolah: '/app/kepala/guru', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
 
 const errorMeta = computed(() => {
   switch (authErrorCode.value) {

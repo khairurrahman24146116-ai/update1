@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
@@ -25,8 +26,10 @@ use App\Http\Controllers\Api\StructureMemberController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\StudentImportController;
 use App\Http\Controllers\Api\SubjectController;
+use App\Http\Controllers\Api\TeacherAccountController;
 use App\Http\Controllers\Api\TeacherAttendanceController;
 use App\Http\Controllers\Api\TeacherController;
+use App\Http\Controllers\Api\TeacherDirectoryController;
 use App\Http\Controllers\Api\UserController;
 use App\Models\LandingSection;
 use App\Models\SchoolPrincipal;
@@ -49,13 +52,13 @@ Route::post('/ppdb-registrations', [PPDBRegistrationController::class, 'publicSt
 Route::get('/organization-members/public', [OrganizationMemberController::class, 'publicIndex']);
 Route::get('/structure/{unit}', [StructureMemberController::class, 'publicShow']);
 
-Route::middleware(['auth:sanctum', 'active'])->group(function () {
+Route::middleware(['auth:sanctum', 'active', 'role.assigned'])->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/permissions/catalog', [PermissionController::class, 'catalog'])
-        ->middleware('permission:permissions.view,permissions.manage');
+        ->middleware(['role:admin_utama', 'permission:permissions.view,permissions.manage']);
 
     Route::middleware('permission:students.import')->prefix('import-siswa')->group(function () {
         Route::get('/options', [StudentImportController::class, 'options']);
@@ -73,15 +76,11 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         ->where('filename', '[A-Za-z0-9._-]+')
         ->middleware('permission:system.backup.download');
 
-    Route::middleware(['role:admin', 'permission:logs.view'])->prefix('activity-logs')->group(function () {
+    Route::middleware(['role:admin_utama', 'permission:logs.view'])->prefix('activity-logs')->group(function () {
         Route::get('/', [ActivityLogController::class, 'index']);
         Route::get('/options', [ActivityLogController::class, 'options']);
         Route::get('/export', [ActivityLogController::class, 'export']);
         Route::get('/pdf', [ActivityLogController::class, 'pdf']);
-        Route::get('/retention', [ActivityLogController::class, 'retention']);
-        Route::get('/retention/preview', [ActivityLogController::class, 'retentionPreview']);
-        Route::put('/retention', [ActivityLogController::class, 'updateRetention']);
-        Route::post('/prune', [ActivityLogController::class, 'prune']);
         Route::get('/{activityLog}', [ActivityLogController::class, 'show'])->whereNumber('activityLog');
     });
 
@@ -141,14 +140,41 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/spp/report', [SppController::class, 'report'])->middleware('permission:reports.finance.view');
     });
 
-    Route::get('/users', [UserController::class, 'index'])->middleware(['role:admin,operator', 'permission:users.view']);
-    Route::get('/users/stats', [UserController::class, 'stats'])->middleware(['role:admin,operator', 'permission:users.view']);
-    Route::post('/users', [UserController::class, 'store'])->middleware(['role:admin,operator', 'permission:users.create']);
-    Route::put('/users/{id}', [UserController::class, 'update'])->middleware(['role:admin,operator', 'permission:users.update']);
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware(['role:admin,operator', 'permission:users.delete']);
+    Route::get('/users', [UserController::class, 'index'])->middleware(['role:admin_utama', 'permission:users.view']);
+    Route::get('/users/stats', [UserController::class, 'stats'])->middleware(['role:admin_utama', 'permission:users.view']);
 
-    Route::get('/users/{id}/permissions', [PermissionController::class, 'show'])->middleware('permission:permissions.view,permissions.manage');
-    Route::put('/users/{id}/permissions', [PermissionController::class, 'update'])->middleware('permission:permissions.manage');
+    Route::prefix('accounts')->middleware('role:admin_utama,operator')->group(function () {
+        Route::get('/', [AccountController::class, 'index'])->middleware('permission:users.view');
+        Route::get('/options', [AccountController::class, 'options'])->middleware('permission:users.view');
+        Route::post('/', [AccountController::class, 'store'])->middleware('permission:users.create');
+        Route::put('/{id}', [AccountController::class, 'update'])->middleware('permission:users.update');
+        Route::post('/{id}/reset-password', [AccountController::class, 'resetPassword'])->middleware('permission:users.update');
+    });
+
+    Route::prefix('teacher-accounts')->middleware('role:admin_utama,operator')->group(function () {
+        Route::get('/', [TeacherAccountController::class, 'index'])->middleware('permission:teachers.view');
+        Route::get('/classrooms', [TeacherAccountController::class, 'classrooms'])->middleware('permission:teachers.view');
+        Route::post('/', [TeacherAccountController::class, 'store'])->middleware('permission:teachers.create');
+        Route::put('/{id}', [TeacherAccountController::class, 'update'])->middleware('permission:teachers.update');
+    });
+
+    Route::prefix('teacher-directory')
+        ->middleware('role:admin_utama,operator,kepala_sekolah')
+        ->group(function () {
+            Route::get('/', [TeacherDirectoryController::class, 'index'])->middleware('permission:teachers.view');
+            Route::get('/options', [TeacherDirectoryController::class, 'options'])->middleware('permission:teachers.view');
+            Route::post('/', [TeacherDirectoryController::class, 'store'])->middleware('permission:teachers.create');
+            Route::get('/{teacher}/attendance', [TeacherDirectoryController::class, 'attendance'])->middleware('permission:attendance.teacher.view');
+            Route::put('/{teacher}/attendance/{attendance}', [TeacherDirectoryController::class, 'updateAttendance'])->middleware('permission:attendance.teacher.manage');
+            Route::put('/{teacher}/assignments', [TeacherDirectoryController::class, 'updateAssignments'])->middleware('permission:teachers.assignments');
+            Route::put('/{teacher}/units', [TeacherDirectoryController::class, 'updateUnits'])->middleware('permission:teachers.update');
+            Route::post('/{teacher}/photo', [TeacherDirectoryController::class, 'uploadPhoto'])->middleware('permission:teachers.update');
+            Route::put('/{teacher}', [TeacherDirectoryController::class, 'update'])->middleware('permission:teachers.update');
+            Route::get('/{teacher}', [TeacherDirectoryController::class, 'show'])->middleware('permission:teachers.view');
+        });
+
+    Route::get('/users/{id}/permissions', [PermissionController::class, 'show'])->middleware(['role:admin_utama', 'permission:permissions.view,permissions.manage']);
+    Route::put('/users/{id}/permissions', [PermissionController::class, 'update'])->middleware(['role:admin_utama', 'permission:permissions.manage']);
 
     Route::apiResource('classrooms', ClassroomController::class)
         ->only(['store', 'update', 'destroy'])

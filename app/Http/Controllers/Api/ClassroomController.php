@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Classroom;
+use App\Models\Teacher;
+use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\ClassroomService;
 use Illuminate\Http\Request;
@@ -52,10 +54,12 @@ class ClassroomController extends Controller
             'jalur' => 'sometimes|in:formal,lpi',
             'jenjang' => 'sometimes|in:SMP,SMA,Tsanawiyah,Aliyah',
             'tahun_ajaran_id' => 'sometimes|integer|exists:academic_years,id',
+            'wali_kelas_id' => 'sometimes|nullable|integer|exists:teachers,id',
         ]);
         if ($unit = $this->unitRestriction($request)) {
             $v['unit'] = $unit;
         }
+        $this->ensureWaliKelasAccess($request->user(), $v['unit'] ?? null, $v['wali_kelas_id'] ?? null);
         $request->validate([
             'name' => [Rule::unique('classrooms', 'name')->where('academic_year', $year)],
         ]);
@@ -85,9 +89,14 @@ class ClassroomController extends Controller
             'jalur' => 'sometimes|in:formal,lpi',
             'jenjang' => 'sometimes|in:SMP,SMA,Tsanawiyah,Aliyah',
             'tahun_ajaran_id' => 'sometimes|integer|exists:academic_years,id',
+            'wali_kelas_id' => 'sometimes|nullable|integer|exists:teachers,id',
         ]);
         if ($unit = $this->unitRestriction($request)) {
             $v['unit'] = $unit;
+        }
+        if (array_key_exists('wali_kelas_id', $v)) {
+            $this->authorize('assignWaliKelas', $c);
+            $this->ensureWaliKelasAccess($request->user(), $v['unit'] ?? $c->unit, $v['wali_kelas_id']);
         }
         $updated = $this->service->update($c, $v);
         ActivityLogger::log('classroom.update', $request->user(), Classroom::class, $id, $v);
@@ -105,6 +114,32 @@ class ClassroomController extends Controller
         return response()->noContent();
     }
 
+    private function ensureWaliKelasAccess(?User $user, ?string $classroomUnit, ?int $teacherId): void
+    {
+        if ($teacherId === null || $user?->isAdmin()) {
+            return;
+        }
+
+        $teacher = Teacher::query()->with('units')->find($teacherId);
+
+        if (! $teacher) {
+            abort(422, 'Guru wali kelas tidak ditemukan.');
+        }
+
+        if ($classroomUnit === null || trim($classroomUnit) === '') {
+            abort(422, 'Tentukan unit kelas sebelum memilih wali kelas.');
+        }
+
+        $matches = $teacher->units
+            ->pluck('kode')
+            ->map(fn (string $code): string => strtolower($code))
+            ->contains(strtolower($classroomUnit));
+
+        if (! $matches) {
+            abort(403, 'Guru wali kelas berada di luar unit kelas ini.');
+        }
+    }
+
     /**
      * Akun non-admin yang memiliki unit hanya boleh membuat/mengubah kelas
      * pada unitnya sendiri.
@@ -113,7 +148,7 @@ class ClassroomController extends Controller
     {
         $user = $request->user();
 
-        if (! $user || $user->isAdmin() || $user->isOperator()) {
+        if (! $user || $user->isAdmin()) {
             return null;
         }
 

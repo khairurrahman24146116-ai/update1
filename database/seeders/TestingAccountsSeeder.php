@@ -18,7 +18,7 @@ class TestingAccountsSeeder extends Seeder
     {
         $password = Hash::make('password123');
 
-        $roles = ['admin', 'guru', 'bendahara_lpi', 'bendahara_sma', 'wali_murid'];
+        $roles = ['admin_utama', 'operator', 'pending', 'guru', 'bendahara_lpi', 'bendahara_sma', 'wali_murid'];
 
         foreach ($roles as $role) {
             User::updateOrCreate(
@@ -33,7 +33,7 @@ class TestingAccountsSeeder extends Seeder
                         default => null,
                     },
                     'is_active' => true,
-                    'is_protected' => $role === 'admin',
+                    'is_protected' => $role === 'admin_utama',
                 ]
             );
         }

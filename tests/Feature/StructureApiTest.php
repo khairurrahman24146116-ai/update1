@@ -16,7 +16,7 @@ class StructureApiTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role' => 'admin']);
+        return User::factory()->create(['role' => 'admin_utama']);
     }
 
     public function test_public_endpoint_returns_tree_for_each_unit(): void

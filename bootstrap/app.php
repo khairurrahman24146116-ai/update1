@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckActiveUser;
+use App\Http\Middleware\EnsureRoleAssigned;
 use App\Http\Middleware\EnsureUnitAccess;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'active' => CheckActiveUser::class,
+            'role.assigned' => EnsureRoleAssigned::class,
             'unit' => EnsureUnitAccess::class,
         ]);
     })

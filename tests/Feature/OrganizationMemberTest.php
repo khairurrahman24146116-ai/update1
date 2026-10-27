@@ -44,7 +44,7 @@ class OrganizationMemberTest extends TestCase
 
     public function test_admin_can_manage_organization_members(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
 
         $res = $this->actingAs($admin)->postJson('/api/organization-members', [
             'position' => 'Pimpinan Dayah',
@@ -67,7 +67,7 @@ class OrganizationMemberTest extends TestCase
 
     public function test_update_prevents_hierarchy_cycle(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $parent = OrganizationMember::create(['position' => 'Pimpinan']);
         $child = OrganizationMember::create(['position' => 'Bawahan', 'parent_id' => $parent->id]);
 
@@ -79,7 +79,7 @@ class OrganizationMemberTest extends TestCase
 
     public function test_photo_upload_rejects_svg_and_accepts_jpg(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
 
         $svg = UploadedFile::fake()->create('icon.svg', 10, 'image/svg+xml');
         $this->actingAs($admin)

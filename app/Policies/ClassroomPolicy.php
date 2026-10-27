@@ -9,12 +9,12 @@ class ClassroomPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('classrooms.view');
+        return ! $user->isOperator() && $user->hasPermission('classrooms.view');
     }
 
     public function view(User $user, Classroom $classroom): bool
     {
-        if (! $user->hasPermission('classrooms.view')) {
+        if ($user->isOperator() || ! $user->hasPermission('classrooms.view')) {
             return false;
         }
 
@@ -27,27 +27,33 @@ class ClassroomPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasPermission('classrooms.create');
+        return ! $user->isOperator() && $user->hasPermission('classrooms.create');
     }
 
     public function update(User $user, Classroom $classroom): bool
     {
-        return $user->hasPermission('classrooms.update') && $this->withinAccess($user, $classroom);
+        return ! $user->isOperator()
+            && $user->hasPermission('classrooms.update')
+            && $this->withinAccess($user, $classroom);
     }
 
     public function delete(User $user, Classroom $classroom): bool
     {
-        return $user->hasPermission('classrooms.delete') && $this->withinAccess($user, $classroom);
+        return $user->isAdminUtama()
+            && $user->hasPermission('classrooms.delete')
+            && $this->withinAccess($user, $classroom);
     }
 
     public function assignWaliKelas(User $user, Classroom $classroom): bool
     {
-        return $user->hasPermission('classrooms.update') && $this->withinAccess($user, $classroom);
+        return ! $user->isOperator()
+            && $user->hasPermission('classrooms.update')
+            && $this->withinAccess($user, $classroom);
     }
 
     private function withinAccess(User $user, Classroom $classroom): bool
     {
-        if ($user->isAdmin() || $user->isOperator()) {
+        if ($user->isAdmin()) {
             return true;
         }
 

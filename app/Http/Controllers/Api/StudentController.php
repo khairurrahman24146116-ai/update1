@@ -95,7 +95,7 @@ class StudentController extends Controller
 
     private function ensureClassroomAccess(?User $user, int $classroomId): void
     {
-        if (! $user || $user->isAdmin() || $user->isOperator()) {
+        if (! $user || $user->isAdmin()) {
             return;
         }
 

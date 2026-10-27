@@ -135,7 +135,7 @@ const dirty = computed(() => {
   return a !== [...initial.value.allow].sort().join(',') || d !== [...initial.value.deny].sort().join(',')
 })
 const allAssignableSelected = computed(() => {
-  if (!data.value || data.value.user?.role === 'admin') return false
+  if (!data.value || ['admin_utama', 'admin'].includes(data.value.user?.role)) return false
 
   const assignable = data.value.modules
     .flatMap((m) => m.permissions)
@@ -152,7 +152,7 @@ const filteredModules = computed(() => {
     .filter((m) => m.permissions.length)
 })
 
-function labelRole(r) { return ({ admin: 'Admin', guru: 'Guru', bendahara_lpi: 'Bendahara LPI', bendahara_sma: 'Bendahara SMA', wali_murid: 'Wali Murid' })[r] || r }
+function labelRole(r) { return ({ admin_utama: 'Admin Utama', admin: 'Admin', operator: 'Operator', pending: 'Menunggu Hak Akses', kepala_sekolah: 'Kepala Sekolah', guru: 'Guru', bendahara_lpi: 'Bendahara LPI', bendahara_sma: 'Bendahara SMA', wali_murid: 'Wali Murid' })[r] || r }
 function isEffective(key) {
   if (deny.value.has(key)) return false
   if (allow.value.has(key)) return true
@@ -165,7 +165,7 @@ function sourceOf(key) {
 }
 function canToggle(p) {
   if (!data.value?.can_manage) return false
-  if (privileged.value.has(p.key) && data.value.user?.role !== 'admin') return false
+  if (privileged.value.has(p.key) && !['admin_utama', 'admin'].includes(data.value.user?.role)) return false
   return true
 }
 function toggle(p) {
@@ -223,3 +223,6 @@ async function save() {
 }
 onMounted(load)
 </script>
+
+
+

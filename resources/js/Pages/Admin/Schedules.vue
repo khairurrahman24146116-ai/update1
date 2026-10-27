@@ -8,7 +8,7 @@
         <option v-for="d in days" :key="d" :value="d">{{ labelDay(d) }}</option>
       </select>
       <button @click="load" class="btn btn--primary btn--sm">Cari</button>
-      <button v-if="user?.role === 'admin'" @click="openForm" class="btn btn--ghost btn--sm">+ Tambah Jadwal</button>
+      <button v-if="isAdmin" @click="openForm" class="btn btn--ghost btn--sm">+ Tambah Jadwal</button>
     </div>
 
     <div v-if="loading" class="p-8 text-center text-sm text-on-surface-variant">Memuat data...</div>
@@ -20,8 +20,8 @@
         <div class="text-xs text-on-surface-variant">Guru: {{ s.teacher?.name ?? '—' }}</div>
         <div class="flex gap-2 pt-2">
           <router-link v-if="user?.role === 'guru'" :to="`/app/guru/absensi?schedule=${s.id}&date=${today}`" class="btn btn--secondary btn--sm">Absen</router-link>
-          <button v-if="user?.role === 'admin'" @click="openEdit(s)" class="btn btn--ghost btn--sm">Edit</button>
-          <button v-if="user?.role === 'admin'" @click="remove(s.id)" class="btn btn--destructive btn--sm">Hapus</button>
+          <button v-if="isAdmin" @click="openEdit(s)" class="btn btn--ghost btn--sm">Edit</button>
+          <button v-if="isAdmin" @click="remove(s.id)" class="btn btn--destructive btn--sm">Hapus</button>
         </div>
       </div>
     </div>
@@ -93,12 +93,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import BackButton from '../../Components/BackButton.vue'
 import EmptyState from '../../Components/EmptyState.vue'
 import AppShell from '../../Components/AppShell.vue'
 import { useAuth } from '../../composables/useAuth.js'
+import { isAdminUser } from '../../permissions.js'
 const { user } = useAuth()
+const isAdmin = computed(() => isAdminUser(user.value))
 
 const search = ref('')
 const filterDay = ref('')

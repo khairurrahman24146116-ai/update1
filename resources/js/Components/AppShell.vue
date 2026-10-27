@@ -69,17 +69,17 @@ watchEffect(() => {
 onMounted(() => { load(); refreshUser().catch(() => {}) })
 
 const roleLabel = computed(() => {
-  const map = { admin: 'Admin', guru: 'Guru', bendahara: 'Bendahara', bendahara_lpi: 'Bendahara LPI', bendahara_sma: 'Bendahara SMA', wali_murid: 'Wali Murid' }
+  const map = { admin_utama: 'Admin Utama', admin: 'Admin', pending: 'Menunggu Hak Akses', operator: 'Operator', kepala_sekolah: 'Kepala Sekolah', guru: 'Guru', bendahara: 'Bendahara', bendahara_lpi: 'Bendahara LPI', bendahara_sma: 'Bendahara SMA', wali_murid: 'Wali Murid' }
   return map[user.value?.role] || 'Pengguna'
 })
 
-const squareShell = computed(() => ['admin', 'bendahara', 'bendahara_lpi', 'bendahara_sma'].includes(user.value?.role))
+const squareShell = computed(() => ['admin', 'admin_utama', 'bendahara', 'bendahara_lpi', 'bendahara_sma'].includes(user.value?.role))
 
-const showAdminPanel = computed(() => user.value?.role !== 'admin' && isAdminAreaUser.value)
-const showFinancePanel = computed(() => !['admin', 'bendahara_lpi', 'bendahara_sma'].includes(user.value?.role) && isFinanceAreaUser.value)
+const showAdminPanel = computed(() => !['admin', 'admin_utama', 'operator', 'kepala_sekolah'].includes(user.value?.role) && isAdminAreaUser.value)
+const showFinancePanel = computed(() => !['admin', 'admin_utama', 'bendahara_lpi', 'bendahara_sma'].includes(user.value?.role) && isFinanceAreaUser.value)
 
 const homePath = computed(() => {
-  const map = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
+  const map = { admin_utama: '/app/admin', admin: '/app/admin', pending: '/app/pending', operator: '/app/operator/akun', kepala_sekolah: '/app/kepala/guru', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
   return map[user.value?.role] || '/'
 })
 
@@ -94,3 +94,6 @@ function dismissDenied() {
   router.replace({ query })
 }
 </script>
+
+
+

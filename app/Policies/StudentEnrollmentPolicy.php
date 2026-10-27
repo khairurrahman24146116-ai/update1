@@ -9,16 +9,16 @@ class StudentEnrollmentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('students.view');
+        return ! $user->isOperator() && $user->hasPermission('students.view');
     }
 
     public function view(User $user, StudentEnrollment $enrollment): bool
     {
-        if (! $user->hasPermission('students.view')) {
+        if ($user->isOperator() || ! $user->hasPermission('students.view')) {
             return false;
         }
 
-        if ($user->isAdmin() || $user->isOperator()) {
+        if ($user->isAdmin()) {
             return true;
         }
 
@@ -31,16 +31,19 @@ class StudentEnrollmentPolicy
 
     public function create(User $user): bool
     {
-        return $user->isAdmin() || $user->isOperator();
+        return $user->isAdminUtama() || ($user->isKepalaSekolah() && $user->hasPermission('students.create'));
     }
 
     public function update(User $user, StudentEnrollment $enrollment): bool
     {
-        return $user->isAdmin() || $user->isOperator();
+        return $user->isAdminUtama()
+            || ($user->isKepalaSekolah()
+                && $user->hasPermission('students.update')
+                && $user->canAccessDataUnit($enrollment->unit?->kode));
     }
 
     public function delete(User $user, StudentEnrollment $enrollment): bool
     {
-        return $user->isAdmin() || $user->isOperator();
+        return $user->isAdminUtama();
     }
 }

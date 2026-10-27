@@ -15,12 +15,15 @@ import BendaharaPayments from './Pages/Bendahara/Payments.vue'
 import BendaharaReports from './Pages/Bendahara/Reports.vue'
 import BendaharaPreview from './Pages/Bendahara/Preview.vue'
 import WaliMuridDashboard from './Pages/WaliMurid/Dashboard.vue'
+import OperatorAkun from './Pages/Operator/Akun.vue'
+import PendingAccess from './Pages/PendingAccess.vue'
 import AdminSettings from './Pages/Admin/Settings.vue'
 import AdminHomepageSettings from './Pages/Admin/HomepageSettings.vue'
 import AdminOrganization from './Pages/Admin/Organization.vue'
 import AdminStructure from './Pages/Admin/Structure.vue'
 import AdminStudents from './Pages/Admin/Students.vue'
 import AdminTeachers from './Pages/Admin/Teachers.vue'
+import TeacherDetail from './Pages/Admin/TeacherDetail.vue'
 import AdminFinance from './Pages/Admin/Finance.vue'
 import AdminSchedules from './Pages/Admin/Schedules.vue'
 import AdminActivityLogs from './Pages/Admin/ActivityLogs.vue'
@@ -52,9 +55,10 @@ import LpiAkademikKalender from './Pages/Lpi/LpiAkademikKalender.vue'
 import NotFound from './Pages/NotFound.vue'
 import { LOGIN_PATH } from './site-paths.js'
 import { ADMIN_MANAGE_PERMISSIONS } from './permissions.js'
+import { refreshUserSession } from './composables/useAuth.js'
 
-const roleMap = { admin: '/app/admin', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
-const financeRoles = ['admin', 'bendahara_lpi', 'bendahara_sma']
+const roleMap = { admin_utama: '/app/admin', operator: '/app/operator/akun', pending: '/app/pending', kepala_sekolah: '/app/kepala/guru', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
+const financeRoles = ['admin_utama', 'bendahara_lpi', 'bendahara_sma']
 function currentUser() {
   try { return JSON.parse(localStorage.getItem('madani_user') || 'null') } catch { return null }
 }
@@ -63,6 +67,22 @@ function currentRole() {
 }
 function denyAccess() {
   return { path: roleMap[currentRole()] || LOGIN_PATH, query: { denied: '1' } }
+}
+let sessionSynced = false
+let sessionSyncPromise = null
+async function syncSessionOnce() {
+  if (sessionSynced) return
+  if (!localStorage.getItem('madani_token')) {
+    sessionSynced = true
+    return
+  }
+  if (!sessionSyncPromise) {
+    sessionSyncPromise = refreshUserSession()
+      .catch(() => null)
+      .finally(() => { sessionSyncPromise = null })
+  }
+  await sessionSyncPromise
+  sessionSynced = true
 }
 
 const routes = [
@@ -106,19 +126,26 @@ const routes = [
     { path: LOGIN_PATH, component: Login, meta: { guestOnly: true } },
     { path: '/:pathMatch(.*)*', component: NotFound },
     { path: '/app', redirect: () => roleMap[currentRole()] || '/' },
-    { path: '/app/admin', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin', permissions: ADMIN_MANAGE_PERMISSIONS } },
-    { path: '/app/admin/settings', component: AdminSettings, meta: { requiresAuth: true, role: 'admin', permissions: ['users.view', 'permissions.view', 'settings.site.manage', 'settings.landing.manage', 'content.news.view', 'content.gallery.view', 'ppdb.waves.view'] } },
-    { path: '/app/admin/activity-logs', component: AdminActivityLogs, meta: { requiresAuth: true, role: 'admin', permissions: ['logs.view'], adminOnly: true } },
-    { path: '/app/admin/homepage', component: AdminHomepageSettings, meta: { requiresAuth: true, role: 'admin', permissions: ['settings.homepage.view', 'settings.homepage.manage'] } },
-    { path: '/app/admin/organization', component: AdminOrganization, meta: { requiresAuth: true, role: 'admin', permissions: ['content.structure.view'] } },
-    { path: '/app/admin/structure', component: AdminStructure, meta: { requiresAuth: true, role: 'admin', permissions: ['content.structure.view'] } },
-    { path: '/app/admin/students', component: AdminStudents, meta: { requiresAuth: true, role: 'admin', permissions: ['students.view'] } },
-    { path: '/app/admin/teachers', component: AdminTeachers, meta: { requiresAuth: true, role: 'admin', permissions: ['teachers.view'] } },
+    { path: '/app/pending', component: PendingAccess, meta: { requiresAuth: true, role: 'pending' } },
+    { path: '/app/operator', redirect: '/app/operator/akun' },
+    { path: '/app/operator/akun', component: OperatorAkun, meta: { requiresAuth: true, role: ['admin_utama', 'operator'], permissions: ['users.view'] } },
+    { path: '/app/admin', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin_utama', permissions: ADMIN_MANAGE_PERMISSIONS } },
+    { path: '/app/admin/settings', component: AdminSettings, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['users.view', 'permissions.view', 'settings.site.manage', 'settings.landing.manage', 'content.news.view', 'content.gallery.view', 'ppdb.waves.view'] } },
+    { path: '/app/admin/activity-logs', component: AdminActivityLogs, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['logs.view'], adminOnly: true } },
+    { path: '/app/admin/homepage', component: AdminHomepageSettings, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['settings.homepage.view', 'settings.homepage.manage'] } },
+    { path: '/app/admin/organization', component: AdminOrganization, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['content.structure.view'] } },
+    { path: '/app/admin/structure', component: AdminStructure, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['content.structure.view'] } },
+    { path: '/app/admin/students', component: AdminStudents, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['students.view'] } },
+    { path: '/app/admin/teachers', component: AdminTeachers, meta: { requiresAuth: true, role: ['admin_utama', 'operator'], permissions: ['teachers.view'] } },
+    { path: '/app/admin/teachers/:id', component: TeacherDetail, meta: { requiresAuth: true, role: ['admin_utama', 'operator'], permissions: ['teachers.view'] } },
+    { path: '/app/kepala', redirect: '/app/kepala/guru' },
+    { path: '/app/kepala/guru', component: AdminTeachers, meta: { requiresAuth: true, role: 'kepala_sekolah', permissions: ['teachers.view'] } },
+    { path: '/app/kepala/guru/:id', component: TeacherDetail, meta: { requiresAuth: true, role: 'kepala_sekolah', permissions: ['teachers.view'] } },
     { path: '/app/admin/finance', component: AdminFinance, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.view', 'reports.finance.view'] } },
-    { path: '/app/admin/kelas', component: AdminKelas, meta: { requiresAuth: true, role: 'admin', permissions: ['classrooms.view'] } },
-    { path: '/app/admin/mapel', component: AdminMapel, meta: { requiresAuth: true, role: 'admin', permissions: ['subjects.view'] } },
-    { path: '/app/admin/schedules', component: AdminSchedules, meta: { requiresAuth: true, role: 'admin', permissions: ['schedules.view'] } },
-    { path: '/app/admin/import-siswa', component: ImportSiswa, meta: { requiresAuth: true, role: 'admin', permissions: ['students.import'], adminOnly: true } },
+    { path: '/app/admin/kelas', component: AdminKelas, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['classrooms.view'] } },
+    { path: '/app/admin/mapel', component: AdminMapel, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['subjects.view'] } },
+    { path: '/app/admin/schedules', component: AdminSchedules, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['schedules.view'] } },
+    { path: '/app/admin/import-siswa', component: ImportSiswa, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['students.import'], adminOnly: true } },
     { path: '/app/guru', component: GuruDashboard, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/jadwal', component: GuruJadwal, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/absensi', component: GuruAbsensi, meta: { requiresAuth: true, role: 'guru' } },
@@ -146,9 +173,13 @@ const router = createRouter({
     return { top: 0 }
   },
 })
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   if (to.path === '/tentang' && to.hash === '#struktur') return '/struktur'
-  const token = localStorage.getItem('madani_token')
+  let token = localStorage.getItem('madani_token')
+  if (token) {
+    await syncSessionOnce()
+    token = localStorage.getItem('madani_token')
+  }
   if (to.meta.requiresAuth && !token) return LOGIN_PATH
   if (to.meta.guestOnly && token) {
     const r = currentRole()
@@ -157,6 +188,7 @@ router.beforeEach((to) => {
   if (token && (to.meta.role || to.meta.permissions || to.meta.adminOnly)) {
     const u = currentUser()
     const r = u?.role || null
+    if (r === 'pending' && to.path !== '/app/pending') return '/app/pending'
     const allowedRoles = to.meta.role ? (Array.isArray(to.meta.role) ? to.meta.role : [to.meta.role]) : []
     const roleOk = Boolean(r) && allowedRoles.includes(r)
     const perms = Array.isArray(u?.permissions) ? u.permissions : null
@@ -164,7 +196,7 @@ router.beforeEach((to) => {
       ? Boolean(perms && to.meta.permissions.some((p) => perms.includes(p)))
       : true
 
-    if (to.meta.adminOnly && r !== 'admin') return denyAccess()
+    if (to.meta.adminOnly && r !== 'admin_utama') return denyAccess()
     if (allowedRoles.length && !roleOk) return denyAccess()
     if (to.meta.permissions && !permOk) return denyAccess()
   }
@@ -172,3 +204,4 @@ router.beforeEach((to) => {
 })
 
 export default router
+

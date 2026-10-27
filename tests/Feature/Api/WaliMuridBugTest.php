@@ -88,7 +88,7 @@ class WaliMuridBugTest extends TestCase
 
     public function test_6_parent_id_admin_rejected(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $cl = $this->classroom();
         $this->actingAs($admin)->postJson('/api/students', [
             'nis' => 'N100', 'nisn' => 'NISN100', 'name' => 'Test', 'classroom_id' => $cl->id, 'parent_id' => $admin->id,
@@ -97,7 +97,7 @@ class WaliMuridBugTest extends TestCase
 
     public function test_7_parent_id_guru_rejected(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $guru = User::factory()->create(['role' => 'guru']);
         $cl = $this->classroom();
         $this->actingAs($admin)->postJson('/api/students', [
@@ -107,7 +107,7 @@ class WaliMuridBugTest extends TestCase
 
     public function test_8_parent_id_bendahara_rejected(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $bend = User::factory()->create(['role' => 'bendahara']);
         $cl = $this->classroom();
         $this->actingAs($admin)->postJson('/api/students', [
@@ -117,7 +117,7 @@ class WaliMuridBugTest extends TestCase
 
     public function test_9_duplicate_nisn_rejected(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $cl = $this->classroom();
         $wali = $this->wali();
         Student::create(['nis' => 'N200', 'nisn' => '0071234999', 'name' => 'Existing', 'gender' => 'L', 'classroom_id' => $cl->id, 'parent_id' => $wali->id, 'status' => 'aktif']);
@@ -148,7 +148,7 @@ class WaliMuridBugTest extends TestCase
 
     public function test_parent_id_nullable_allowed(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $cl = $this->classroom();
         $this->actingAs($admin)->postJson('/api/students', [
             'nis' => 'N300', 'nisn' => 'NISN300', 'name' => 'No Wali', 'classroom_id' => $cl->id, 'parent_id' => null,
@@ -158,7 +158,7 @@ class WaliMuridBugTest extends TestCase
 
     public function test_parent_id_can_be_cleared_via_update(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $cl = $this->classroom();
         $wali = $this->wali('waliClear@madani.test');
         $s = Student::create(['nis' => 'N400', 'nisn' => 'NISN400', 'name' => 'ToClear', 'gender' => 'L', 'classroom_id' => $cl->id, 'parent_id' => $wali->id, 'status' => 'aktif']);

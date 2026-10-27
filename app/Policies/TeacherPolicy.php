@@ -52,6 +52,29 @@ class TeacherPolicy
             && $this->withinUnit($user, $teacher);
     }
 
+    public function manageUnits(User $user, Teacher $teacher): bool
+    {
+        return $user->isAdminUtama() && $user->hasPermission('teachers.update');
+    }
+
+    public function manageAssignments(User $user, Teacher $teacher): bool
+    {
+        if (! $user->hasPermission('teachers.assignments')) {
+            return false;
+        }
+
+        return $user->isAdmin() || ($user->isKepalaSekolah() && $this->withinUnit($user, $teacher));
+    }
+
+    public function manageAttendance(User $user, Teacher $teacher): bool
+    {
+        if (! $user->hasPermission('attendance.teacher.manage')) {
+            return false;
+        }
+
+        return $user->isAdmin() || ($user->isKepalaSekolah() && $this->withinUnit($user, $teacher));
+    }
+
     private function withinUnit(User $user, Teacher $teacher): bool
     {
         $codes = $teacher->units()->pluck('units.kode')

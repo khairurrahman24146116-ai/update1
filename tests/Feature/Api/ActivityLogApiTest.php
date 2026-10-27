@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\ActivityLog;
 use App\Models\Classroom;
 use App\Models\Subject;
+use App\Models\Unit;
 use App\Models\User;
 use App\Models\UserPermission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,7 +17,10 @@ class ActivityLogApiTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role' => User::ROLE_ADMIN]);
+        return User::factory()->create([
+            'role' => User::ROLE_ADMIN_UTAMA,
+            'is_protected' => false,
+        ]);
     }
 
     /**
@@ -26,7 +30,7 @@ class ActivityLogApiTest extends TestCase
     {
         return ActivityLog::create(array_merge([
             'user_name' => 'Admin Uji',
-            'user_role' => User::ROLE_ADMIN,
+            'user_role' => User::ROLE_ADMIN_UTAMA,
             'action' => 'login',
             'module' => 'auth',
             'description' => 'Login berhasil',
@@ -36,7 +40,7 @@ class ActivityLogApiTest extends TestCase
         ], $overrides));
     }
 
-    public function test_admin_can_list_and_filter_logs(): void
+    public function test_admin_utama_can_list_and_filter_logs(): void
     {
         $this->log();
         $this->log([
@@ -53,6 +57,35 @@ class ActivityLogApiTest extends TestCase
             ->assertJsonPath('data.0.module_label', 'Keuangan');
 
         $this->assertSame(1, $response->json('total'));
+    }
+
+    public function test_logs_can_be_filtered_by_role_and_unit(): void
+    {
+        $lpi = (int) Unit::where('kode', 'LPI')->value('id');
+        $sma = (int) Unit::where('kode', 'SMA')->value('id');
+
+        $this->log(['user_role' => 'operator', 'unit_id' => $lpi, 'user_name' => 'Operator LPI']);
+        $this->log(['user_role' => 'operator', 'unit_id' => $sma, 'user_name' => 'Operator SMA']);
+        $this->log(['user_role' => 'guru', 'unit_id' => $lpi, 'user_name' => 'Guru LPI']);
+
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->getJson('/api/activity-logs?role=operator')
+            ->assertOk()
+            ->assertJsonCount(2, 'data');
+
+        $this->actingAs($admin)
+            ->getJson('/api/activity-logs?unit=sma')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.user_name', 'Operator SMA');
+
+        $this->actingAs($admin)
+            ->getJson('/api/activity-logs?only_operators=1&unit=lpi')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.user_name', 'Operator LPI');
     }
 
     public function test_list_sanitizes_legacy_metadata(): void
@@ -77,15 +110,17 @@ class ActivityLogApiTest extends TestCase
         $this->assertSame('aman', $metadata['note']);
     }
 
-    public function test_non_admin_cannot_view_logs(): void
+    public function test_non_admin_utama_cannot_view_logs(): void
     {
-        $guru = User::factory()->create(['role' => User::ROLE_GURU]);
+        foreach ([User::ROLE_GURU, User::ROLE_ADMIN, User::ROLE_OPERATOR, User::ROLE_KEPALA_SEKOLAH] as $role) {
+            $user = User::factory()->create(['role' => $role]);
 
-        $this->actingAs($guru)->getJson('/api/activity-logs')->assertForbidden();
-        $this->actingAs($guru)->getJson('/api/activity-logs/options')->assertForbidden();
+            $this->actingAs($user)->getJson('/api/activity-logs')->assertForbidden();
+            $this->actingAs($user)->getJson('/api/activity-logs/options')->assertForbidden();
+        }
     }
 
-    public function test_admin_without_logs_permission_is_denied(): void
+    public function test_admin_utama_without_logs_permission_is_denied(): void
     {
         $admin = $this->admin();
         UserPermission::create([
@@ -147,27 +182,20 @@ class ActivityLogApiTest extends TestCase
         $this->assertDatabaseMissing('activity_logs', ['action' => 'activity_log.pdf']);
     }
 
-    public function test_admin_can_update_retention(): void
+    public function test_activity_logs_are_append_only(): void
     {
-        $this->actingAs($this->admin())
-            ->putJson('/api/activity-logs/retention', ['months' => 24])
-            ->assertOk()
-            ->assertJsonPath('months', 24);
+        $log = $this->log();
+        $admin = $this->admin();
 
-        $this->assertDatabaseHas('site_settings', ['activity_log_retention_months' => 24]);
-        $this->assertDatabaseHas('activity_logs', ['action' => 'activity_log.retention.update']);
-    }
+        $this->actingAs($admin)
+            ->postJson('/api/activity-logs/prune', ['confirm' => true, 'months' => 1])
+            ->assertStatus(405);
 
-    public function test_prune_requires_confirmation(): void
-    {
-        $old = $this->log(['created_at' => now()->subMonths(13)]);
+        $this->actingAs($admin)
+            ->putJson('/api/activity-logs/retention', ['months' => 1])
+            ->assertStatus(405);
 
-        $this->actingAs($this->admin())
-            ->postJson('/api/activity-logs/prune', ['months' => 12])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('confirm');
-
-        $this->assertDatabaseHas('activity_logs', ['id' => $old->id]);
+        $this->assertDatabaseHas('activity_logs', ['id' => $log->id]);
     }
 
     public function test_schedule_write_is_logged(): void
@@ -195,20 +223,5 @@ class ActivityLogApiTest extends TestCase
             'user_id' => $admin->id,
             'target_id' => $schedule['id'],
         ]);
-    }
-
-    public function test_prune_deletes_only_logs_older_than_cutoff(): void
-    {
-        $old = $this->log(['created_at' => now()->subMonths(13)]);
-        $recent = $this->log(['action' => 'logout', 'created_at' => now()->subMonths(2)]);
-
-        $this->actingAs($this->admin())
-            ->postJson('/api/activity-logs/prune', ['confirm' => true, 'months' => 12])
-            ->assertOk()
-            ->assertJsonPath('deleted', 1);
-
-        $this->assertDatabaseMissing('activity_logs', ['id' => $old->id]);
-        $this->assertDatabaseHas('activity_logs', ['id' => $recent->id]);
-        $this->assertDatabaseHas('activity_logs', ['action' => 'activity_log.prune']);
     }
 }

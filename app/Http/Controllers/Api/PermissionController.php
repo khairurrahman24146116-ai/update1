@@ -128,7 +128,7 @@ class PermissionController extends Controller
         $reason = null;
         if ((int) $actor->id === (int) $target->id) {
             $reason = 'Tidak dapat mengubah hak akses akun sendiri.';
-        } elseif ($target->isProtectedAdmin()) {
+        } elseif (($target->isAdminUtama() || $target->isProtectedAdmin())) {
             $reason = 'Hak akses Admin Utama tidak dapat diubah.';
         } elseif (! $actor->hasPermission('permissions.manage')) {
             $reason = 'Akun ini hanya dapat melihat hak akses.';
@@ -141,7 +141,7 @@ class PermissionController extends Controller
             'allow' => $allow,
             'deny' => $deny,
             'effective_permissions' => $target->effectivePermissions(),
-            'is_protected_admin' => $target->isProtectedAdmin(),
+            'is_protected_admin' => ($target->isAdminUtama() || $target->isProtectedAdmin()),
             'can_manage' => $reason === null,
             'cannot_manage_reason' => $reason,
             'modules' => PermissionCatalog::modules(),
@@ -155,15 +155,15 @@ class PermissionController extends Controller
             abort(403, 'Anda tidak memiliki izin mengelola hak akses.');
         }
 
-        if (! $actor->isAdmin()) {
-            abort(403, 'Hanya admin yang dapat mengelola hak akses.');
+        if (! $actor->isAdminUtama()) {
+            abort(403, 'Hanya Admin Utama yang dapat mengelola hak akses.');
         }
 
         if ((int) $actor->id === (int) $target->id) {
             abort(403, 'Tidak dapat mengubah hak akses akun sendiri.');
         }
 
-        if ($target->isProtectedAdmin()) {
+        if (($target->isAdminUtama() || $target->isProtectedAdmin())) {
             abort(403, 'Hak akses Admin Utama tidak dapat diubah.');
         }
     }

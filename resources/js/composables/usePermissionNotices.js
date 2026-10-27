@@ -44,7 +44,7 @@ export function usePermissionNotices(user) {
   }
 
   function sync(currentUser) {
-    if (!currentUser?.id || currentUser.role === 'admin') {
+    if (!currentUser?.id || ['admin_utama', 'admin'].includes(currentUser.role)) {
       notices.value = []
       return
     }
@@ -116,3 +116,4 @@ export function usePermissionNotices(user) {
 
   return { notices, dismiss }
 }
+

@@ -47,6 +47,9 @@ class ActivityLogCatalog
 
         'user.create' => 'Menambah akun pengguna',
         'user.update' => 'Mengubah akun pengguna',
+        'user.deactivate' => 'Menonaktifkan akun pengguna',
+        'user.activate' => 'Mengaktifkan akun pengguna',
+        'user.password_reset' => 'Mereset kata sandi akun',
         'user.delete' => 'Menghapus akun pengguna',
         'permission.update' => 'Mengubah hak akses akun',
 
@@ -60,6 +63,11 @@ class ActivityLogCatalog
         'import.failed' => 'Impor santri gagal',
         'import.cancel' => 'Membatalkan impor santri',
 
+        'teacher.create' => 'Menambah profil guru',
+        'teacher.update' => 'Mengubah profil guru',
+        'teacher.units.update' => 'Mengubah unit & jabatan guru',
+        'teacher.assignments.update' => 'Mengubah penugasan & wali kelas guru',
+        'teacher.photo.upload' => 'Mengunggah foto guru',
         'teacher_subject.create' => 'Menambah mata pelajaran guru',
         'teacher_subject.delete' => 'Menghapus mata pelajaran guru',
         'classroom.create' => 'Menambah kelas',
@@ -77,6 +85,7 @@ class ActivityLogCatalog
         'attendance.import' => 'Mengimpor absensi siswa',
         'attendance.teacher.checkin' => 'Check-in kehadiran guru',
         'attendance.teacher.checkout' => 'Check-out kehadiran guru',
+        'attendance.teacher.update' => 'Mengubah absensi guru',
         'score.update' => 'Menyimpan nilai santri',
 
         'finance.transaction.create' => 'Menambah transaksi keuangan',
@@ -136,8 +145,24 @@ class ActivityLogCatalog
         'system.maintenance' => 'Pemeliharaan sistem',
         'activity_log.export' => 'Mengekspor log aktivitas (CSV)',
         'activity_log.pdf' => 'Mencetak log aktivitas (PDF)',
-        'activity_log.prune' => 'Menghapus log aktivitas lama',
-        'activity_log.retention.update' => 'Mengubah masa simpan log aktivitas',
+    ];
+
+    /**
+     * Label role untuk filter log.
+     *
+     * @var array<string, string>
+     */
+    public const ROLES = [
+        'admin' => 'Admin',
+        'admin_utama' => 'Admin Utama',
+        'operator' => 'Operator',
+        'pending' => 'Menunggu Hak Akses',
+        'kepala_sekolah' => 'Kepala Sekolah',
+        'bendahara' => 'Bendahara',
+        'bendahara_lpi' => 'Bendahara LPI',
+        'bendahara_sma' => 'Bendahara SMA',
+        'guru' => 'Guru',
+        'wali_murid' => 'Wali Murid',
     ];
 
     public static function moduleFor(string $action): string
@@ -145,7 +170,7 @@ class ActivityLogCatalog
         return match (true) {
             in_array($action, ['login', 'login.failed', 'login.blocked', 'logout'], true) => 'auth',
             str_starts_with($action, 'import.') || str_starts_with($action, 'student.') => 'students',
-            str_starts_with($action, 'teacher_subject.') => 'teachers',
+            str_starts_with($action, 'teacher_subject.') || str_starts_with($action, 'teacher.') => 'teachers',
             str_starts_with($action, 'classroom.') => 'classrooms',
             str_starts_with($action, 'subject.') => 'subjects',
             str_starts_with($action, 'schedule.') => 'schedules',
@@ -176,6 +201,11 @@ class ActivityLogCatalog
     public static function descriptionFor(string $action): string
     {
         return self::ACTIONS[$action] ?? Str::headline(str_replace(['.', '_'], ' ', $action));
+    }
+
+    public static function roleLabel(?string $role): string
+    {
+        return self::ROLES[$role ?? ''] ?? ($role ?: '-');
     }
 
     /**

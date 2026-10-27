@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Http\Middleware\CheckActiveUser;
 use App\Models\Classroom;
 use App\Models\FinanceTransaction;
 use App\Models\Unit;
@@ -18,7 +19,7 @@ class PermissionApiTest extends TestCase
     private function protectedAdmin(): User
     {
         return User::factory()->create([
-            'role' => User::ROLE_ADMIN,
+            'role' => User::ROLE_ADMIN_UTAMA,
             'is_protected' => true,
         ]);
     }
@@ -136,7 +137,7 @@ class PermissionApiTest extends TestCase
     public function test_protected_admin_permissions_cannot_be_edited(): void
     {
         $admin = $this->protectedAdmin();
-        $other = User::factory()->create(['role' => User::ROLE_ADMIN, 'is_protected' => false]);
+        $other = User::factory()->create(['role' => User::ROLE_ADMIN_UTAMA, 'is_protected' => false]);
         $other->permissionOverrides()->create([
             'permission' => 'permissions.manage',
             'effect' => UserPermission::EFFECT_ALLOW,
@@ -323,5 +324,98 @@ class PermissionApiTest extends TestCase
             ->assertOk();
 
         $this->actingAs($guru->fresh())->getJson('/api/teachers')->assertOk();
+    }
+
+    public function test_account_options_expose_permission_management_only_to_admin_utama(): void
+    {
+        $admin = $this->protectedAdmin();
+        $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+
+        $this->actingAs($admin)
+            ->getJson('/api/accounts/options')
+            ->assertOk()
+            ->assertJsonPath('can_manage_permissions', true)
+            ->assertJsonPath('current_user_id', $admin->id);
+
+        $this->actingAs($operator)
+            ->getJson('/api/accounts/options')
+            ->assertOk()
+            ->assertJsonPath('can_manage_permissions', false)
+            ->assertJsonPath('current_user_id', $operator->id);
+    }
+
+    public function test_operator_with_permission_overrides_cannot_access_permission_management(): void
+    {
+        $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+        $guru = User::factory()->create(['role' => User::ROLE_GURU]);
+
+        foreach (['permissions.view', 'permissions.manage'] as $permission) {
+            $operator->permissionOverrides()->create([
+                'permission' => $permission,
+                'effect' => UserPermission::EFFECT_ALLOW,
+            ]);
+        }
+
+        $operator->forgetPermissionCache();
+
+        $this->actingAs($operator)
+            ->getJson("/api/users/{$guru->id}/permissions")
+            ->assertForbidden();
+
+        $this->actingAs($operator)
+            ->putJson("/api/users/{$guru->id}/permissions", ['allow' => ['students.create']])
+            ->assertForbidden();
+
+        $this->actingAs($operator)
+            ->getJson('/api/permissions/catalog')
+            ->assertForbidden();
+    }
+
+    public function test_permission_update_is_logged(): void
+    {
+        $admin = $this->protectedAdmin();
+        $guru = User::factory()->create(['role' => User::ROLE_GURU]);
+
+        $this->actingAs($admin)
+            ->putJson("/api/users/{$guru->id}/permissions", ['allow' => ['teachers.create']])
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'permission.update',
+            'user_id' => $admin->id,
+            'target_type' => User::class,
+            'target_id' => $guru->id,
+        ]);
+    }
+
+    public function test_removing_manage_permission_from_last_active_admin_returns_conflict(): void
+    {
+        $actor = User::factory()->create([
+            'role' => User::ROLE_ADMIN_UTAMA,
+            'is_protected' => false,
+            'is_active' => false,
+        ]);
+        $actor->permissionOverrides()->create([
+            'permission' => 'permissions.manage',
+            'effect' => UserPermission::EFFECT_ALLOW,
+            'granted_by' => $actor->id,
+        ]);
+        $actor->forgetPermissionCache();
+
+        $target = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'is_protected' => false,
+            'is_active' => true,
+        ]);
+        $target->permissionOverrides()->create([
+            'permission' => 'permissions.manage',
+            'effect' => UserPermission::EFFECT_ALLOW,
+            'granted_by' => $actor->id,
+        ]);
+
+        $this->withoutMiddleware(CheckActiveUser::class)
+            ->actingAs($actor)
+            ->putJson("/api/users/{$target->id}/permissions", ['deny' => ['teachers.view']])
+            ->assertStatus(409);
     }
 }

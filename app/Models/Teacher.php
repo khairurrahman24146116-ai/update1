@@ -12,7 +12,7 @@ class Teacher extends Model
 {
     use ScopedByUnit;
 
-    protected $fillable = ['user_id', 'nama', 'nip'];
+    protected $fillable = ['user_id', 'nama', 'nip', 'photo_path'];
 
     protected function casts(): array
     {
@@ -41,5 +41,15 @@ class Teacher extends Model
     public function classrooms(): HasMany
     {
         return $this->hasMany(Classroom::class, 'wali_kelas_id');
+    }
+
+    public function teacherSubjects(): HasMany
+    {
+        return $this->hasMany(TeacherSubject::class, 'teacher_id', 'user_id');
+    }
+
+    public function teacherAttendances(): HasMany
+    {
+        return $this->hasMany(TeacherAttendance::class, 'teacher_id', 'user_id');
     }
 }

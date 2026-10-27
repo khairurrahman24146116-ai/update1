@@ -14,7 +14,7 @@ class ClassroomApiTest extends TestCase
 
     public function test_admin_can_create_classroom(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
 
         $this->actingAs($admin)
             ->postJson('/api/classrooms', [

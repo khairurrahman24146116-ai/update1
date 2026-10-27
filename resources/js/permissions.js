@@ -42,7 +42,16 @@ export function canAny(user, permissions = []) {
 }
 
 export function isAdminUser(user) {
-  return user?.role === 'admin'
+  return ['admin_utama', 'admin'].includes(user?.role)
+}
+
+export function isAdminUtama(user) {
+  return user?.role === 'admin_utama'
+}
+
+export function canAccessAdminModule(user, module = {}) {
+  if (module.adminOnly && !isAdminUtama(user)) return false
+  return !module.permission || can(user, module.permission)
 }
 
 export function hasAdminAreaAccess(user) {

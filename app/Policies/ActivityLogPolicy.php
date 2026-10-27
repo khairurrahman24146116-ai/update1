@@ -27,18 +27,8 @@ class ActivityLogPolicy
         return $this->allowed($user);
     }
 
-    public function manageRetention(User $user): bool
-    {
-        return $this->allowed($user);
-    }
-
-    public function prune(User $user): bool
-    {
-        return $this->allowed($user);
-    }
-
     private function allowed(User $user): bool
     {
-        return $user->isAdmin() && $user->hasPermission('logs.view');
+        return $user->isAdminUtama() && $user->hasPermission('logs.view');
     }
 }

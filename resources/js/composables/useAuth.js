@@ -11,6 +11,7 @@ const user = ref(userInitial)
 const loading = ref(false)
 const error = ref('')
 const errorCode = ref('')
+let refreshPromise = null
 
 function clearSession() {
   token.value = ''; user.value = null
@@ -42,6 +43,27 @@ function patchFetch() {
 }
 
 if (token.value) patchFetch()
+
+export async function refreshUserSession() {
+  if (!token.value) return null
+  if (refreshPromise) return refreshPromise
+  refreshPromise = (async () => {
+    const res = await fetch('/api/me', { headers: { Authorization: `Bearer ${token.value}`, Accept: 'application/json' } })
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data.has_full_permission_access) {
+      clearSession()
+      location.href = `${LOGIN_PATH}?all_permissions=1`
+      return null
+    }
+    user.value = data
+    localStorage.setItem(KEY_USER, JSON.stringify(data))
+    return data
+  })().finally(() => {
+    refreshPromise = null
+  })
+  return refreshPromise
+}
 
 export function useAuth() {
   async function doLogin(email, password) {
@@ -86,18 +108,7 @@ export function useAuth() {
   const isFinanceAreaUser = computed(() => hasFinanceAccess(user.value))
 
   async function refreshUser() {
-    if (!token.value) return null
-    const res = await fetch('/api/me', { headers: { Authorization: `Bearer ${token.value}`, Accept: 'application/json' } })
-    if (!res.ok) return null
-    const data = await res.json()
-    if (data.has_full_permission_access) {
-      clearSession()
-      location.href = `${LOGIN_PATH}?all_permissions=1`
-      return null
-    }
-    user.value = data
-    localStorage.setItem(KEY_USER, JSON.stringify(data))
-    return data
+    return refreshUserSession()
   }
 
   return { token, user, loading, error, errorCode, doLogin, doLogout, hasRole, permissions, can, canAny, isAdminAreaUser, isFinanceAreaUser, refreshUser }

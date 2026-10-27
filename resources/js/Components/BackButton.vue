@@ -11,7 +11,7 @@ function resolveFallback(){
   if(props.fallback) return props.fallback
   try{
     const u=JSON.parse(localStorage.getItem('madani_user')||'null')
-    const map={admin:'/app/admin',guru:'/app/guru',bendahara:'/app/bendahara',wali_murid:'/app/wali-murid'}
+    const map={admin_utama:'/app/admin',admin:'/app/admin',pending:'/app/pending',operator:'/app/operator/akun',kepala_sekolah:'/app/kepala/guru',guru:'/app/guru',bendahara:'/app/bendahara',bendahara_lpi:'/app/bendahara',bendahara_sma:'/app/bendahara',wali_murid:'/app/wali-murid'}
     return map[u?.role]||'/'
   }catch{ return '/' }
 }
@@ -20,3 +20,4 @@ function go(){
   else router.push(resolveFallback())
 }
 </script>
+

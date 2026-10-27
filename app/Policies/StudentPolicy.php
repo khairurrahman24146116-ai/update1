@@ -9,12 +9,12 @@ class StudentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('students.view');
+        return ! $user->isOperator() && $user->hasPermission('students.view');
     }
 
     public function view(User $user, Student $student): bool
     {
-        if (! $user->hasPermission('students.view')) {
+        if ($user->isOperator() || ! $user->hasPermission('students.view')) {
             return false;
         }
 
@@ -23,37 +23,41 @@ class StudentPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasPermission('students.create');
+        return ! $user->isOperator() && $user->hasPermission('students.create');
     }
 
     public function import(User $user): bool
     {
-        return $user->isAdmin() && $user->hasPermission('students.import');
+        return $user->isAdminUtama() && $user->hasPermission('students.import');
     }
 
     public function update(User $user, Student $student): bool
     {
-        return $user->hasPermission('students.update') && $this->withinAccess($user, $student);
+        return ! $user->isOperator()
+            && $user->hasPermission('students.update')
+            && $this->withinAccess($user, $student);
     }
 
     public function delete(User $user, Student $student): bool
     {
-        return $user->hasPermission('students.delete') && $this->withinAccess($user, $student);
+        return $user->isAdminUtama()
+            && $user->hasPermission('students.delete')
+            && $this->withinAccess($user, $student);
     }
 
     public function promote(User $user): bool
     {
-        return $user->isAdmin() || $user->isOperator();
+        return $user->isAdminUtama();
     }
 
     public function placeManually(User $user): bool
     {
-        return $user->isAdmin() || $user->isOperator();
+        return $user->isAdminUtama();
     }
 
     private function withinAccess(User $user, Student $student): bool
     {
-        if ($user->isAdmin() || $user->isOperator()) {
+        if ($user->isAdmin()) {
             return true;
         }
 

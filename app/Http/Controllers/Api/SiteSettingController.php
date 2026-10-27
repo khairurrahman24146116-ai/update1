@@ -57,6 +57,6 @@ class SiteSettingController extends Controller
 
     public function publicIndex()
     {
-        return SiteSetting::first()?->makeHidden('activity_log_retention_months');
+        return SiteSetting::first();
     }
 }

@@ -95,7 +95,7 @@ export function useFinanceApi() {
     } catch {
       role = null
     }
-    if (role !== 'admin' || !url.startsWith('/api/finance/')) return url
+    if (!['admin_utama', 'admin'].includes(role) || !url.startsWith('/api/finance/')) return url
 
     const [path, query = ''] = url.split('?')
     const params = new URLSearchParams(query)
@@ -136,3 +136,4 @@ export function useFinanceApi() {
 
   return { loading, error, request, run }
 }
+

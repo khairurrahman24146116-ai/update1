@@ -27,11 +27,9 @@
   <section v-if="active==='berita'" class="bg-white border border-outline-variant rounded-xl shadow-sm p-6"><SettingsBerita /></section>
   <section v-if="active==='galeri'" class="bg-white border border-outline-variant rounded-xl shadow-sm p-3 sm:p-6 min-w-0 max-w-full"><SettingsGaleri /></section>
   <section v-if="active==='ppdb'" class="bg-white border border-outline-variant rounded-xl shadow-sm p-6"><SettingsPPDB /></section>
-  <section v-if="active==='akun'" class="bg-white border border-outline-variant rounded-xl shadow-sm p-6"><SettingsAkun /></section>
   <section v-if="active==='keamanan'" class="space-y-6">
     <template v-if="canViewLogs">
       <ActivityLogViewer :key="logVersion" />
-      <ActivityLogRetention @pruned="logVersion++" />
     </template>
     <div v-else class="bg-white border border-outline-variant rounded-xl shadow-sm p-6 text-sm text-on-surface-variant">
       Anda tidak memiliki izin <code class="font-mono">logs.view</code> untuk membuka log aktivitas.
@@ -147,9 +145,7 @@ import AppShell from '../../Components/AppShell.vue'
 import SettingsBerita from './SettingsBerita.vue'
 import SettingsGaleri from './SettingsGaleri.vue'
 import SettingsPPDB from './SettingsPPDB.vue'
-import SettingsAkun from './SettingsAkun.vue'
 import ActivityLogViewer from '../../Components/ActivityLogViewer.vue'
-import ActivityLogRetention from '../../Components/ActivityLogRetention.vue'
 import { useSiteSettings } from '../../composables/useSiteSettings'
 const { load: reloadSiteSettings } = useSiteSettings()
 const { can } = useAuth()
@@ -190,7 +186,7 @@ function fileNameOf(path) {
 }
 async function fetchLanding(){ try{ const r=await fetch('/api/landing-sections',{headers:{Authorization:`Bearer ${token()}`}}); if(r.ok) landing.value=await r.json(); }catch{} }
 async function saveLanding(sec){ const r=await fetch('/api/landing-sections/'+sec.id,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token()}`},body:JSON.stringify(sec)}); if(r.ok) notify('Section tersimpan'); else notify('Gagal simpan', 'error') }
-const tabs = [{key:'identitas',label:'Identitas Dayah'},{key:'logo',label:'Logo & Favicon'},{key:'kontak',label:'Kontak & Alamat'},{key:'sosial',label:'Sosial Media'},{key:'landing',label:'Landing Page'},{key:'berita',label:'Berita & Kategori'},{key:'galeri',label:'Galeri & Album'},{key:'ppdb',label:'PPDB & Pendaftar'},{key:'akun',label:'Portal / Akun'},{key:'keamanan',label:'Keamanan & Audit Log'}]
+const tabs = [{key:'identitas',label:'Identitas Dayah'},{key:'logo',label:'Logo & Favicon'},{key:'kontak',label:'Kontak & Alamat'},{key:'sosial',label:'Sosial Media'},{key:'landing',label:'Landing Page'},{key:'berita',label:'Berita & Kategori'},{key:'galeri',label:'Galeri & Album'},{key:'ppdb',label:'PPDB & Pendaftar'},{key:'keamanan',label:'Keamanan & Audit Log'}]
 const token = () => localStorage.getItem('madani_token')
 async function fetchData(){
   try{ const r=await fetch('/api/site-settings',{headers:{Authorization:`Bearer ${token()}`}}); if(r.ok){ form.value=await r.json(); syncSnapshot() } }catch{}

@@ -19,6 +19,8 @@ class User extends Authenticatable
 
     public const ROLE_ADMIN_UTAMA = 'admin_utama';
 
+    public const ROLE_PENDING = 'pending';
+
     public const ROLE_OPERATOR = 'operator';
 
     public const ROLE_KEPALA_SEKOLAH = 'kepala_sekolah';
@@ -81,6 +83,20 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_ADMIN_UTAMA], true);
+    }
+
+    /**
+     * Hanya role kanonis admin_utama. Role admin lama tidak lagi dianggap
+     * admin utama agar endpoint sensitif tidak dapat diakses akun warisan.
+     */
+    public function isAdminUtama(): bool
+    {
+        return $this->role === self::ROLE_ADMIN_UTAMA;
+    }
+
+    public function isPending(): bool
+    {
+        return $this->role === self::ROLE_PENDING;
     }
 
     public function isOperator(): bool

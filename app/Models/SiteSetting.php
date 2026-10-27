@@ -12,7 +12,7 @@ class SiteSetting extends Model
         'map_lat', 'map_lng', 'instagram', 'youtube', 'tiktok', 'facebook', 'hero_image',
         'homepage_badge_text', 'homepage_title', 'homepage_tagline', 'homepage_logo_path',
         'prayer_city_name', 'prayer_latitude', 'prayer_longitude', 'prayer_timezone', 'prayer_card_visible',
-        'hero_overlay_opacity', 'activity_log_retention_months',
+        'hero_overlay_opacity',
     ];
 
     protected $casts = [
@@ -21,6 +21,5 @@ class SiteSetting extends Model
         'prayer_latitude' => 'decimal:7',
         'prayer_longitude' => 'decimal:7',
         'hero_overlay_opacity' => 'integer',
-        'activity_log_retention_months' => 'integer',
     ];
 }

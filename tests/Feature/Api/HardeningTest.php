@@ -25,7 +25,7 @@ class HardeningTest extends TestCase
 
     public function test_admin_can_list_users_without_password_hash(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         User::factory()->create(['role' => 'guru']);
         $res = $this->actingAs($admin)->getJson('/api/users')->assertOk();
         $first = $res->json()[0] ?? $res->json('data')[0] ?? null;
@@ -35,7 +35,7 @@ class HardeningTest extends TestCase
 
     public function test_admin_can_read_user_stats(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         User::factory()->count(3)->create(['role' => 'guru']);
         User::factory()->create(['role' => 'wali_murid']);
 
@@ -53,7 +53,7 @@ class HardeningTest extends TestCase
 
     public function test_users_index_is_paginated(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         User::factory()->count(4)->create(['role' => 'guru']);
 
         $res = $this->actingAs($admin)->getJson('/api/users?per_page=2')->assertOk();
@@ -62,29 +62,35 @@ class HardeningTest extends TestCase
         $this->assertEquals(3, $res->json('last_page'));
     }
 
-    public function test_guru_cannot_create_user(): void
+    public function test_guru_cannot_create_account(): void
     {
         $guru = User::factory()->create(['role' => 'guru']);
-        $this->actingAs($guru)->postJson('/api/users', ['name' => 'X', 'email' => 'x@x.com', 'password' => 'secret1', 'role' => 'guru'])->assertStatus(403);
+        $this->actingAs($guru)->postJson('/api/accounts', [
+            'name' => 'X',
+            'email' => 'x@x.com',
+            'password' => 'secret1',
+            'role' => 'guru',
+            'units' => [['code' => 'SMA', 'jabatan' => 'Guru']],
+        ])->assertStatus(403);
     }
 
     public function test_site_upload_rejects_php(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $file = UploadedFile::fake()->create('evil.php', 10, 'application/x-php');
         $this->actingAs($admin)->postJson('/api/site-settings/upload', ['file' => $file, 'field' => 'logo_path'])->assertStatus(422);
     }
 
     public function test_site_upload_accepts_jpg(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $file = UploadedFile::fake()->image('logo.jpg', 100, 100);
         $this->actingAs($admin)->post('/api/site-settings/upload', ['file' => $file, 'field' => 'logo_path'])->assertOk();
     }
 
     public function test_site_upload_rejects_svg(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $file = UploadedFile::fake()->create('icon.svg', 10, 'image/svg+xml');
         $this->actingAs($admin)->postJson('/api/site-settings/upload', ['file' => $file, 'field' => 'logo_path'])->assertStatus(422);
     }
@@ -100,7 +106,7 @@ class HardeningTest extends TestCase
 
     public function test_admin_can_read_homepage_settings(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $this->actingAs($admin)->getJson('/api/homepage-settings')
             ->assertOk()
             ->assertJsonStructure(['settings', 'hero_media']);
@@ -108,14 +114,14 @@ class HardeningTest extends TestCase
 
     public function test_homepage_media_upload_rejects_svg(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $file = UploadedFile::fake()->create('icon.svg', 10, 'image/svg+xml');
         $this->actingAs($admin)->postJson('/api/homepage-settings/upload-media', ['file' => $file])->assertStatus(422);
     }
 
     public function test_homepage_media_upload_accepts_jpg(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         Storage::fake('public');
         $file = UploadedFile::fake()->image('hero.jpg', 200, 120);
         $this->actingAs($admin)->post('/api/homepage-settings/upload-media', ['file' => $file])->assertOk();
@@ -133,7 +139,7 @@ class HardeningTest extends TestCase
 
     public function test_students_pagination(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         $cl = Classroom::create(['name' => 'X-1', 'grade' => 10, 'academic_year' => '2026/2027']);
         for ($i = 1; $i <= 20; $i++) {
             Student::create(['nis' => "N{$i}", 'nisn' => "NN{$i}", 'name' => "Siswa {$i}", 'gender' => 'L', 'classroom_id' => $cl->id, 'status' => 'aktif']);
@@ -150,7 +156,7 @@ class HardeningTest extends TestCase
 
     public function test_backup_contains_sql_structure(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin_utama']);
         Storage::fake('backups');
         $this->actingAs($admin)->postJson('/api/backups')->assertOk();
         $files = Storage::disk('backups')->allFiles();

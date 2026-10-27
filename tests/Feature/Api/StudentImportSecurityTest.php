@@ -32,7 +32,7 @@ class StudentImportSecurityTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role' => User::ROLE_ADMIN]);
+        return User::factory()->create(['role' => User::ROLE_ADMIN_UTAMA]);
     }
 
     private function classroom(string $name, int $grade, string $jalur, string $jenjang, string $unit = 'sma'): Classroom

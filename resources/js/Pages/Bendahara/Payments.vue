@@ -96,11 +96,12 @@ import { formatDateTime, formatRupiah, monthLabel, useFinanceApi } from '../../c
 import { useAuth } from '../../composables/useAuth.js'
 import { useDialog } from '../../composables/useDialog.js'
 import { unitLabel } from '../../data/lpi.js'
+import { isAdminUser } from '../../permissions.js'
 
 const { loading, error, request } = useFinanceApi()
 const { user } = useAuth()
 const dialog = useDialog()
-const isAdmin = computed(() => user.value?.role === 'admin')
+const isAdmin = computed(() => isAdminUser(user.value))
 
 const list = ref([])
 const meta = ref(null)
