@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\Schedule;
 use App\Models\User;
+use App\Services\TeacherAssignmentService;
 
 class SchedulePolicy
 {
+    public function __construct(protected TeacherAssignmentService $assignments) {}
+
     public function viewAny(User $user): bool
     {
         return $user->hasPermission('schedules.view');
@@ -14,7 +17,21 @@ class SchedulePolicy
 
     public function view(User $user, Schedule $s): bool
     {
-        return $user->hasPermission('schedules.view');
+        if (! $user->hasPermission('schedules.view')) {
+            return false;
+        }
+
+        $s->loadMissing('classroom');
+
+        if ($s->classroom === null || ! $this->assignments->isClassroomEnabled($s->classroom)) {
+            return false;
+        }
+
+        if ($user->role === User::ROLE_GURU) {
+            return $this->assignments->canAccessSchedule($user, $s);
+        }
+
+        return true;
     }
 
     /**

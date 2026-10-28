@@ -54,26 +54,45 @@ class ClassroomMapelTest extends TestCase
     public function test_admin_create_subject(): void
     {
         $admin = User::factory()->create(['role' => 'admin_utama']);
-        $this->actingAs($admin)->postJson('/api/subjects', ['name' => 'Matematika', 'code' => 'MTK'])->assertStatus(201);
+        $this->actingAs($admin)->postJson('/api/subjects', [
+            'name' => 'Matematika',
+            'code' => 'MTK',
+            'jenis' => 'formal',
+            'placements' => [['unit' => 'sma', 'jenjang' => 'SMA']],
+        ])->assertStatus(201);
     }
 
     public function test_duplicate_subject_code_rejected(): void
     {
         $admin = User::factory()->create(['role' => 'admin_utama']);
-        $this->actingAs($admin)->postJson('/api/subjects', ['name' => 'Matematika', 'code' => 'MTK'])->assertStatus(201);
-        $this->actingAs($admin)->postJson('/api/subjects', ['name' => 'Matematika 2', 'code' => 'MTK'])->assertStatus(422);
+        $payload = [
+            'jenis' => 'formal',
+            'placements' => [['unit' => 'sma', 'jenjang' => 'SMA']],
+        ];
+        $this->actingAs($admin)->postJson('/api/subjects', ['name' => 'Matematika', 'code' => 'MTK', ...$payload])->assertStatus(201);
+        $this->actingAs($admin)->postJson('/api/subjects', ['name' => 'Matematika 2', 'code' => 'MTK', ...$payload])->assertStatus(422);
     }
 
     public function test_guru_cannot_create_subject(): void
     {
         $guru = User::factory()->create(['role' => 'guru']);
-        $this->actingAs($guru)->postJson('/api/subjects', ['name' => 'Fisika', 'code' => 'FIS'])->assertStatus(403);
+        $this->actingAs($guru)->postJson('/api/subjects', [
+            'name' => 'Fisika',
+            'code' => 'FIS',
+            'jenis' => 'formal',
+            'placements' => [['unit' => 'sma', 'jenjang' => 'SMA']],
+        ])->assertStatus(403);
     }
 
     public function test_admin_edit_subject(): void
     {
         $admin = User::factory()->create(['role' => 'admin_utama']);
-        $r = $this->actingAs($admin)->postJson('/api/subjects', ['name' => 'Kimia', 'code' => 'KIM'])->assertStatus(201);
+        $r = $this->actingAs($admin)->postJson('/api/subjects', [
+            'name' => 'Kimia',
+            'code' => 'KIM',
+            'jenis' => 'formal',
+            'placements' => [['unit' => 'sma', 'jenjang' => 'SMA']],
+        ])->assertStatus(201);
         $id = $r->json('id');
         $this->actingAs($admin)->putJson("/api/subjects/{$id}", ['name' => 'Kimia Updated'])->assertOk();
     }

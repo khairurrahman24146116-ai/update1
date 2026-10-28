@@ -21,9 +21,9 @@
 <input v-model="form.name" placeholder="Nama kelas (contoh X-1)" class="input" />
 <input v-model.number="form.grade" type="number" min="7" max="12" placeholder="Tingkat (7-12)" class="input" />
 <select v-model="form.tahun_ajaran_id" class="input"><option value="">Tahun ajaran</option><option v-for="y in years" :key="y.id" :value="y.id">{{ y.name }}</option></select>
-<select v-model="form.jalur" class="input"><option value="formal">Formal</option><option value="lpi">LPI</option></select>
-<select v-model="form.jenjang" class="input"><option value="SMP">SMP</option><option value="SMA">SMA</option><option value="Tsanawiyah">Tsanawiyah</option><option value="Aliyah">Aliyah</option></select>
-<div class="text-xs text-on-surface-variant flex items-center">Unit mengikuti jalur: formal = SMA, lpi = LPI.</div>
+          <select v-model="form.jalur" class="input"><option v-for="option in jalurOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select>
+          <select v-model="form.jenjang" class="input"><option v-for="option in jenjangOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select>
+          <div class="text-xs text-on-surface-variant flex items-center">Unit mengikuti jenjang dan jalur: SMP = SMP, formal = SMA, LPI = LPI.</div>
 </div>
 <p v-if="formError" class="text-error text-xs">{{ formError }}</p>
 <div class="flex gap-2"><button @click="submit" class="btn btn--primary btn--sm">Simpan</button><button @click="showForm=false" class="btn btn--ghost btn--sm">Batal</button></div>
@@ -38,14 +38,40 @@
 </AppShell>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import BackButton from '../../Components/BackButton.vue'
 import EmptyState from '../../Components/EmptyState.vue'
 import AppShell from '../../Components/AppShell.vue'
+import { useAuth } from '../../composables/useAuth.js'
+import { enabledUnitCodes } from '../../units.js'
+const { user } = useAuth()
 const search=ref(''), list=ref([]), meta=ref(null), page=ref(1), loading=ref(false), error=ref(''), showForm=ref(false), formError=ref(''), editingId=ref(null)
 const years=ref([]), filterYear=ref('')
-const emptyForm=()=>({ name:'', grade:'', tahun_ajaran_id:'', jalur:'formal', jenjang:'SMA' })
+const enabledCodes=computed(()=>enabledUnitCodes(user.value))
+const jalurCatalog=[
+  { value:'formal', label:'Formal', codes:['sma','smp'] },
+  { value:'lpi', label:'LPI', codes:['lpi'] },
+]
+const jenjangCatalog=[
+  { value:'SMP', label:'SMP', codes:['smp'] },
+  { value:'SMA', label:'SMA', codes:['sma'] },
+  { value:'Tsanawiyah', label:'Tsanawiyah', codes:['lpi'] },
+  { value:'Aliyah', label:'Aliyah', codes:['lpi'] },
+]
+const baseJalurOptions=computed(()=>jalurCatalog.filter(option=>option.codes.some(code=>enabledCodes.value.includes(code))))
+const baseJenjangOptions=computed(()=>jenjangCatalog.filter(option=>option.codes.some(code=>enabledCodes.value.includes(code))))
+const emptyForm=()=>({ name:'', grade:'', tahun_ajaran_id:'', jalur:baseJalurOptions.value[0]?.value||'formal', jenjang:baseJenjangOptions.value[0]?.value||'SMA' })
 const form=ref(emptyForm())
+const jalurOptions=computed(()=>{
+  const list=baseJalurOptions.value
+  if(form.value.jalur && !list.some(option=>option.value===form.value.jalur)) return [{ value:form.value.jalur, label:`${form.value.jalur} (nonaktif)` }, ...list]
+  return list
+})
+const jenjangOptions=computed(()=>{
+  const list=baseJenjangOptions.value
+  if(form.value.jenjang && !list.some(option=>option.value===form.value.jenjang)) return [{ value:form.value.jenjang, label:`${form.value.jenjang} (nonaktif)` }, ...list]
+  return list
+})
 let timer=null
 function onSearch(){ clearTimeout(timer); timer=setTimeout(()=>goPage(1), 350) }
 function goPage(p){ page.value=Math.max(1,p); load() }
@@ -65,7 +91,8 @@ async function submit(){
   formError.value=''
   if(!form.value.name || !form.value.grade){ formError.value='Nama dan tingkat wajib'; return }
   const year=years.value.find(y=>String(y.id)===String(form.value.tahun_ajaran_id))
-  const payload={ name: form.value.name, grade: Number(form.value.grade), tahun_ajaran_id: form.value.tahun_ajaran_id ? Number(form.value.tahun_ajaran_id) : undefined, academic_year: year?.name, jalur: form.value.jalur, jenjang: form.value.jenjang, unit: form.value.jalur==='lpi'?'lpi':'sma' }
+  const unit = form.value.jenjang==='SMP' ? 'smp' : (form.value.jalur==='lpi' ? 'lpi' : 'sma')
+  const payload={ name: form.value.name, grade: Number(form.value.grade), tahun_ajaran_id: form.value.tahun_ajaran_id ? Number(form.value.tahun_ajaran_id) : undefined, academic_year: year?.name, jalur: form.value.jalur, jenjang: form.value.jenjang, unit }
   const url=editingId.value?`/api/classrooms/${editingId.value}`:'/api/classrooms'; const method=editingId.value?'PUT':'POST'
   const r=await fetch(url,{method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)})
   if(!r.ok){ const j=await r.json(); formError.value=j.message||Object.values(j.errors??{}).flat().join(', '); return }

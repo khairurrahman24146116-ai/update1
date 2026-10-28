@@ -31,6 +31,7 @@ class StudentImportParser
         'jenis_kelamin' => ['jenis kelamin', 'gender', 'jk', 'l/p', 'kelamin', 'jenis kelamin l/p'],
         'tanggal_lahir' => ['tanggal lahir', 'tgl lahir', 'tanggal lahir siswa'],
         'kelas' => ['kelas', 'class', 'classroom', 'rombel', 'nama kelas'],
+        'unit' => ['unit', 'kode unit', 'satuan pendidikan'],
         'asal_siswa' => ['asal siswa', 'asal', 'sumber', 'asal pendaftaran', 'jalur masuk'],
         'nama_ayah' => ['nama ayah', 'ayah', 'nama bapak', 'bapak', 'nama ayah kandung'],
         'nama_ibu' => ['nama ibu', 'ibu', 'nama ibu kandung'],

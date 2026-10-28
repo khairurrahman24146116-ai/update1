@@ -323,6 +323,11 @@ class TeacherDirectoryApiTest extends TestCase
             'academic_year' => '2026/2027',
             'unit' => strtolower($code),
             'unit_id' => $this->unitId($code),
+            'jenjang' => match ($code) {
+                'LPI' => $grade >= 10 ? Classroom::JENJANG_ALIYAH : Classroom::JENJANG_TSANAWIYAH,
+                'SMP' => Classroom::JENJANG_SMP,
+                default => Classroom::JENJANG_SMA,
+            },
         ]);
     }
 

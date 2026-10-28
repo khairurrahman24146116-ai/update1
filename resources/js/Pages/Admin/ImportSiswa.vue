@@ -25,6 +25,7 @@
       <div class="text-xs bg-surface-container-low border border-outline-variant rounded-xl p-3">
         Header wajib: <span class="font-bold">NIS / NISN / Nama / Jenis Kelamin / Kelas</span> (urutan bebas).
         NISN yang kosong menjadi peringatan. Kelas mengikuti master tahun ajaran terpilih.
+        <span class="font-bold text-error">Jika ada satu baris error, seluruh file ditolak.</span>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
@@ -60,6 +61,7 @@
               <th class="p-2 text-left">NISN</th>
               <th class="p-2 text-left">Nama</th>
               <th class="p-2 text-left">Kelas</th>
+              <th class="p-2 text-left">Unit</th>
               <th class="p-2 text-left">Aksi</th>
               <th class="p-2 text-left">Status</th>
               <th class="p-2 text-left">Catatan</th>
@@ -72,6 +74,7 @@
               <td class="p-2">{{ r.data_valid?.nisn }}</td>
               <td class="p-2">{{ r.data_valid?.nama }}</td>
               <td class="p-2">{{ r.data_valid?.kelas }}</td>
+              <td class="p-2">{{ r.data_valid?.unit || '-' }}</td>
               <td class="p-2">{{ labelAksi(r.aksi) }}</td>
               <td class="p-2 font-bold" :class="statusClass(r.status)">{{ r.status }}</td>
               <td class="p-2">
@@ -91,9 +94,13 @@
           <button @click="goPage(meta.current_page + 1)" :disabled="meta.current_page >= meta.last_page" class="btn btn--ghost btn--sm disabled:opacity-40">Next</button>
         </div>
       </div>
+      <div v-if="hasBlockingErrors" class="text-xs bg-red-50 border border-red-200 text-red-700 rounded-xl p-3">
+        Ada {{ preview.summary.error }} baris error. Import tidak bisa dilanjutkan.
+        Perbaiki file lalu upload ulang; tidak ada data yang akan disimpan.
+      </div>
       <div class="flex flex-wrap gap-2 pt-2 border-t border-outline-variant">
-        <button @click="doConfirm" :disabled="busy || preview.summary.error === preview.summary.total" class="btn btn--primary btn--sm disabled:opacity-50">
-          Konfirmasi Import (baris valid & peringatan)
+        <button @click="doConfirm" :disabled="busy || hasBlockingErrors" class="btn btn--primary btn--sm disabled:opacity-50">
+          Konfirmasi Import
         </button>
         <button @click="downloadErrors" class="btn btn--ghost btn--sm">Unduh Error (CSV)</button>
         <button @click="doCancel" class="btn btn--ghost btn--sm text-error">Batalkan</button>
@@ -138,7 +145,7 @@
   </AppShell>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import BackButton from '../../Components/BackButton.vue'
 import AppShell from '../../Components/AppShell.vue'
 import EmptyState from '../../Components/EmptyState.vue'
@@ -158,6 +165,7 @@ const result = ref(null)
 const history = ref([])
 const busy = ref(false)
 const error = ref('')
+const hasBlockingErrors = computed(() => Number(preview.value?.summary?.error || 0) > 0)
 
 async function parseError(res) {
   try {
@@ -256,6 +264,10 @@ function goPage(p) {
 
 async function doConfirm() {
   if (!batchId.value) return
+  if (hasBlockingErrors.value) {
+    error.value = 'Perbaiki semua baris error terlebih dahulu. Import tidak akan menyimpan data apa pun.'
+    return
+  }
   busy.value = true
   error.value = ''
   try {

@@ -6,8 +6,8 @@
     <template v-if="summary">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div v-for="card in cards" :key="card.label" class="bg-white border border-outline-variant rounded-xl shadow-sm p-4 min-w-0">
-          <div class="flex items-center gap-2 text-on-surface-variant">
-            <span class="material-symbols-outlined !w-4 !h-4">{{ card.icon }}</span>
+          <div class="text-on-surface-variant" :class="card.icon ? 'flex items-center gap-2' : ''">
+            <span v-if="card.icon" class="material-symbols-outlined !w-4 !h-4">{{ card.icon }}</span>
             <span class="font-label-sm text-label-sm uppercase tracking-wide">{{ card.label }}</span>
           </div>
           <div class="mt-2 text-xl md:text-2xl font-black break-words" :class="card.class">{{ card.value }}</div>
@@ -89,7 +89,7 @@ const to = ref('')
 const cards = computed(() => {
   if (!summary.value) return []
   return [
-    { label: 'Saldo Awal', value: formatRupiah(summary.value.opening_balance), icon: 'savings', hint: 'Saldo pembukaan unit', class: 'text-on-surface' },
+    { label: 'Saldo Awal', value: formatRupiah(summary.value.opening_balance), hint: 'Saldo pembukaan unit', class: 'text-on-surface' },
     { label: 'Total Pemasukan', value: formatRupiah(summary.value.total_income), icon: 'trending_up', hint: 'Termasuk pembayaran SPP', class: 'text-success' },
     { label: 'Total Pengeluaran', value: formatRupiah(summary.value.total_expense), icon: 'trending_down', hint: 'Seluruh pengeluaran unit', class: 'text-error' },
     { label: 'Saldo', value: formatRupiah(summary.value.balance), icon: 'account_balance_wallet', hint: 'Saldo awal + pemasukan − pengeluaran', class: 'text-primary' },

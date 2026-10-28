@@ -7,6 +7,7 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Services\TeacherProfileService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -93,6 +94,7 @@ class AccountController extends Controller
                 ])
                 ->values(),
             'units' => Unit::query()
+                ->whereIn(DB::raw('LOWER(kode)'), Unit::enabledCodes())
                 ->orderBy('kode')
                 ->get(['kode', 'nama'])
                 ->map(fn (Unit $unit): array => [
@@ -100,6 +102,7 @@ class AccountController extends Controller
                     'label' => $unit->nama,
                 ])
                 ->values(),
+            'jabatan_options' => User::jabatanOptions(),
             'can_assign_role' => $actor->isAdminUtama(),
             'can_assign_unit' => $actor->isAdminUtama(),
             'can_manage_permissions' => $actor->isAdminUtama() && $actor->hasPermission('permissions.manage'),
@@ -126,7 +129,7 @@ class AccountController extends Controller
             'password' => ['required', 'string', 'min:6'],
             'role' => ['required', Rule::in(self::MANAGEABLE_ROLES)],
             'units' => ['required', 'array', 'min:1'],
-            'units.*.code' => ['required', 'string', 'distinct', Rule::in(['LPI', 'SMA', 'SMP'])],
+            'units.*.code' => ['required', 'string', 'distinct', Rule::in(array_map('strtoupper', Unit::enabledCodes()))],
             'units.*.jabatan' => ['nullable', 'string', 'max:100'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
@@ -176,7 +179,7 @@ class AccountController extends Controller
             'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($account->id)],
             'role' => ['sometimes', Rule::in(self::MANAGEABLE_ROLES)],
             'units' => ['sometimes', 'array', 'min:1'],
-            'units.*.code' => ['required', 'string', 'distinct', Rule::in(['LPI', 'SMA', 'SMP'])],
+            'units.*.code' => ['required', 'string', 'distinct', Rule::in(array_map('strtoupper', Unit::enabledCodes()))],
             'units.*.jabatan' => ['nullable', 'string', 'max:100'],
             'is_active' => ['sometimes', 'boolean'],
         ]);

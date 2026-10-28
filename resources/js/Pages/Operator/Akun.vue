@@ -258,10 +258,14 @@
                         v-model="form.jabatan[unit.code]"
                         type="text"
                         class="op-input op-input--sm"
+                        list="jabatan-options"
                         :placeholder="`Jabatan di ${unit.code}...`"
                       />
                     </label>
                   </div>
+                  <datalist id="jabatan-options">
+                    <option v-for="jabatan in options.jabatan_options" :key="jabatan" :value="jabatan" />
+                  </datalist>
                 </div>
               </div>
 
@@ -385,24 +389,22 @@ import AppShell from '../../Components/AppShell.vue'
 import PermissionsPanel from '../../Components/PermissionsPanel.vue'
 import { useDialog } from '../../composables/useDialog.js'
 
-const unitTabs = [
-  { value: 'all', label: 'Semua' },
-  { value: 'LPI', label: 'LPI' },
-  { value: 'SMA', label: 'SMA' },
-  { value: 'SMP', label: 'SMP' },
-]
-
 const dialog = useDialog()
 const accounts = ref([])
 const meta = ref(null)
 const options = reactive({
   roles: [],
   units: [],
+  jabatan_options: [],
   can_assign_role: false,
   can_assign_unit: false,
   can_manage_permissions: false,
   current_user_id: null,
 })
+const unitTabs = computed(() => [
+  { value: 'all', label: 'Semua' },
+  ...options.units.map((unit) => ({ value: unit.code, label: unit.label || unit.code })),
+])
 const filters = reactive({ unit: 'all', search: '', role: '', is_active: '' })
 const loading = ref(false)
 const pageError = ref('')
@@ -501,6 +503,10 @@ async function loadOptions() {
     const data = await request('/api/accounts/options')
     options.roles = data.roles || []
     options.units = data.units || []
+    options.jabatan_options = data.jabatan_options || []
+    if (filters.unit !== 'all' && !options.units.some((unit) => unit.code === filters.unit)) {
+      filters.unit = 'all'
+    }
     options.can_assign_role = Boolean(data.can_assign_role)
     options.can_assign_unit = Boolean(data.can_assign_unit)
     options.can_manage_permissions = Boolean(data.can_manage_permissions)

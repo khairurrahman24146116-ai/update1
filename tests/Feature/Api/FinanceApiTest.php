@@ -52,6 +52,29 @@ class FinanceApiTest extends TestCase
         return $user;
     }
 
+    private function guruBendahara(string $unit, bool $grantPermissions = false): User
+    {
+        $user = User::factory()->create(['role' => User::ROLE_GURU, 'unit' => null]);
+
+        $user->units()->attach(
+            Unit::where('kode', strtoupper($unit))->value('id'),
+            ['jabatan' => 'Bendahara '.strtoupper($unit)],
+        );
+
+        if ($grantPermissions) {
+            foreach (['finance.view', 'finance.transactions.view', 'finance.transactions.create', 'finance.transactions.update', 'finance.transactions.delete'] as $permission) {
+                $user->permissionOverrides()->create([
+                    'permission' => $permission,
+                    'effect' => 'allow',
+                ]);
+            }
+
+            $user->forgetPermissionCache();
+        }
+
+        return $user;
+    }
+
     public function test_bendahara_unit_is_forced_on_create(): void
     {
         $bendahara = $this->bendahara('lpi');
@@ -157,6 +180,81 @@ class FinanceApiTest extends TestCase
             $user = User::factory()->create(['role' => $role]);
             $this->actingAs($user)->getJson('/api/finance/transactions')->assertStatus(403);
         }
+    }
+
+    public function test_guru_with_finance_permission_can_access_finance_and_only_sees_own_unit(): void
+    {
+        $guru = $this->guruBendahara('sma', grantPermissions: true);
+
+        FinanceTransaction::factory()->unit('sma')->income()->create(['description' => 'SMA only']);
+        FinanceTransaction::factory()->unit('lpi')->income()->create(['description' => 'LPI only']);
+
+        $this->actingAs($guru)->getJson('/api/finance/transactions?type=income')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.description', 'SMA only');
+
+        $this->actingAs($guru)->getJson('/api/finance/dashboard')
+            ->assertOk()
+            ->assertJsonPath('unit', 'sma');
+
+        $this->assertSame(User::ROLE_GURU, $guru->fresh()->role);
+    }
+
+    public function test_guru_with_bendahara_jabatan_can_access_finance_without_role_change(): void
+    {
+        $guru = $this->guruBendahara('sma');
+
+        $this->assertTrue($guru->canAccessFinance());
+
+        $this->actingAs($guru)->postJson('/api/finance/transactions', [
+            'type' => 'income',
+            'transaction_date' => '2026-10-01',
+            'amount' => 125000,
+            'description' => 'Infaq bendahara jabatan',
+        ])->assertCreated()->assertJsonPath('unit', 'sma');
+
+        $this->assertDatabaseHas('finance_transactions', ['unit' => 'sma', 'amount' => 125000]);
+        $this->assertSame(User::ROLE_GURU, $guru->fresh()->role);
+    }
+
+    public function test_guru_finance_access_is_denied_for_other_units(): void
+    {
+        $guru = $this->guruBendahara('sma', grantPermissions: true);
+        $trx = FinanceTransaction::factory()->unit('sma')->create();
+
+        $this->actingAs($guru)->getJson('/api/finance/transactions?unit=lpi')->assertForbidden();
+        $this->actingAs($guru)->getJson('/api/finance/transactions?unit=smp')->assertForbidden();
+        $this->actingAs($guru)->deleteJson("/api/finance/transactions/{$trx->id}")->assertNoContent();
+
+        $lpiTrx = FinanceTransaction::factory()->unit('lpi')->create();
+        $this->actingAs($guru)->deleteJson("/api/finance/transactions/{$lpiTrx->id}")->assertForbidden();
+        $this->assertDatabaseHas('finance_transactions', ['id' => $lpiTrx->id]);
+    }
+
+    public function test_guru_without_permission_or_jabatan_is_denied_finance(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_GURU, 'unit' => null]);
+        $user->units()->attach(
+            Unit::where('kode', 'SMA')->value('id'),
+            ['jabatan' => 'Guru Mata Pelajaran'],
+        );
+
+        $this->actingAs($user)->getJson('/api/finance/transactions')->assertForbidden();
+    }
+
+    public function test_finance_user_without_unit_gets_clear_message(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_GURU, 'unit' => null]);
+        $user->permissionOverrides()->create([
+            'permission' => 'finance.view',
+            'effect' => 'allow',
+        ]);
+        $user->forgetPermissionCache();
+
+        $this->actingAs($user)->getJson('/api/finance/dashboard')
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Akun belum terhubung ke unit, hubungi admin.');
     }
 
     public function test_paying_spp_updates_invoice_and_records_income_once(): void

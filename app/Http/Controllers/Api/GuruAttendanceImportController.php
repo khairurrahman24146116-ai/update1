@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Schedule;
+use App\Models\Scopes\BerdasarkanUnit;
 use App\Models\Student;
+use App\Models\Unit;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -123,6 +125,12 @@ class GuruAttendanceImportController extends Controller
     private function assertAuthorized(Request $request, Schedule $schedule): void
     {
         $user = $request->user();
+        $schedule->loadMissing('classroom');
+
+        if ($schedule->classroom === null || ! Unit::isClassroomEnabled($schedule->classroom)) {
+            abort(403, 'Kelas jadwal tidak aktif.');
+        }
+
         if ($user->isAdmin()) {
             return;
         }
@@ -214,8 +222,11 @@ class GuruAttendanceImportController extends Controller
         $seen = [];
         $nisList = array_values(array_filter(array_map(fn ($r) => $r['nis'] ?? '', $rows)));
         $nisnList = array_values(array_filter(array_map(fn ($r) => $r['nisn'] ?? '', $rows)));
-        $studentsByNis = $nisList ? Student::whereIn('nis', $nisList)->get()->keyBy(fn ($s) => (string) $s->nis) : collect();
-        $studentsByNisn = $nisnList ? Student::whereIn('nisn', $nisnList)->get()->keyBy(fn ($s) => (string) $s->nisn) : collect();
+        $studentQuery = fn () => Student::query()
+            ->withoutGlobalScope(BerdasarkanUnit::class)
+            ->where('classroom_id', $schedule->classroom_id);
+        $studentsByNis = $nisList ? $studentQuery()->whereIn('nis', $nisList)->get()->keyBy(fn ($s) => (string) $s->nis) : collect();
+        $studentsByNisn = $nisnList ? $studentQuery()->whereIn('nisn', $nisnList)->get()->keyBy(fn ($s) => (string) $s->nisn) : collect();
         $existingKeys = Attendance::where('schedule_id', $schedule->id)->whereDate('date', $date)->pluck('student_id')->flip()->toArray();
         foreach ($rows as $r) {
             $errs = [];

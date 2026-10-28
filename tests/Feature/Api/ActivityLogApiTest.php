@@ -202,7 +202,13 @@ class ActivityLogApiTest extends TestCase
     {
         $admin = $this->admin();
         $guru = User::factory()->create(['role' => User::ROLE_GURU]);
-        $classroom = Classroom::create(['name' => 'X-Audit', 'grade' => 10, 'academic_year' => '2026/2027']);
+        $classroom = Classroom::create([
+            'name' => 'X-Audit',
+            'grade' => 10,
+            'academic_year' => '2026/2027',
+            'unit' => 'sma',
+            'jenjang' => Classroom::JENJANG_SMA,
+        ]);
         $subject = Subject::create(['name' => 'Audit', 'code' => 'AUD']);
 
         $schedule = $this->actingAs($admin)

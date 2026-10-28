@@ -55,9 +55,9 @@ class TeacherProfileService
             $code = strtoupper(trim((string) ($item['code'] ?? '')));
             $unit = Unit::query()->whereRaw('UPPER(kode) = ?', [$code])->first();
 
-            if (! $unit) {
+            if (! $unit || ! Unit::isEnabledCode(strtolower((string) $unit->kode))) {
                 throw ValidationException::withMessages([
-                    'units' => "Unit {$code} tidak ditemukan.",
+                    'units' => "Unit {$code} tidak tersedia.",
                 ]);
             }
 

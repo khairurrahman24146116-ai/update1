@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Student;
+use App\Models\Unit;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
@@ -112,7 +113,11 @@ class AuthController extends Controller
      */
     private function userPayload(User $user): array
     {
-        return array_merge($user->toArray(), $user->permissionPayload());
+        return array_merge($user->toArray(), $user->permissionPayload(), [
+            'can_access_finance' => $user->canAccessFinance(),
+            'finance_unit_codes' => $user->financeUnitCodes(),
+            'enabled_units' => Unit::enabledCodes(),
+        ]);
     }
 
     private function fullAccessResponse(User $user, string $channel): ?JsonResponse

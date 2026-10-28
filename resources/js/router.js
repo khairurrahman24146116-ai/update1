@@ -34,7 +34,9 @@ import GuruAbsensi from './Pages/Guru/Absensi.vue'
 import GuruImportAbsensi from './Pages/Guru/ImportAbsensi.vue'
 import GuruJadwal from './Pages/Guru/Jadwal.vue'
 import GuruNilai from './Pages/Guru/Nilai.vue'
+import GuruAkhlak from './Pages/Guru/Akhlak.vue'
 import WaliNilaiAnak from './Pages/WaliMurid/NilaiAnak.vue'
+import WaliAkhlak from './Pages/WaliMurid/Akhlak.vue'
 import WaliSurat from './Pages/WaliMurid/Surat.vue'
 import WaliPertemuan from './Pages/WaliMurid/Pertemuan.vue'
 import BeritaDetail from './Pages/BeritaDetail.vue'
@@ -54,7 +56,7 @@ import LpiAkademikKurikulum from './Pages/Lpi/LpiAkademikKurikulum.vue'
 import LpiAkademikKalender from './Pages/Lpi/LpiAkademikKalender.vue'
 import NotFound from './Pages/NotFound.vue'
 import { LOGIN_PATH } from './site-paths.js'
-import { ADMIN_MANAGE_PERMISSIONS } from './permissions.js'
+import { ADMIN_MANAGE_PERMISSIONS, canManageAkhlak, hasFinanceAccess } from './permissions.js'
 import { refreshUserSession } from './composables/useAuth.js'
 
 const roleMap = { admin_utama: '/app/admin', operator: '/app/operator/akun', pending: '/app/pending', kepala_sekolah: '/app/kepala/guru', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
@@ -145,22 +147,25 @@ const routes = [
     { path: '/app/admin/kelas', component: AdminKelas, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['classrooms.view'] } },
     { path: '/app/admin/mapel', component: AdminMapel, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['subjects.view'] } },
     { path: '/app/admin/schedules', component: AdminSchedules, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['schedules.view'] } },
+    { path: '/app/admin/kesejahteraan', component: GuruAkhlak, meta: { requiresAuth: true, role: 'admin_utama', akhlakAccess: true } },
     { path: '/app/admin/import-siswa', component: ImportSiswa, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['students.import'], adminOnly: true } },
     { path: '/app/guru', component: GuruDashboard, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/jadwal', component: GuruJadwal, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/absensi', component: GuruAbsensi, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/import-absensi', component: GuruImportAbsensi, meta: { requiresAuth: true, role: 'guru' } },
     { path: '/app/guru/nilai', component: GuruNilai, meta: { requiresAuth: true, role: 'guru' } },
-    { path: '/app/bendahara', component: BendaharaDashboard, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.view'] } },
-    { path: '/app/bendahara/pemasukan', component: BendaharaTransactions, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.transactions.view'] } },
-    { path: '/app/bendahara/pengeluaran', component: BendaharaTransactions, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.transactions.view'] } },
-    { path: '/app/bendahara/spp', component: BendaharaSpp, meta: { requiresAuth: true, role: financeRoles, permissions: ['spp.view'] } },
-    { path: '/app/bendahara/pembayaran', component: BendaharaPayments, meta: { requiresAuth: true, role: financeRoles, permissions: ['spp.view'] } },
-    { path: '/app/bendahara/laporan', component: BendaharaReports, meta: { requiresAuth: true, role: financeRoles, permissions: ['reports.finance.view'] } },
-    { path: '/app/bendahara/preview/pemasukan', component: BendaharaPreview, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.transactions.view'], reportType: 'income' } },
-    { path: '/app/bendahara/preview/pengeluaran', component: BendaharaPreview, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.transactions.view'], reportType: 'expense' } },
+    { path: '/app/guru/akhlak', component: GuruAkhlak, meta: { requiresAuth: true, role: 'guru', akhlakAccess: true } },
+    { path: '/app/bendahara', component: BendaharaDashboard, meta: { requiresAuth: true, financeAccess: true, permissions: ['finance.view'] } },
+    { path: '/app/bendahara/pemasukan', component: BendaharaTransactions, meta: { requiresAuth: true, financeAccess: true, permissions: ['finance.transactions.view'] } },
+    { path: '/app/bendahara/pengeluaran', component: BendaharaTransactions, meta: { requiresAuth: true, financeAccess: true, permissions: ['finance.transactions.view'] } },
+    { path: '/app/bendahara/spp', component: BendaharaSpp, meta: { requiresAuth: true, financeAccess: true, permissions: ['spp.view'] } },
+    { path: '/app/bendahara/pembayaran', component: BendaharaPayments, meta: { requiresAuth: true, financeAccess: true, permissions: ['spp.view'] } },
+    { path: '/app/bendahara/laporan', component: BendaharaReports, meta: { requiresAuth: true, financeAccess: true, permissions: ['reports.finance.view'] } },
+    { path: '/app/bendahara/preview/pemasukan', component: BendaharaPreview, meta: { requiresAuth: true, financeAccess: true, permissions: ['finance.transactions.view'], reportType: 'income' } },
+    { path: '/app/bendahara/preview/pengeluaran', component: BendaharaPreview, meta: { requiresAuth: true, financeAccess: true, permissions: ['finance.transactions.view'], reportType: 'expense' } },
     { path: '/app/wali-murid', component: WaliMuridDashboard, meta: { requiresAuth: true, role: 'wali_murid' } },
     { path: '/app/wali-murid/nilai', component: WaliNilaiAnak, meta: { requiresAuth: true, role: 'wali_murid' } },
+    { path: '/app/wali-murid/akhlak', component: WaliAkhlak, meta: { requiresAuth: true, role: 'wali_murid', permissions: ['welfare.view'] } },
     { path: '/app/wali-murid/surat', component: WaliSurat, meta: { requiresAuth: true, role: 'wali_murid' } },
     { path: '/app/wali-murid/pertemuan', component: WaliPertemuan, meta: { requiresAuth: true, role: 'wali_murid' } },
 ]
@@ -180,12 +185,16 @@ router.beforeEach(async (to) => {
     await syncSessionOnce()
     token = localStorage.getItem('madani_token')
   }
+  if (token && to.meta.akhlakAccess) {
+    await refreshUserSession().catch(() => null)
+    token = localStorage.getItem('madani_token')
+  }
   if (to.meta.requiresAuth && !token) return LOGIN_PATH
   if (to.meta.guestOnly && token) {
     const r = currentRole()
     return roleMap[r] || '/'
   }
-  if (token && (to.meta.role || to.meta.permissions || to.meta.adminOnly)) {
+  if (token && (to.meta.role || to.meta.permissions || to.meta.adminOnly || to.meta.akhlakAccess)) {
     const u = currentUser()
     const r = u?.role || null
     if (r === 'pending' && to.path !== '/app/pending') return '/app/pending'
@@ -197,6 +206,8 @@ router.beforeEach(async (to) => {
       : true
 
     if (to.meta.adminOnly && r !== 'admin_utama') return denyAccess()
+    if (to.meta.akhlakAccess && !canManageAkhlak(u)) return denyAccess()
+    if (to.meta.financeAccess && !hasFinanceAccess(u)) return denyAccess()
     if (allowedRoles.length && !roleOk) return denyAccess()
     if (to.meta.permissions && !permOk) return denyAccess()
   }

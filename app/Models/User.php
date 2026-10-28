@@ -35,6 +35,8 @@ class User extends Authenticatable
 
     public const ROLE_WALI_MURID = 'wali_murid';
 
+    public const JABATAN_KABAG_PENGAJIAN = 'Kabag Pengajian';
+
     public const FINANCE_ROLES = [
         self::ROLE_BENDAHARA,
         self::ROLE_BENDAHARA_LPI,
@@ -117,6 +119,56 @@ class User extends Authenticatable
     public function isGuru(): bool
     {
         return $this->role === self::ROLE_GURU;
+    }
+
+    /**
+     * Akses tunggal fitur Akhlak, Izin, dan Kelayakan Santri.
+     */
+    public function canManageAkhlak(): bool
+    {
+        if ($this->isAdminUtama()) {
+            return true;
+        }
+
+        if (! $this->isGuru() || ! Unit::isEnabledCode('lpi')) {
+            return false;
+        }
+
+        return $this->hasJabatanOnUnit(self::JABATAN_KABAG_PENGAJIAN, 'lpi');
+    }
+
+    public function hasJabatanOnUnit(string $jabatan, string $unitCode): bool
+    {
+        $expected = $this->normalizeJabatan($jabatan);
+        $unitCode = strtolower(trim($unitCode));
+
+        foreach ($this->unitsWithJabatan() as $unit) {
+            if (strtolower(trim((string) $unit->kode)) !== $unitCode) {
+                continue;
+            }
+
+            if ($this->normalizeJabatan($unit->pivot?->jabatan) === $expected) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function jabatanOptions(): array
+    {
+        return [
+            self::JABATAN_KABAG_PENGAJIAN,
+            'Kepala Unit',
+            'Wali Kelas',
+            'Guru Mata Pelajaran',
+            'Bendahara LPI',
+            'Bendahara SMA',
+            'Operator',
+        ];
     }
 
     public function isWaliMurid(): bool
@@ -215,8 +267,62 @@ class User extends Authenticatable
         return in_array($this->role, self::FINANCE_ROLES, true);
     }
 
+    /**
+     * Akun dengan jabatan bendahara pada salah satu unit tetap dianggap
+     * memiliki akses keuangan meskipun rolenya guru/operator.
+     */
+    public function hasFinanceJabatan(): bool
+    {
+        foreach ($this->unitsWithJabatan() as $unit) {
+            $jabatan = $unit->pivot?->jabatan;
+
+            if (is_string($jabatan) && str_contains(strtolower($jabatan), 'bendahara')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Unit keuangan (LPI/SMA) yang terhubung ke akun ini.
+     *
+     * @return list<string>
+     */
+    public function financeUnitCodes(): array
+    {
+        return array_values(array_intersect($this->effectiveUnitCodes(), ['lpi', 'sma']));
+    }
+
+    /**
+     * Satu pintu akses modul keuangan: role admin/keuangan, izin keuangan,
+     * atau jabatan bendahara.
+     */
+    public function canAccessFinance(): bool
+    {
+        return $this->isAdmin()
+            || $this->isFinanceRole()
+            || $this->hasFinanceJabatan()
+            || $this->hasFinancePermission();
+    }
+
+    public function hasFinancePermission(): bool
+    {
+        foreach ($this->effectivePermissions() as $permission) {
+            if ($this->isFinancePermissionKey($permission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function canAccessFinanceUnit(string $unit): bool
     {
+        if (! $this->canAccessFinance()) {
+            return false;
+        }
+
         return $this->isAdmin() || $this->canAccessDataUnit($unit);
     }
 
@@ -268,6 +374,16 @@ class User extends Authenticatable
         }
 
         $overrides = $this->permissionOverridesMap();
+        $rolePermissions = PermissionCatalog::forRole($this->role);
+        $jabatanPermissions = $this->isFinanceRole() ? [] : $this->financeJabatanPermissions();
+
+        if ($this->canManageAkhlak()) {
+            $jabatanPermissions = array_values(array_unique(array_merge(
+                $jabatanPermissions,
+                ['welfare.view', 'welfare.manage', 'welfare.approve', 'welfare.settings'],
+            )));
+        }
+
         $permissions = [];
 
         foreach (PermissionCatalog::allPermissions() as $permission) {
@@ -277,12 +393,68 @@ class User extends Authenticatable
                 continue;
             }
 
-            if (in_array($permission, PermissionCatalog::forRole($this->role), true) || $effect === UserPermission::EFFECT_ALLOW) {
+            if (
+                in_array($permission, $rolePermissions, true)
+                || in_array($permission, $jabatanPermissions, true)
+                || $effect === UserPermission::EFFECT_ALLOW
+            ) {
                 $permissions[] = $permission;
             }
         }
 
         return $this->effectivePermissionsCache = $permissions;
+    }
+
+    private function unitsWithJabatan(): iterable
+    {
+        return $this->relationLoaded('units') ? $this->units : $this->units()->get();
+    }
+
+    private function normalizeJabatan(?string $jabatan): string
+    {
+        $normalized = strtolower(trim((string) $jabatan));
+        $normalized = preg_replace('/[^a-z0-9]+/', ' ', $normalized) ?? '';
+
+        return trim(preg_replace('/\s+/', ' ', $normalized) ?? '');
+    }
+
+    /**
+     * Izin keuangan bawaan jabatan bendahara, mengikuti unitnya.
+     *
+     * @return list<string>
+     */
+    private function financeJabatanPermissions(): array
+    {
+        $permissions = [];
+
+        foreach ($this->unitsWithJabatan() as $unit) {
+            $jabatan = $unit->pivot?->jabatan;
+
+            if (! is_string($jabatan) || ! str_contains(strtolower($jabatan), 'bendahara')) {
+                continue;
+            }
+
+            $role = match (strtolower(trim((string) $unit->kode))) {
+                'lpi' => self::ROLE_BENDAHARA_LPI,
+                'sma' => self::ROLE_BENDAHARA_SMA,
+                default => self::ROLE_BENDAHARA,
+            };
+
+            foreach (PermissionCatalog::forRole($role) as $permission) {
+                if ($this->isFinancePermissionKey($permission)) {
+                    $permissions[] = $permission;
+                }
+            }
+        }
+
+        return array_values(array_unique($permissions));
+    }
+
+    private function isFinancePermissionKey(string $permission): bool
+    {
+        return str_starts_with($permission, 'finance.')
+            || str_starts_with($permission, 'spp.')
+            || str_starts_with($permission, 'reports.finance');
     }
 
     public function forgetPermissionCache(): void
@@ -362,6 +534,7 @@ class User extends Authenticatable
             'role_permissions' => PermissionCatalog::forRole($this->role),
             'permission_overrides' => $this->permissionOverridesMap(),
             'has_full_permission_access' => $this->hasFullPermissionAccess(),
+            'can_manage_akhlak' => $this->canManageAkhlak(),
             'is_protected_admin' => $this->isProtectedAdmin(),
         ];
     }

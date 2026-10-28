@@ -49,6 +49,10 @@ export function isAdminUtama(user) {
   return user?.role === 'admin_utama'
 }
 
+export function canManageAkhlak(user) {
+  return user?.can_manage_akhlak === true
+}
+
 export function canAccessAdminModule(user, module = {}) {
   if (module.adminOnly && !isAdminUtama(user)) return false
   return !module.permission || can(user, module.permission)
@@ -59,8 +63,16 @@ export function hasAdminAreaAccess(user) {
   return canAny(user, ADMIN_MANAGE_PERMISSIONS)
 }
 
+export function hasFinanceJabatan(user) {
+  return Array.isArray(user?.units) && user.units.some((unit) =>
+    String(unit?.jabatan || '').toLowerCase().includes('bendahara')
+  )
+}
+
 export function hasFinanceAccess(user) {
+  if (user?.can_access_finance === true) return true
   if (isAdminUser(user)) return true
   if (FINANCE_ROLES.includes(user?.role)) return true
+  if (hasFinanceJabatan(user)) return true
   return canAny(user, FINANCE_PERMISSIONS)
 }

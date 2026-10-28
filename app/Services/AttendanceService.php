@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\Schedule;
+use App\Models\Scopes\BerdasarkanUnit;
 use App\Models\Student;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -21,7 +22,12 @@ class AttendanceService
     public function sheet(int $scheduleId, string $date): Collection
     {
         $schedule = Schedule::findOrFail($scheduleId);
-        $students = Student::where('classroom_id', $schedule->classroom_id)->where('status', 'aktif')->orderBy('name')->get();
+        $students = Student::query()
+            ->withoutGlobalScope(BerdasarkanUnit::class)
+            ->where('classroom_id', $schedule->classroom_id)
+            ->where('status', 'aktif')
+            ->orderBy('name')
+            ->get();
         $records = Attendance::where('schedule_id', $scheduleId)->where('date', $date)->get()->keyBy('student_id');
 
         return $students->map(fn ($s) => ['student' => $s, 'attendance' => $records->get($s->id)]);

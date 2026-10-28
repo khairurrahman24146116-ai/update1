@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\ActivityLogController;
+use App\Http\Controllers\Api\AkhlakRecordController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BackupController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Api\ClassroomController;
 use App\Http\Controllers\Api\FinanceTransactionController;
 use App\Http\Controllers\Api\GalleryAlbumController;
 use App\Http\Controllers\Api\GuruAttendanceImportController;
+use App\Http\Controllers\Api\GuruDashboardController;
 use App\Http\Controllers\Api\HomepageSettingController;
 use App\Http\Controllers\Api\LandingSectionController;
 use App\Http\Controllers\Api\NewsCategoryController;
@@ -24,13 +26,19 @@ use App\Http\Controllers\Api\SiteSettingController;
 use App\Http\Controllers\Api\SppController;
 use App\Http\Controllers\Api\StructureMemberController;
 use App\Http\Controllers\Api\StudentController;
+use App\Http\Controllers\Api\StudentEligibilityController;
 use App\Http\Controllers\Api\StudentImportController;
+use App\Http\Controllers\Api\StudentPermitController;
+use App\Http\Controllers\Api\StudentWelfareSettingController;
 use App\Http\Controllers\Api\SubjectController;
 use App\Http\Controllers\Api\TeacherAccountController;
+use App\Http\Controllers\Api\TeacherAssignmentController;
 use App\Http\Controllers\Api\TeacherAttendanceController;
 use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\TeacherDirectoryController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\WaliWelfareController;
+use App\Http\Controllers\Api\WelfareMetaController;
 use App\Models\LandingSection;
 use App\Models\SchoolPrincipal;
 use Illuminate\Support\Facades\Route;
@@ -111,11 +119,45 @@ Route::middleware(['auth:sanctum', 'active', 'role.assigned'])->group(function (
     Route::get('/teachers', [TeacherController::class, 'index'])
         ->middleware('permission:teachers.view');
 
+    Route::get('/guru/dashboard', GuruDashboardController::class)->middleware('role:guru');
+    Route::get('/guru/assignments', [TeacherAssignmentController::class, 'index'])->middleware(['role:guru', 'permission:scores.view']);
     Route::get('/scores/sheet', [ScoreController::class, 'sheet'])->middleware('permission:scores.view');
     Route::post('/scores', [ScoreController::class, 'store'])->middleware('permission:scores.update');
     Route::get('/wali/scores', [ScoreController::class, 'waliScores'])->middleware(['role:wali_murid', 'permission:scores.view']);
 
-    Route::prefix('finance')->group(function () {
+    Route::prefix('welfare')->group(function () {
+        Route::get('/meta', WelfareMetaController::class)
+            ->middleware(['role:admin_utama,guru,wali_murid']);
+
+        Route::get('/wali/overview', [WaliWelfareController::class, 'overview'])
+            ->middleware(['role:wali_murid', 'permission:welfare.view']);
+
+        Route::middleware('akhlak')->group(function () {
+            Route::get('/akhlak', [AkhlakRecordController::class, 'index']);
+            Route::post('/akhlak', [AkhlakRecordController::class, 'store']);
+            Route::put('/akhlak/{id}', [AkhlakRecordController::class, 'update'])
+                ->whereNumber('id');
+            Route::post('/akhlak/{id}/cancel', [AkhlakRecordController::class, 'cancel'])
+                ->whereNumber('id');
+
+            Route::get('/permits', [StudentPermitController::class, 'index']);
+            Route::post('/permits', [StudentPermitController::class, 'store']);
+            Route::post('/permits/{id}/approve', [StudentPermitController::class, 'approve'])
+                ->whereNumber('id');
+            Route::post('/permits/{id}/reject', [StudentPermitController::class, 'reject'])
+                ->whereNumber('id');
+            Route::post('/permits/{id}/cancel', [StudentPermitController::class, 'cancel'])
+                ->whereNumber('id');
+
+            Route::get('/students/{studentId}/eligibility', [StudentEligibilityController::class, 'show'])
+                ->whereNumber('studentId');
+
+            Route::get('/settings', [StudentWelfareSettingController::class, 'show']);
+            Route::put('/settings', [StudentWelfareSettingController::class, 'update']);
+        });
+    });
+
+    Route::prefix('finance')->middleware('finance')->group(function () {
         Route::get('/dashboard', [FinanceTransactionController::class, 'dashboard'])->middleware('permission:finance.view');
         Route::get('/report', [FinanceTransactionController::class, 'report'])->middleware('permission:reports.finance.view');
         Route::post('/report-audit', [FinanceTransactionController::class, 'reportAudit'])->middleware('permission:reports.finance.view');

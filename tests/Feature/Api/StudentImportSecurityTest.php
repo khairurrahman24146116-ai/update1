@@ -10,8 +10,10 @@ use App\Models\ImportBatch;
 use App\Models\ImportRow;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\ImportTemplateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class StudentImportSecurityTest extends TestCase
@@ -443,7 +445,7 @@ class StudentImportSecurityTest extends TestCase
         $this->assertDatabaseCount('import_batches', 0);
     }
 
-    public function test_error_csv_is_safe_and_activity_log_does_not_store_phone(): void
+    public function test_error_csv_is_safe_and_confirm_rejects_the_whole_batch(): void
     {
         $admin = $this->admin();
         $file = $this->csv([
@@ -467,7 +469,7 @@ class StudentImportSecurityTest extends TestCase
         ]);
 
         $preview = $this->actingAs($admin)->preview($admin, $file);
-        $preview->assertOk();
+        $preview->assertOk()->assertJsonPath('summary.error', 1);
         $batchId = $preview->json('batch.id');
 
         $response = $this->actingAs($admin)->get("/api/import-siswa/batches/{$batchId}/errors");
@@ -477,10 +479,86 @@ class StudentImportSecurityTest extends TestCase
         $this->assertStringContainsString("'=SUM(1,1)", $csv);
 
         $this->post("/api/import-siswa/batches/{$batchId}/confirm", [], ['Accept' => 'application/json'])
-            ->assertOk();
+            ->assertStatus(422)
+            ->assertJsonPath('message', fn (string $message): bool => str_contains($message, 'Import dibatalkan'));
+
+        $this->assertDatabaseCount('students', 0);
+        $this->assertDatabaseHas('import_batches', [
+            'id' => $batchId,
+            'status' => ImportBatch::STATUS_PREVIEW,
+        ]);
 
         $payloads = ActivityLog::whereIn('action', ['import.preview', 'import.confirm'])->pluck('metadata')->toJson();
         $this->assertStringNotContainsString('081234567890', $payloads);
+    }
+
+    public function test_unit_column_validates_the_selected_class_unit(): void
+    {
+        $lpiClass = $this->classroom('Aliyah 1', 10, Classroom::JALUR_LPI, Classroom::JENJANG_ALIYAH, 'lpi');
+        $admin = $this->admin();
+        $headers = ['NIS', 'NISN', 'Nama', 'Jenis Kelamin', 'Kelas', 'Unit', 'Asal Siswa'];
+
+        $wrongUnit = $this->csv([[
+            'NIS' => '2026070',
+            'NISN' => '0070000070',
+            'Nama' => 'Unit Salah',
+            'Jenis Kelamin' => 'L',
+            'Kelas' => 'X-1',
+            'Unit' => 'LPI',
+            'Asal Siswa' => 'internal',
+        ]], $headers);
+
+        $this->actingAs($admin)->preview($admin, $wrongUnit)
+            ->assertOk()
+            ->assertJsonPath('summary.error', 1);
+
+        $withUnit = $this->csv([[
+            'NIS' => '2026071',
+            'NISN' => '0070000071',
+            'Nama' => 'Unit LPI',
+            'Jenis Kelamin' => 'P',
+            'Kelas' => 'Aliyah 1',
+            'Unit' => 'LPI',
+            'Asal Siswa' => 'internal',
+        ]], $headers);
+
+        $preview = $this->actingAs($admin)->preview($admin, $withUnit);
+        $preview->assertOk()->assertJsonPath('summary.error', 0);
+        $batchId = $preview->json('batch.id');
+
+        $this->post("/api/import-siswa/batches/{$batchId}/confirm", [], ['Accept' => 'application/json'])
+            ->assertOk();
+
+        $this->assertSame($lpiClass->id, Student::where('nis', '2026071')->firstOrFail()->classroom_id);
+    }
+
+    public function test_template_keeps_data_sheet_empty_and_puts_examples_on_a_separate_sheet(): void
+    {
+        $path = app(ImportTemplateService::class)->path($this->year);
+        $spreadsheet = IOFactory::load($path);
+
+        try {
+            $data = $spreadsheet->getSheetByName('Data Siswa');
+            $this->assertNotNull($data);
+            $this->assertSame('NIS', $data->getCell('A1')->getValue());
+            $this->assertSame('Unit', $data->getCell('G1')->getValue());
+            $this->assertNull($data->getCell('A2')->getValue());
+
+            $example = $spreadsheet->getSheetByName('Contoh');
+            $this->assertNotNull($example);
+            $this->assertSame('2026001', (string) $example->getCell('A4')->getValue());
+
+            $classes = $spreadsheet->getSheetByName('Kelas');
+            $this->assertNotNull($classes);
+            $this->assertSame('Unit', $classes->getCell('B1')->getValue());
+
+            $guide = $spreadsheet->getSheetByName('Petunjuk');
+            $this->assertNotNull($guide);
+            $this->assertStringContainsString('SATU baris error', (string) $guide->getCell('A6')->getValue());
+        } finally {
+            $spreadsheet->disconnectWorksheets();
+            @unlink($path);
+        }
     }
 
     public function test_template_download_contains_expected_headers(): void

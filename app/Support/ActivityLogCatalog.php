@@ -21,6 +21,7 @@ class ActivityLogCatalog
         'schedules' => 'Jadwal Pelajaran',
         'attendance' => 'Absensi',
         'scores' => 'Nilai',
+        'welfare' => 'Kesejahteraan Santri',
         'finance' => 'Keuangan',
         'spp' => 'SPP & Pembayaran',
         'reports' => 'Laporan Keuangan',
@@ -87,6 +88,15 @@ class ActivityLogCatalog
         'attendance.teacher.checkout' => 'Check-out kehadiran guru',
         'attendance.teacher.update' => 'Mengubah absensi guru',
         'score.update' => 'Menyimpan nilai santri',
+
+        'akhlak.create' => 'Mencatat akhlak santri',
+        'akhlak.update' => 'Mengoreksi catatan akhlak santri',
+        'akhlak.cancel' => 'Membatalkan catatan akhlak santri',
+        'permit.create' => 'Mengajukan izin santri',
+        'permit.approve' => 'Menyetujui izin santri',
+        'permit.reject' => 'Menolak izin santri',
+        'permit.cancel' => 'Membatalkan izin santri',
+        'welfare.settings.update' => 'Mengubah batas kelayakan santri',
 
         'finance.transaction.create' => 'Menambah transaksi keuangan',
         'finance.transaction.update' => 'Mengubah transaksi keuangan',
@@ -176,6 +186,8 @@ class ActivityLogCatalog
             str_starts_with($action, 'schedule.') => 'schedules',
             str_starts_with($action, 'attendance.') || str_starts_with($action, 'teacher_attendance.') => 'attendance',
             str_starts_with($action, 'score.') => 'scores',
+            str_starts_with($action, 'akhlak.') || str_starts_with($action, 'permit.')
+                || str_starts_with($action, 'welfare.') => 'welfare',
             str_starts_with($action, 'finance.') => 'finance',
             str_starts_with($action, 'spp.') => 'spp',
             str_starts_with($action, 'reports.') => 'reports',

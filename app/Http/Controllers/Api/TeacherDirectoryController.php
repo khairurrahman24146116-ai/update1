@@ -41,6 +41,10 @@ class TeacherDirectoryController extends Controller
         $search = trim((string) $request->query('search', ''));
         $perPage = min(max((int) $request->query('per_page', 20), 1), 100);
 
+        if ($unit !== 'all' && ! Unit::isEnabledCode($unit)) {
+            abort(403, 'Unit tidak aktif.');
+        }
+
         if ($actor->isKepalaSekolah() && $unit !== 'all' && ! in_array($unit, $actor->effectiveUnitCodes(), true)) {
             abort(403, 'Unit di luar kewenangan Anda.');
         }
@@ -92,9 +96,11 @@ class TeacherDirectoryController extends Controller
 
         /** @var User $actor */
         $actor = $request->user();
+        $enabledCodes = Unit::enabledCodes();
         $unitCodes = $actor->isAdmin() || $actor->isOperator()
             ? Unit::query()->orderBy('kode')->pluck('kode')->map(fn (string $code): string => strtolower($code))->all()
             : $actor->effectiveUnitCodes();
+        $unitCodes = array_values(array_intersect($unitCodes, $enabledCodes));
 
         $units = Unit::query()
             ->whereIn(DB::raw('LOWER(kode)'), $unitCodes)
@@ -109,6 +115,7 @@ class TeacherDirectoryController extends Controller
             ->mapWithKeys(fn (string $name, string $code): array => [strtoupper($code) => $name]);
 
         $classrooms = Classroom::query()
+            ->inEnabledUnits()
             ->orderBy('grade')
             ->orderBy('name')
             ->get()
@@ -117,7 +124,9 @@ class TeacherDirectoryController extends Controller
                 'name' => $classroom->name,
                 'grade' => $classroom->grade,
                 'unit' => strtoupper((string) $classroom->unit),
+                'jenjang' => (string) $classroom->jenjang,
                 'unit_name' => $unitNames->get(strtoupper((string) $classroom->unit)),
+                'label' => $classroom->unitLabel(),
                 'academic_year' => $classroom->academic_year,
             ]);
 
@@ -125,7 +134,11 @@ class TeacherDirectoryController extends Controller
 
         return response()->json([
             'units' => $units,
-            'subjects' => Subject::query()->orderBy('name')->get(['id', 'name', 'code']),
+            'subjects' => Subject::query()
+                ->with('scopes')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'jenis']),
             'classrooms' => $classrooms,
             'academic_year' => $activeYear,
         ]);
@@ -357,9 +370,36 @@ class TeacherDirectoryController extends Controller
         }
 
         foreach ($classrooms as $classroom) {
+            if (! Unit::isClassroomEnabled($classroom)) {
+                abort(403, "Kelas {$classroom->name} tidak aktif.");
+            }
+
             if (! in_array(strtolower((string) $classroom->unit), $teacherUnitCodes, true)) {
                 throw ValidationException::withMessages([
                     'assignments' => "Kelas {$classroom->name} berada di luar unit guru.",
+                ]);
+            }
+        }
+
+        $subjects = Subject::query()
+            ->with('scopes')
+            ->whereIn('id', collect($data['assignments'])->pluck('subject_id')->unique())
+            ->get()
+            ->keyBy('id');
+
+        foreach ($data['assignments'] as $assignment) {
+            $subject = $subjects->get((int) $assignment['subject_id']);
+            $classroom = $classrooms->get((int) $assignment['classroom_id']);
+
+            if ($subject === null || ! $subject->is_active) {
+                throw ValidationException::withMessages([
+                    'assignments' => 'Mapel yang dipilih tidak aktif.',
+                ]);
+            }
+
+            if ($classroom !== null && ! $subject->isAvailableFor($classroom)) {
+                throw ValidationException::withMessages([
+                    'assignments' => "Mapel {$subject->name} tidak sesuai unit/jenjang kelas {$classroom->name}.",
                 ]);
             }
         }
@@ -555,9 +595,9 @@ class TeacherDirectoryController extends Controller
         $teacher->load([
             'user:id,name,email,phone,role,unit,is_active,created_at',
             'units:id,kode,nama',
-            'classrooms:id,name,grade,unit,academic_year,wali_kelas_id',
-            'teacherSubjects.subject:id,name,code',
-            'teacherSubjects.classroom:id,name,grade,unit,academic_year',
+            'classrooms:id,name,grade,unit,jenjang,academic_year,wali_kelas_id',
+            'teacherSubjects.subject:id,name,code,jenis',
+            'teacherSubjects.classroom:id,name,grade,unit,jenjang,academic_year',
         ]);
 
         $user = $teacher->user;
@@ -589,6 +629,8 @@ class TeacherDirectoryController extends Controller
                 'name' => $classroom->name,
                 'grade' => $classroom->grade,
                 'unit' => strtoupper((string) $classroom->unit),
+                'jenjang' => (string) $classroom->jenjang,
+                'label' => $classroom->unitLabel(),
                 'academic_year' => $classroom->academic_year,
             ])->values()->all(),
             'assignments' => $teacher->teacherSubjects
@@ -597,9 +639,12 @@ class TeacherDirectoryController extends Controller
                     'id' => $assignment->id,
                     'subject_id' => $assignment->subject_id,
                     'subject_name' => $assignment->subject?->name,
+                    'subject_jenis' => $assignment->subject?->jenis,
                     'classroom_id' => $assignment->classroom_id,
                     'classroom_name' => $assignment->classroom?->name,
                     'classroom_unit' => strtoupper((string) $assignment->classroom?->unit),
+                    'classroom_jenjang' => (string) $assignment->classroom?->jenjang,
+                    'classroom_label' => $assignment->classroom?->unitLabel(),
                     'academic_year' => $assignment->academic_year,
                 ])->values()->all(),
             'permissions' => [
@@ -616,7 +661,9 @@ class TeacherDirectoryController extends Controller
      */
     private function tabs(User $actor): array
     {
-        $query = Unit::query()->orderBy('kode');
+        $query = Unit::query()
+            ->whereIn(DB::raw('LOWER(kode)'), Unit::enabledCodes())
+            ->orderBy('kode');
 
         if ($actor->isKepalaSekolah()) {
             $query->whereIn(DB::raw('LOWER(kode)'), $actor->effectiveUnitCodes());

@@ -22,18 +22,21 @@ class ClassroomController extends Controller
 
         $user = $request->user();
         $yearId = $request->query('tahun_ajaran_id');
+        $enabledOnly = $request->boolean('enabled_units');
+        $perPage = min(max((int) $request->query('per_page', 15), 1), 100);
 
         if ($user?->isFinanceRole()) {
             $search = $request->query('search');
 
             return Classroom::withCount('students')
+                ->when($enabledOnly, fn ($q) => $q->inEnabledUnits())
                 ->when($yearId, fn ($q) => $q->where('tahun_ajaran_id', $yearId))
                 ->when($search, fn ($q) => $q->where(fn ($q2) => $q2->where('name', 'like', "%{$search}%")->orWhere('academic_year', 'like', "%{$search}%")))
                 ->orderBy('grade')->orderBy('name')
                 ->paginate(100);
         }
 
-        return $this->service->list($request->query('search'), 15, $yearId ? (int) $yearId : null);
+        return $this->service->list($request->query('search'), $perPage, $yearId ? (int) $yearId : null, $enabledOnly);
     }
 
     public function store(Request $request)

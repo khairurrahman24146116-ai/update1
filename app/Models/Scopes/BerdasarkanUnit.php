@@ -26,14 +26,7 @@ class BerdasarkanUnit implements Scope
         }
 
         if ($user->isGuru()) {
-            if ($user->effectiveUnitCodes() === []) {
-                $builder->whereRaw('1 = 0');
-
-                return;
-            }
-
             $this->applyTeacherScope($builder, $model, $user);
-            $this->applyUnitScope($builder, $model, $user);
 
             return;
         }

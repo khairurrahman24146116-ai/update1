@@ -33,6 +33,10 @@
         <div class="font-bold">Ajukan Pertemuan</div>
         <div class="text-xs text-on-surface-variant">Kontak & jadwalkan pertemuan dengan sekolah</div>
       </router-link>
+      <router-link v-if="hasLpi" to="/app/wali-murid/akhlak" class="p-5 bg-white border border-outline-variant rounded-xl shadow-sm hover:shadow-md transition-[transform,box-shadow]">
+        <div class="font-bold">Akhlak & Izin Anak</div>
+        <div class="text-xs text-on-surface-variant">Catatan akhlak, izin, dan kelayakan santri</div>
+      </router-link>
     </div>
 </AppShell>
 </template>
@@ -43,6 +47,7 @@ import AppShell from '../../Components/AppShell.vue'
 const children = ref([])
 const loading = ref(false)
 const error = ref('')
+const hasLpi = ref(false)
 function initials(name){
   if(!name) return '?'
   const p=name.trim().split(/\s+/).slice(0,2).map(s=>s[0]?.toUpperCase()||'').join('')
@@ -51,11 +56,15 @@ function initials(name){
 onMounted(async()=>{
   loading.value=true; error.value=''
   try{
-    const r = await fetch('/api/students')
+    const welfareRequest = fetch('/api/welfare/meta')
+      .then((response) => (response.ok ? response.json() : null))
+      .catch(() => null)
+    const [r, welfare] = await Promise.all([fetch('/api/students'), welfareRequest])
     if(!r.ok) throw new Error('Gagal memuat data anak')
     const j = await r.json()
     const arr=j.data ?? (Array.isArray(j)?j:[])
     children.value=arr
+    hasLpi.value = Boolean(welfare?.has_lpi)
   }catch(e){ error.value=e.message||'Gagal memuat' }
   finally{ loading.value=false }
 })

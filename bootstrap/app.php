@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\CheckActiveUser;
+use App\Http\Middleware\EnsureAkhlakAccess;
+use App\Http\Middleware\EnsureFinanceAccess;
 use App\Http\Middleware\EnsureRoleAssigned;
 use App\Http\Middleware\EnsureUnitAccess;
 use App\Http\Middleware\PermissionMiddleware;
@@ -25,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => CheckActiveUser::class,
             'role.assigned' => EnsureRoleAssigned::class,
             'unit' => EnsureUnitAccess::class,
+            'finance' => EnsureFinanceAccess::class,
+            'akhlak' => EnsureAkhlakAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

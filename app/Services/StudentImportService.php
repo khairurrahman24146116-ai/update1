@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\ImportBatch;
 use App\Models\ImportRow;
 use App\Models\Student;
+use App\Models\Unit;
 use App\Models\User;
 use App\Support\PhoneNormalizer;
 use Carbon\Carbon;
@@ -135,6 +136,15 @@ class StudentImportService
 
                 $validated = $this->validateRows($input, $year, (bool) $locked->update_existing, true);
 
+                $errorRows = collect($validated)->where('status', ImportRow::STATUS_ERROR);
+
+                if ($errorRows->isNotEmpty()) {
+                    $numbers = $errorRows->pluck('nomor_baris')->take(10)->implode(', ');
+                    $suffix = $errorRows->count() > 10 ? ', ...' : '';
+
+                    abort(422, "Import dibatalkan: {$errorRows->count()} baris masih error (baris {$numbers}{$suffix}). Tidak ada data yang disimpan. Perbaiki file lalu upload ulang.");
+                }
+
                 $hasil = ['berhasil' => [], 'errors' => [], 'peringatan' => []];
                 $rowByNumber = $rows->keyBy('nomor_baris');
 
@@ -204,6 +214,7 @@ class StudentImportService
                         'nisn' => $student->nisn,
                         'nama' => $student->name,
                         'kelas' => $data['kelas'] ?? null,
+                        'unit' => $data['unit'] ?? null,
                         'aksi' => $aksi,
                     ];
 
@@ -300,7 +311,7 @@ class StudentImportService
 
         $handle = fopen('php://temp', 'r+');
         fwrite($handle, "\xEF\xBB\xBF");
-        fputcsv($handle, ['Nomor Baris', 'NIS', 'NISN', 'Nama', 'Kelas', 'Status', 'Pesan']);
+        fputcsv($handle, ['Nomor Baris', 'NIS', 'NISN', 'Nama', 'Kelas', 'Unit', 'Status', 'Pesan']);
 
         foreach ($errors as $error) {
             fputcsv($handle, [
@@ -309,6 +320,7 @@ class StudentImportService
                 $this->csvSafe((string) ($error['nisn'] ?? '')),
                 $this->csvSafe((string) ($error['nama'] ?? '')),
                 $this->csvSafe((string) ($error['kelas'] ?? '')),
+                $this->csvSafe((string) ($error['unit'] ?? '')),
                 $this->csvSafe((string) ($error['status'] ?? 'error')),
                 $this->csvSafe($this->messageText($error['pesan'] ?? [])),
             ]);
@@ -366,7 +378,19 @@ class StudentImportService
             if (($data['kelas'] ?? '') === '') {
                 $this->addMessage($messages, 'error', 'Kelas wajib diisi.');
             } else {
+                $unit = (string) ($data['unit'] ?? '');
                 $candidates = $classMap[$this->comparable($data['kelas'])] ?? [];
+
+                if ($unit !== '') {
+                    if (! Unit::isEnabledCode($unit)) {
+                        $this->addMessage($messages, 'error', "Unit '{$unit}' tidak dikenal. Gunakan LPI, SMA, atau SMP.");
+                    }
+
+                    $candidates = array_values(array_filter(
+                        $candidates,
+                        fn (Classroom $candidate): bool => $this->classUnit($candidate) === $unit,
+                    ));
+                }
 
                 if (count($candidates) === 1) {
                     $class = $candidates[0];
@@ -375,9 +399,10 @@ class StudentImportService
                         $this->addMessage($messages, 'error', "Kelas '{$class->name}' belum memiliki jalur/jenjang. Lengkapi data kelas terlebih dahulu.");
                     }
                 } elseif (count($candidates) > 1) {
-                    $this->addMessage($messages, 'error', "Kelas '{$data['kelas']}' ambigu pada tahun ajaran {$year->name}.");
+                    $this->addMessage($messages, 'error', "Kelas '{$data['kelas']}' ambigu pada tahun ajaran {$year->name}. Isi kolom Unit untuk membedakan.");
                 } else {
-                    $this->addMessage($messages, 'error', "Kelas '{$data['kelas']}' tidak ditemukan pada tahun ajaran {$year->name}.");
+                    $unitSuffix = $unit !== '' ? " pada unit '{$unit}'" : '';
+                    $this->addMessage($messages, 'error', "Kelas '{$data['kelas']}' tidak ditemukan{$unitSuffix} pada tahun ajaran {$year->name}.");
                 }
             }
 
@@ -543,6 +568,7 @@ class StudentImportService
             'jenis_kelamin' => $this->normalizeGender($raw['jenis_kelamin'] ?? ''),
             'tanggal_lahir' => $date['value'],
             'kelas' => $this->cleanText($raw['kelas'] ?? ''),
+            'unit' => $this->normalizeUnit($raw['unit'] ?? ''),
             'asal_siswa' => $this->normalizeAsal($raw['asal_siswa'] ?? ''),
             'nama_ayah' => $this->cleanText($raw['nama_ayah'] ?? ''),
             'nama_ibu' => $this->cleanText($raw['nama_ibu'] ?? ''),
@@ -581,6 +607,14 @@ class StudentImportService
             'p', 'perempuan', 'wanita', 'putri' => 'P',
             default => null,
         };
+    }
+
+    private function normalizeUnit(mixed $value): string
+    {
+        $value = mb_strtolower(trim((string) $value));
+        $value = preg_replace('/[^a-z0-9]+/', ' ', $value) ?? $value;
+
+        return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
     }
 
     private function normalizeAsal(mixed $value): ?string
@@ -711,6 +745,11 @@ class StudentImportService
         }
 
         return $query->get();
+    }
+
+    private function classUnit(Classroom $classroom): string
+    {
+        return strtolower(trim((string) $classroom->unit));
     }
 
     private function resolveLpiClass(Collection $classes, string $jenjang, int $grade): ?Classroom
@@ -1015,6 +1054,7 @@ class StudentImportService
             'nisn' => $data['nisn'] ?? null,
             'nama' => $data['nama'] ?? null,
             'kelas' => $data['kelas'] ?? null,
+            'unit' => $data['unit'] ?? null,
             'status' => $result['status'] ?? ImportRow::STATUS_ERROR,
             'pesan' => $result['pesan'] ?? [],
         ];

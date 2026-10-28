@@ -142,16 +142,18 @@
             <div class="space-y-2">
               <div v-for="(row, index) in assignmentRows" :key="row.key" class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-end border border-outline-variant rounded-lg p-3 bg-white">
                 <label class="space-y-1 text-xs font-bold">Mata pelajaran
-                  <select v-model="row.subject_id" class="input">
+                  <select v-model="row.subject_id" class="input" :disabled="!row.classroom_id">
                     <option value="">Pilih mapel</option>
-                    <option v-for="subject in options.subjects" :key="subject.id" :value="subject.id">{{ subject.name }}</option>
+                    <option v-for="subject in subjectsForRow(row)" :key="subject.id" :value="subject.id">{{ subject.name }} ({{ jenisLabel(subject.jenis) }})</option>
                   </select>
+                  <span v-if="selectedRowSubject(row)" class="badge mt-1" :class="jenisClass(selectedRowSubject(row).jenis)">{{ jenisLabel(selectedRowSubject(row).jenis) }}</span>
+                  <span v-else-if="row.classroom_id" class="block text-xs font-normal text-on-surface-variant">Tidak ada mapel aktif yang cocok.</span>
                 </label>
                 <label class="space-y-1 text-xs font-bold">Kelas
-                  <select v-model="row.classroom_id" class="input">
+                  <select v-model="row.classroom_id" class="input" @change="syncSubjectForRow(row)">
                     <option value="">Pilih kelas</option>
                     <option v-for="classroom in assignableClassrooms" :key="classroom.id" :value="classroom.id">
-                      {{ classroom.name }} · {{ classroom.unit }}
+                      {{ classroom.name }} · {{ classroom.label || classroom.unitLabel || classroom.unit }}
                     </option>
                   </select>
                 </label>
@@ -165,7 +167,7 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 <label v-for="classroom in assignableClassrooms" :key="classroom.id" class="flex items-center gap-2 text-sm">
                   <input v-model="waliClassroomIds" type="checkbox" :value="classroom.id" />
-                  {{ classroom.name }} · {{ classroom.unit }}
+                  {{ classroom.name }} · {{ classroom.label || classroom.unit }}
                 </label>
               </div>
             </div>
@@ -247,6 +249,7 @@
                 <thead class="bg-surface-container-low">
                   <tr>
                     <th class="p-3 text-left">Mapel</th>
+                    <th class="p-3 text-left">Jenis</th>
                     <th class="p-3 text-left">Kelas</th>
                     <th class="p-3 text-left">Tahun</th>
                   </tr>
@@ -254,9 +257,10 @@
                 <tbody>
                   <tr v-for="assignment in teacher.assignments" :key="assignment.id" class="border-t border-outline-variant">
                     <td class="p-3">{{ assignment.subject_name || '-' }}</td>
+                    <td class="p-3"><span class="badge" :class="jenisClass(assignment.subject_jenis)">{{ jenisLabel(assignment.subject_jenis) }}</span></td>
                     <td class="p-3">
                       {{ assignment.classroom_name || '-' }}
-                      <span v-if="assignment.classroom_unit" class="text-xs text-on-surface-variant">· {{ assignment.classroom_unit }}</span>
+                      <span v-if="assignment.classroom_label" class="text-xs text-on-surface-variant">· {{ assignment.classroom_label }}</span>
                     </td>
                     <td class="p-3 text-xs">{{ assignment.academic_year }}</td>
                   </tr>
@@ -432,6 +436,46 @@ const assignableClassrooms = computed(() => {
   const codes = (teacher.value?.units || []).map((unit) => unit.code)
   return options.value.classrooms.filter((classroom) => codes.includes(classroom.unit))
 })
+
+function jenisLabel(jenis) {
+  return jenis === 'non_formal' ? 'Non Formal' : 'Formal'
+}
+
+function jenisClass(jenis) {
+  return jenis === 'non_formal' ? 'bg-tertiary-fixed text-on-surface' : 'bg-primary-fixed text-on-surface'
+}
+
+function classroomForRow(row) {
+  return assignableClassrooms.value.find((classroom) => String(classroom.id) === String(row.classroom_id)) ?? null
+}
+
+function subjectMatchesClassroom(subject, classroom) {
+  if (!classroom) return false
+  if (!subject.scopes?.length) return true
+
+  const unit = String(classroom.unit ?? '').toLowerCase()
+  const jenjang = String(classroom.jenjang ?? classroom.jenjang_name ?? '').toLowerCase()
+
+  return subject.scopes.some((scope) => String(scope.unit).toLowerCase() === unit && String(scope.jenjang).toLowerCase() === jenjang)
+}
+
+function subjectsForRow(row) {
+  const classroom = classroomForRow(row)
+  if (!classroom) return []
+
+  return options.value.subjects.filter((subject) => subjectMatchesClassroom(subject, classroom))
+}
+
+function selectedRowSubject(row) {
+  return options.value.subjects.find((subject) => String(subject.id) === String(row.subject_id)) ?? null
+}
+
+function syncSubjectForRow(row) {
+  if (!row.subject_id) return
+  if (!subjectsForRow(row).some((subject) => String(subject.id) === String(row.subject_id))) {
+    row.subject_id = ''
+  }
+}
 const attendanceSummary = computed(() => {
   const summary = attendanceData.value.summary || {}
   return [

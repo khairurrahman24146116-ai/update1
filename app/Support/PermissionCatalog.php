@@ -100,6 +100,16 @@ class PermissionCatalog
                 'scores.update' => 'Menyimpan nilai',
             ],
         ],
+        'welfare' => [
+            'label' => 'Kesejahteraan Santri',
+            'description' => 'Catatan akhlak, izin santri, dan kelayakan santri LPI.',
+            'permissions' => [
+                'welfare.view' => 'Melihat kesejahteraan santri',
+                'welfare.manage' => 'Mencatat akhlak & mengajukan izin',
+                'welfare.approve' => 'Menyetujui izin santri',
+                'welfare.settings' => 'Mengubah batas kelayakan santri',
+            ],
+        ],
         'finance' => [
             'label' => 'Keuangan',
             'description' => 'Dashboard keuangan, pemasukan, pengeluaran, dan kategori.',
@@ -236,6 +246,8 @@ class PermissionCatalog
         'logs.view',
         'system.backup.create',
         'system.backup.download',
+        'welfare.approve',
+        'welfare.settings',
     ];
 
     /**
@@ -254,6 +266,7 @@ class PermissionCatalog
             'schedules.view', 'schedules.create', 'schedules.update', 'schedules.delete',
             'attendance.view', 'attendance.import', 'attendance.teacher.view', 'attendance.teacher.manage',
             'scores.view', 'scores.update',
+            'welfare.view', 'welfare.manage', 'welfare.approve', 'welfare.settings',
             'finance.view',
             'finance.transactions.view', 'finance.transactions.create', 'finance.transactions.update', 'finance.transactions.delete',
             'finance.categories.view', 'finance.categories.create',
@@ -349,6 +362,7 @@ class PermissionCatalog
             'subjects.view',
             'schedules.view',
             'scores.view',
+            'welfare.view',
         ],
     ];
 

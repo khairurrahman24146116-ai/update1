@@ -149,7 +149,7 @@ const pembina = ref(fallbackPembina)
 function normalize(name) { return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '') }
 
 function photoUrl(path, fbPhoto) {
-  if (!path) return fbPhoto || '/images/emblem.svg'
+  if (!path) return fbPhoto || '/images/profile/logo-lpi-transparent.png'
   if (/^https?:\/\//.test(path) || path.startsWith('/')) return path
   return `${location.origin}/storage/${path}`
 }

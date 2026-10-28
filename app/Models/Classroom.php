@@ -4,10 +4,12 @@ namespace App\Models;
 
 use App\Models\Concerns\ScopedByUnit;
 use Database\Factories\ClassroomFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Classroom extends Model
 {
@@ -48,6 +50,38 @@ class Classroom extends Model
         ];
     }
 
+    public function scopeInEnabledUnits(Builder $query): Builder
+    {
+        $codes = Unit::enabledCodes();
+        $unitIds = Unit::enabledUnitIds();
+
+        return $query->where(function (Builder $query) use ($codes, $unitIds): void {
+            if ($codes === [] && $unitIds === []) {
+                $query->whereRaw('1 = 0');
+
+                return;
+            }
+
+            if ($codes !== []) {
+                $query->whereIn(DB::raw('LOWER(classrooms.unit)'), $codes);
+            }
+
+            if ($unitIds !== []) {
+                $fallback = function (Builder $query) use ($unitIds): void {
+                    $query->where(function (Builder $query): void {
+                        $query->whereNull('unit')->orWhere('unit', '');
+                    })->whereIn('unit_id', $unitIds);
+                };
+
+                if ($codes !== []) {
+                    $query->orWhere($fallback);
+                } else {
+                    $query->where($fallback);
+                }
+            }
+        });
+    }
+
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
@@ -81,6 +115,22 @@ class Classroom extends Model
     public function studentEnrollments(): HasMany
     {
         return $this->hasMany(StudentEnrollment::class, 'class_id');
+    }
+
+    public function unitLabel(): string
+    {
+        $unit = strtoupper(trim((string) $this->unit));
+        $jenjang = trim((string) $this->jenjang);
+
+        if ($unit === '') {
+            return $jenjang !== '' ? $jenjang : '-';
+        }
+
+        if ($jenjang === '' || strcasecmp($unit, $jenjang) === 0) {
+            return $unit;
+        }
+
+        return "{$unit} - {$jenjang}";
     }
 
     public function isFormalSmaGradeTen(): bool

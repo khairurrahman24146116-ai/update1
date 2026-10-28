@@ -18,6 +18,11 @@ trait ResolvesFinanceUnit
     {
         /** @var User $user */
         $user = $request->user();
+
+        if (! $user->canAccessFinance()) {
+            abort(403, 'Anda tidak memiliki akses keuangan.');
+        }
+
         $requested = $requested ?: $request->query('unit');
 
         if ($user->isAdmin()) {
@@ -29,14 +34,14 @@ trait ResolvesFinanceUnit
             return $this->guardLpiAccess($user, $unit);
         }
 
-        $allowed = array_values(array_intersect($user->effectiveUnitCodes(), ['lpi', 'sma']));
+        $allowed = $user->financeUnitCodes();
 
         if ($allowed === []) {
-            abort(403, 'Akun tidak memiliki akses keuangan.');
+            abort(403, 'Akun belum terhubung ke unit, hubungi admin.');
         }
 
         if ($requested !== null && $requested !== '') {
-            $unit = strtolower(trim($requested));
+            $unit = strtolower(trim((string) $requested));
 
             if (! in_array($unit, $allowed, true)) {
                 abort(403, 'Akun tidak memiliki akses ke unit keuangan tersebut.');
@@ -56,7 +61,11 @@ trait ResolvesFinanceUnit
         /** @var User $user */
         $user = $request->user();
 
-        if (! $user->isAdmin() && ! in_array(strtolower($recordUnit), $user->effectiveUnitCodes(), true)) {
+        if (! $user->canAccessFinance()) {
+            abort(403, 'Anda tidak memiliki akses keuangan.');
+        }
+
+        if (! $user->canAccessFinanceUnit($recordUnit)) {
             abort(403, 'Data bukan milik unit akun ini.');
         }
 

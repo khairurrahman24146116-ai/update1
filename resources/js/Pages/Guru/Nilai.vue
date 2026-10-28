@@ -13,7 +13,8 @@
       <button @click="load" class="btn btn--primary btn--sm">Tampilkan</button>
     </div>
     <div v-if="loading" class="p-8 text-center text-sm text-on-surface-variant">Memuat...</div>
-    <EmptyState v-else-if="!sheet.length" icon="assignment" title="Pilih kelas & mapel" description="Pilih kelas dan mata pelajaran, lalu klik Tampilkan." />
+    <EmptyState v-else-if="!assignments.length" icon="assignment" title="Belum ada penugasan" description="Hubungi admin untuk menetapkan kelas dan mata pelajaran Anda." />
+    <EmptyState v-else-if="!sheet.length" icon="assignment" title="Pilih kelas & mapel" description="Pilih kelas dan mata pelajaran yang ditugaskan, lalu klik Tampilkan." />
     <div v-else class="bg-white border border-outline-variant rounded-xl shadow-sm overflow-hidden">
       <table class="w-full text-sm">
         <thead class="bg-primary text-on-primary"><tr><th class="p-3 text-left">No</th><th class="p-3 text-left">NIS</th><th class="p-3 text-left">Siswa</th><th class="p-3 text-left">Nilai (0-100)</th></tr></thead>
@@ -29,14 +30,40 @@
   </AppShell>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import BackButton from '../../Components/BackButton.vue'
 import EmptyState from '../../Components/EmptyState.vue'
 import AppShell from '../../Components/AppShell.vue'
-const classrooms=ref([]), subjects=ref([]), sheet=ref([]), loading=ref(false), saving=ref(false), classroomId=ref(''), subjectId=ref('')
+const assignments=ref([]), sheet=ref([]), loading=ref(false), saving=ref(false), classroomId=ref(''), subjectId=ref('')
+const classrooms=computed(()=>{
+  const seen=new Map()
+  assignments.value.forEach((assignment)=>{
+    if(!seen.has(assignment.classroom_id)) seen.set(assignment.classroom_id, { id: assignment.classroom_id, name: assignment.classroom_name })
+  })
+  return [...seen.values()]
+})
+const subjects=computed(()=>{
+  if(!classroomId.value) return []
+  const seen=new Map()
+  assignments.value
+    .filter((assignment)=>String(assignment.classroom_id)===String(classroomId.value))
+    .forEach((assignment)=>{
+      if(!seen.has(assignment.subject_id)) seen.set(assignment.subject_id, { id: assignment.subject_id, name: assignment.subject_name })
+    })
+  return [...seen.values()]
+})
+watch(classroomId,()=>{
+  if(!subjects.value.some((subject)=>String(subject.id)===String(subjectId.value))) subjectId.value=''
+  sheet.value=[]
+})
+watch(subjectId,()=>{ sheet.value=[] })
 onMounted(async()=>{
-  const [cr,sr]=await Promise.all([fetch('/api/classrooms').then(r=>r.json()), fetch('/api/subjects').then(r=>r.json())])
-  classrooms.value=cr.data??cr; subjects.value=sr.data??sr
+  try{
+    const r=await fetch('/api/guru/assignments')
+    const d=await r.json()
+    if(!r.ok) throw new Error(d.message||'Gagal memuat penugasan')
+    assignments.value=d.assignments??d.data??d
+  }catch(e){ alert(e.message) }
 })
 async function load(){
   if(!classroomId.value||!subjectId.value) return alert('Pilih kelas & mapel')

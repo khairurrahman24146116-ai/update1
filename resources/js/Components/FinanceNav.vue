@@ -66,7 +66,14 @@ const selectedUnit = ref(financeUnit())
 watch(() => props.from, (v) => { from.value = v })
 watch(() => props.to, (v) => { to.value = v })
 
-const unit = computed(() => (isAdmin.value ? selectedUnit.value : user.value?.role === 'bendahara_lpi' ? 'lpi' : user.value?.role === 'bendahara_sma' ? 'sma' : (user.value?.unit || 'sma')))
+const unit = computed(() => {
+  if (isAdmin.value) return selectedUnit.value
+  const codes = Array.isArray(user.value?.finance_unit_codes) ? user.value.finance_unit_codes : []
+  if (codes.length) return codes[0]
+  if (user.value?.role === 'bendahara_lpi') return 'lpi'
+  if (user.value?.role === 'bendahara_sma') return 'sma'
+  return user.value?.unit || 'sma'
+})
 const unitLabel = computed(() => unit.value.toUpperCase())
 const roleLabel = computed(() => {
   const map = { admin: 'Admin', bendahara_lpi: 'Bendahara LPI', bendahara_sma: 'Bendahara SMA' }

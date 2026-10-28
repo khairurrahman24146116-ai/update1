@@ -10,9 +10,10 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ClassroomService
 {
-    public function list(?string $search = null, int $perPage = 15, ?int $yearId = null): LengthAwarePaginator
+    public function list(?string $search = null, int $perPage = 15, ?int $yearId = null, bool $enabledOnly = false): LengthAwarePaginator
     {
         return Classroom::query()->withCount('students')
+            ->when($enabledOnly, fn ($q) => $q->inEnabledUnits())
             ->when($yearId, fn ($q) => $q->where('tahun_ajaran_id', $yearId))
             ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%")->orWhere('academic_year', 'like', "%{$search}%"))
             ->orderBy('grade')->orderBy('name')
