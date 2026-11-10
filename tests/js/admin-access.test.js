@@ -1,6 +1,20 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { canAccessAdminModule, hasFinanceAccess, isAdminUser } from '../../resources/js/permissions.js'
+
+const publicLayouts = [
+  readFileSync(new URL('../../resources/js/Components/LpiLayout.vue', import.meta.url), 'utf8'),
+  readFileSync(new URL('../../resources/js/Components/PublicLayout.vue', import.meta.url), 'utf8'),
+]
+
+test('public layouts never link to the secret login path', () => {
+  for (const layout of publicLayouts) {
+    assert.equal(layout.includes('LOGIN_PATH'), false)
+    assert.equal(layout.includes('akses-dalam-9f2k'), false)
+    assert.equal(layout.includes('Masuk'), false)
+  }
+})
 
 const securityMenu = { permission: 'logs.view', adminOnly: true }
 
