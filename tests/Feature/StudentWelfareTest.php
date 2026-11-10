@@ -329,6 +329,62 @@ class StudentWelfareTest extends TestCase
         ]);
     }
 
+    public function test_override_disabled_allows_normal_permit_and_rejects_excess_permit(): void
+    {
+        $admin = $this->admin();
+        $kabag = $this->kabagPengajian();
+        $classroom = $this->lpiClassroom(Classroom::JENJANG_TSANAWIYAH, 'VII-D');
+        $student = $this->student($classroom, 'Santri Enam');
+
+        $settings = StudentWelfareSetting::query()->firstOrCreate([], StudentWelfareSetting::defaults());
+        $settings->update([
+            'allow_permit_override' => false,
+            'permit_max_per_month' => 1,
+            'permit_max_per_semester' => 1,
+        ]);
+
+        $normal = StudentPermit::create([
+            'student_id' => $student->id,
+            'classroom_id' => $classroom->id,
+            'requested_by' => $kabag->id,
+            'type' => StudentPermit::TYPE_IZIN,
+            'reason' => 'Izin wajar.',
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDay()->toDateString(),
+            'status' => StudentPermit::STATUS_PENDING,
+            'academic_year' => $this->academicYear(),
+            'semester' => 'ganjil',
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson("/api/welfare/permits/{$normal->id}/approve", [])
+            ->assertOk()
+            ->assertJsonPath('status', StudentPermit::STATUS_APPROVED);
+
+        $excess = StudentPermit::create([
+            'student_id' => $student->id,
+            'classroom_id' => $classroom->id,
+            'requested_by' => $kabag->id,
+            'type' => StudentPermit::TYPE_IZIN,
+            'reason' => 'Izin kedua.',
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDay()->toDateString(),
+            'status' => StudentPermit::STATUS_PENDING,
+            'academic_year' => $this->academicYear(),
+            'semester' => 'ganjil',
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson("/api/welfare/permits/{$excess->id}/approve", [])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('override_reason');
+
+        $this->assertDatabaseHas('student_permits', [
+            'id' => $excess->id,
+            'status' => StudentPermit::STATUS_PENDING,
+        ]);
+    }
+
     public function test_wali_only_sees_own_child_and_internal_fields_are_hidden(): void
     {
         $kabag = $this->kabagPengajian();

@@ -437,18 +437,18 @@ class StudentWelfareService
         }
 
         $settings = $this->settings();
-
-        if (! $settings->allow_permit_override) {
-            throw ValidationException::withMessages([
-                'override_reason' => 'Persetujuan melebihi batas izin sedang dinonaktifkan.',
-            ]);
-        }
-
         $permit->loadMissing('student.classroom');
         $counts = $this->permitCounts($permit->student, $permit->start_date);
         $exceedsMonthly = $counts['month'] >= (int) $settings->permit_max_per_month;
         $exceedsSemester = $counts['semester'] >= (int) $settings->permit_max_per_semester;
         $isOverride = $exceedsMonthly || $exceedsSemester;
+
+        if ($isOverride && ! $settings->allow_permit_override) {
+            throw ValidationException::withMessages([
+                'override_reason' => 'Persetujuan melebihi batas izin sedang dinonaktifkan.',
+            ]);
+        }
+
         $overrideReason = trim((string) $overrideReason);
 
         if ($isOverride && $overrideReason === '') {
