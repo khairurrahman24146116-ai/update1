@@ -197,6 +197,10 @@
               <div>
                 <div class="font-bold">{{ permit.student_name }} <span class="text-xs font-normal text-on-surface-variant">- {{ permit.classroom_name }}</span></div>
                 <div class="text-xs text-on-surface-variant">{{ permit.type_label }} - {{ formatDate(permit.start_date) }} s.d. {{ formatDate(permit.end_date) }}</div>
+                <div v-if="permit.is_overdue" class="text-xs font-bold text-error">Belum kembali - terlambat {{ permit.days_late }} hari</div>
+                <div v-else-if="permit.is_returned" class="text-xs text-on-surface-variant">
+                  Kembali {{ formatDate(permit.returned_at) }}<span v-if="permit.is_late" class="text-error"> - terlambat {{ permit.days_late }} hari</span>
+                </div>
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <span v-if="permit.is_override" class="badge bg-tertiary-fixed text-on-surface">Override</span>
@@ -206,10 +210,11 @@
             <p class="text-sm">{{ permit.reason }}</p>
             <p v-if="permit.decision_note" class="text-xs text-on-surface-variant">Catatan keputusan: {{ permit.decision_note }}</p>
             <p v-if="permit.override_reason" class="text-xs text-on-surface-variant">Alasan override: {{ permit.override_reason }}</p>
-            <p class="text-xs text-on-surface-variant">Diajukan oleh {{ permit.requested_by_name || '-' }}<span v-if="permit.decided_by_name"> - diputuskan oleh {{ permit.decided_by_name }}</span></p>
+            <p class="text-xs text-on-surface-variant">Diajukan oleh {{ permit.requested_by_name || '-' }}<span v-if="permit.decided_by_name"> - diputuskan oleh {{ permit.decided_by_name }}</span><span v-if="permit.returned_by_name"> - kembali dicatat oleh {{ permit.returned_by_name }}</span></p>
             <div class="flex flex-wrap gap-2 pt-1">
               <button v-if="permit.can_approve" type="button" class="btn btn--primary btn--sm" @click="approvePermit(permit)">Setujui</button>
               <button v-if="permit.can_reject" type="button" class="btn btn--ghost btn--sm" @click="rejectPermit(permit)">Tolak</button>
+              <button v-if="permit.can_return" type="button" class="btn btn--primary btn--sm" @click="returnPermit(permit)">Catat Kembali</button>
               <button v-if="permit.can_cancel" type="button" class="btn btn--ghost btn--sm text-error" @click="cancelPermit(permit)">Batalkan</button>
             </div>
           </article>
@@ -679,6 +684,34 @@ async function cancelPermit(permit) {
   }
 }
 
+async function returnPermit(permit) {
+  const confirmed = await dialog.confirm(
+    `Catat ${permit.student_name} sudah kembali dari izin?`,
+    {
+      title: 'Catat Kembali',
+      confirmText: 'Ya, Sudah Kembali',
+      variant: 'success',
+    },
+  )
+  if (!confirmed) return
+  saving.value = true
+  error.value = ''
+  try {
+    const response = await fetch(`/api/welfare/permits/${permit.id}/return`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+    if (!response.ok) throw new Error(await responseError(response, 'Gagal mencatat kembalinya santri.'))
+    await loadPermits()
+    if (eligibilityStudentId.value) await loadEligibility(eligibilityStudentId.value)
+  } catch (returnError) {
+    error.value = returnError.message
+  } finally {
+    saving.value = false
+  }
+}
+
 async function saveSettings() {
   saving.value = true
   error.value = ''
@@ -726,7 +759,7 @@ function statusTextClass(level) {
 
 function formatDate(value) {
   if (!value) return '-'
-  const date = new Date(`${value}T00:00:00`)
+  const date = new Date(value.includes('T') ? value : `${value}T00:00:00`)
   if (Number.isNaN(date.getTime())) return value
   return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(date)
 }

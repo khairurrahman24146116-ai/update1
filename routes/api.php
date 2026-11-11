@@ -147,6 +147,8 @@ Route::middleware(['auth:sanctum', 'active', 'role.assigned'])->group(function (
                 ->whereNumber('id');
             Route::post('/permits/{id}/cancel', [StudentPermitController::class, 'cancel'])
                 ->whereNumber('id');
+            Route::post('/permits/{id}/return', [StudentPermitController::class, 'markReturned'])
+                ->whereNumber('id');
 
             Route::get('/students/{studentId}/eligibility', [StudentEligibilityController::class, 'show'])
                 ->whereNumber('studentId');

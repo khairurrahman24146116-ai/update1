@@ -7,6 +7,7 @@ use App\Models\StudentPermit;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\EligibilityService;
+use App\Services\PermitReturnMonitor;
 use App\Services\StudentWelfareService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class StudentPermitController extends Controller
     public function __construct(
         protected StudentWelfareService $welfare,
         protected EligibilityService $eligibility,
+        protected PermitReturnMonitor $permitMonitor,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -90,6 +92,7 @@ class StudentPermitController extends Controller
             $data['decision_note'] ?? null,
         );
         $this->eligibility->evaluate($approved->student);
+        $this->permitMonitor->syncStudent($approved->student);
 
         ActivityLogger::log('permit.approve', $user, StudentPermit::class, $approved->id, [
             'student_id' => $approved->student_id,
@@ -113,6 +116,7 @@ class StudentPermitController extends Controller
         $user = $request->user();
         $rejected = $this->welfare->rejectPermit($user, $permit, $data['decision_note'] ?? null);
         $this->eligibility->evaluate($rejected->student);
+        $this->permitMonitor->syncStudent($rejected->student);
 
         ActivityLogger::log('permit.reject', $user, StudentPermit::class, $rejected->id, [
             'student_id' => $rejected->student_id,
@@ -135,6 +139,7 @@ class StudentPermitController extends Controller
         $user = $request->user();
         $cancelled = $this->welfare->cancelPermit($user, $permit, $data['decision_note'] ?? null);
         $this->eligibility->evaluate($cancelled->student);
+        $this->permitMonitor->syncStudent($cancelled->student);
 
         ActivityLogger::log('permit.cancel', $user, StudentPermit::class, $cancelled->id, [
             'student_id' => $cancelled->student_id,
@@ -142,5 +147,24 @@ class StudentPermitController extends Controller
         ]);
 
         return response()->json($this->welfare->payloadPermit($this->welfare->findPermit($cancelled->id), $user));
+    }
+
+    public function markReturned(Request $request, int $id): JsonResponse
+    {
+        $permit = $this->welfare->findPermit($id);
+        $this->authorize('return', $permit);
+
+        /** @var User $user */
+        $user = $request->user();
+        $returned = $this->welfare->markPermitReturned($user, $permit);
+        $this->eligibility->evaluate($returned->student);
+        $this->permitMonitor->syncStudent($returned->student);
+
+        ActivityLogger::log('permit.return', $user, StudentPermit::class, $returned->id, [
+            'student_id' => $returned->student_id,
+            'returned_at' => $returned->returned_at?->toDateTimeString(),
+        ]);
+
+        return response()->json($this->welfare->payloadPermit($this->welfare->findPermit($returned->id), $user));
     }
 }

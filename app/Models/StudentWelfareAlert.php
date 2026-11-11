@@ -17,6 +17,8 @@ class StudentWelfareAlert extends Model
 
     public const TYPE_PERMIT_OVERRIDE = 'permit_override';
 
+    public const TYPE_PERMIT_RETURN = 'permit_return';
+
     protected $fillable = [
         'student_id',
         'type',

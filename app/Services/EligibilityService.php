@@ -299,6 +299,7 @@ class EligibilityService
         $resolved = StudentWelfareAlert::query()
             ->where('student_id', $studentId)
             ->where('period', $period)
+            ->whereIn('type', $this->managedAlertTypes())
             ->whereNull('resolved_at');
 
         if ($activeTypes === []) {
@@ -308,5 +309,19 @@ class EligibilityService
         }
 
         $resolved->whereNotIn('type', $activeTypes)->update(['resolved_at' => now()]);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function managedAlertTypes(): array
+    {
+        return [
+            StudentWelfareAlert::TYPE_ATTENDANCE,
+            StudentWelfareAlert::TYPE_VIOLATION,
+            StudentWelfareAlert::TYPE_PERMIT_MONTHLY,
+            StudentWelfareAlert::TYPE_PERMIT_SEMESTER,
+            StudentWelfareAlert::TYPE_PERMIT_OVERRIDE,
+        ];
     }
 }

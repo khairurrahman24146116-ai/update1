@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('import:prune-staging')->daily()->withoutOverlapping();
+Schedule::command('welfare:detect-permit-returns')->dailyAt('07:00')->withoutOverlapping();

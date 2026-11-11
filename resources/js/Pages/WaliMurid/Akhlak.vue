@@ -46,6 +46,16 @@
             </li>
           </ul>
         </div>
+
+        <div v-if="eligibility.alerts?.length" class="bg-white rounded-xl border border-outline-variant shadow-sm p-4">
+          <h3 class="font-bold mb-2">Peringatan Sistem</h3>
+          <ul class="space-y-2">
+            <li v-for="alert in eligibility.alerts" :key="alert.id" class="text-sm flex items-start gap-2">
+              <span class="material-symbols-outlined text-[18px]" :class="statusTextClass(alert.severity)">notifications</span>
+              <span>{{ alert.message }}</span>
+            </li>
+          </ul>
+        </div>
       </template>
 
       <section class="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
@@ -77,6 +87,10 @@
               <span class="badge" :class="permitStatusClass(permit.status)">{{ permit.status_label }}</span>
             </div>
             <div class="text-xs text-on-surface-variant">{{ formatDate(permit.start_date) }} s.d. {{ formatDate(permit.end_date) }}</div>
+            <div v-if="permit.is_overdue" class="text-xs font-bold text-error">Belum kembali - terlambat {{ permit.days_late }} hari</div>
+            <div v-else-if="permit.is_returned" class="text-xs text-on-surface-variant">
+              Kembali {{ formatDate(permit.returned_at) }}<span v-if="permit.is_late" class="text-error"> - terlambat {{ permit.days_late }} hari</span>
+            </div>
             <p class="text-sm">{{ permit.reason }}</p>
           </article>
         </div>
@@ -141,7 +155,7 @@ function statusTextClass(level) {
 
 function formatDate(value) {
   if (!value) return '-'
-  const date = new Date(`${value}T00:00:00`)
+  const date = new Date(value.includes('T') ? value : `${value}T00:00:00`)
   if (Number.isNaN(date.getTime())) return value
   return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(date)
 }

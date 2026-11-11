@@ -96,6 +96,7 @@ class ActivityLogCatalog
         'permit.approve' => 'Menyetujui izin santri',
         'permit.reject' => 'Menolak izin santri',
         'permit.cancel' => 'Membatalkan izin santri',
+        'permit.return' => 'Mencatat santri kembali dari izin',
         'welfare.settings.update' => 'Mengubah batas kelayakan santri',
 
         'finance.transaction.create' => 'Menambah transaksi keuangan',

@@ -536,6 +536,116 @@ class StudentWelfareTest extends TestCase
         $this->assertSame(1, StudentWelfareSetting::query()->count());
     }
 
+    public function test_marking_permit_returned_records_actor_and_prevents_duplicate(): void
+    {
+        $this->travelTo(now()->startOfDay()->addHours(8));
+
+        $kabag = $this->kabagPengajian();
+        $classroom = $this->lpiClassroom(Classroom::JENJANG_ALIYAH, 'X-D');
+        $student = $this->student($classroom, 'Santri Kembali');
+        $permit = $this->approvedPermit($kabag, $classroom, $student, now()->subDays(2)->toDateString());
+
+        $this->actingAs($kabag)
+            ->postJson("/api/welfare/permits/{$permit->id}/return")
+            ->assertOk()
+            ->assertJsonPath('is_returned', true)
+            ->assertJsonPath('is_late', true)
+            ->assertJsonPath('days_late', 2)
+            ->assertJsonPath('returned_by', $kabag->id);
+
+        $this->assertNotNull($permit->fresh()->returned_at);
+
+        $this->actingAs($kabag)
+            ->postJson("/api/welfare/permits/{$permit->id}/return")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('permit');
+    }
+
+    public function test_overdue_permit_alert_survives_eligibility_sync_and_resolves_after_return(): void
+    {
+        $this->travelTo(now()->startOfDay()->addHours(8));
+
+        $kabag = $this->kabagPengajian();
+        $classroom = $this->lpiClassroom(Classroom::JENJANG_TSANAWIYAH, 'VIII-D');
+        $student = $this->student($classroom, 'Santri Terlambat');
+        $permit = $this->approvedPermit($kabag, $classroom, $student, now()->subDays(3)->toDateString());
+
+        $this->artisan('welfare:detect-permit-returns')->assertSuccessful();
+
+        $alert = StudentWelfareAlert::query()
+            ->where('student_id', $student->id)
+            ->where('type', StudentWelfareAlert::TYPE_PERMIT_RETURN)
+            ->firstOrFail();
+
+        $this->assertSame('danger', $alert->severity);
+        $this->assertStringContainsString('terlambat 3 hari', $alert->message);
+
+        $this->actingAs($kabag)
+            ->getJson("/api/welfare/students/{$student->id}/eligibility")
+            ->assertOk();
+
+        $this->assertNull($alert->fresh()->resolved_at);
+
+        $this->actingAs($kabag)
+            ->postJson("/api/welfare/permits/{$permit->id}/return")
+            ->assertOk();
+
+        $this->assertNotNull($alert->fresh()->resolved_at);
+    }
+
+    public function test_permit_ending_today_creates_warning_alert(): void
+    {
+        $this->travelTo(now()->startOfDay()->addHours(8));
+
+        $kabag = $this->kabagPengajian();
+        $classroom = $this->lpiClassroom(Classroom::JENJANG_ALIYAH, 'XI-A');
+        $student = $this->student($classroom, 'Santri Hari Ini');
+        $this->approvedPermit($kabag, $classroom, $student, now()->toDateString());
+
+        $this->artisan('welfare:detect-permit-returns')->assertSuccessful();
+
+        $alert = StudentWelfareAlert::query()
+            ->where('student_id', $student->id)
+            ->where('type', StudentWelfareAlert::TYPE_PERMIT_RETURN)
+            ->firstOrFail();
+
+        $this->assertSame('warning', $alert->severity);
+        $this->assertStringContainsString('berakhir hari ini', $alert->message);
+    }
+
+    public function test_ordinary_guru_cannot_mark_permit_returned(): void
+    {
+        $kabag = $this->kabagPengajian();
+        $guru = $this->guruLpiBiasa();
+        $classroom = $this->lpiClassroom(Classroom::JENJANG_ALIYAH, 'XI-B');
+        $student = $this->student($classroom, 'Santri Tidak Berizin');
+        $permit = $this->approvedPermit($kabag, $classroom, $student, now()->subDay()->toDateString());
+
+        $this->actingAs($guru)
+            ->postJson("/api/welfare/permits/{$permit->id}/return")
+            ->assertForbidden();
+
+        $this->assertNull($permit->fresh()->returned_at);
+    }
+
+    private function approvedPermit(User $staff, Classroom $classroom, Student $student, string $endDate): StudentPermit
+    {
+        return StudentPermit::query()->create([
+            'student_id' => $student->id,
+            'classroom_id' => $classroom->id,
+            'requested_by' => $staff->id,
+            'decided_by' => $staff->id,
+            'type' => StudentPermit::TYPE_IZIN,
+            'reason' => 'Keperluan keluarga.',
+            'start_date' => now()->subDays(5)->toDateString(),
+            'end_date' => $endDate,
+            'status' => StudentPermit::STATUS_APPROVED,
+            'decided_at' => now()->subDays(4),
+            'academic_year' => $classroom->academic_year,
+            'semester' => 'ganjil',
+        ]);
+    }
+
     private function admin(): User
     {
         return User::factory()->create(['role' => User::ROLE_ADMIN_UTAMA]);

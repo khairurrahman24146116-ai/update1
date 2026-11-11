@@ -210,6 +210,7 @@ class StudentWelfareService
                 'classroom' => fn ($query) => $query->withoutGlobalScope(BerdasarkanUnit::class),
                 'requester',
                 'decider',
+                'returner',
             ])
             ->findOrFail($permitId);
     }
@@ -364,6 +365,7 @@ class StudentWelfareService
                 'classroom' => fn ($query) => $query->withoutGlobalScope(BerdasarkanUnit::class),
                 'requester',
                 'decider',
+                'returner',
             ]);
 
         if (! empty($filters['student_id'])) {
@@ -524,6 +526,36 @@ class StudentWelfareService
         ]);
     }
 
+    public function markPermitReturned(User $user, StudentPermit $permit): StudentPermit
+    {
+        if (! $user->canManageAkhlak()) {
+            abort(403);
+        }
+
+        if ($permit->status !== StudentPermit::STATUS_APPROVED) {
+            throw ValidationException::withMessages([
+                'permit' => 'Hanya izin yang disetujui yang dapat dicatat kembali.',
+            ]);
+        }
+
+        if ($permit->returned_at !== null) {
+            throw ValidationException::withMessages([
+                'permit' => 'Kembalinya santri sudah dicatat.',
+            ]);
+        }
+
+        $permit->update([
+            'returned_at' => now(),
+            'returned_by' => $user->id,
+        ]);
+
+        return $permit->load([
+            'student' => fn ($query) => $query->withoutGlobalScope(BerdasarkanUnit::class),
+            'classroom' => fn ($query) => $query->withoutGlobalScope(BerdasarkanUnit::class),
+            'returner',
+        ]);
+    }
+
     /**
      * @return array{month: int, semester: int, academic_year: string, semester_name: string, month_start: string, month_end: string, semester_start: string, semester_end: string}
      */
@@ -634,6 +666,22 @@ class StudentWelfareService
      */
     public function payloadPermit(StudentPermit $permit, User $user, bool $forWali = false): array
     {
+        $today = now()->startOfDay();
+        $endDate = $permit->end_date?->copy()->startOfDay();
+        $returnedAt = $permit->returned_at;
+        $isReturned = $returnedAt !== null;
+        $isOverdue = ! $isReturned
+            && $permit->status === StudentPermit::STATUS_APPROVED
+            && $endDate !== null
+            && $endDate->lt($today);
+        $daysLate = 0;
+
+        if ($isReturned && $endDate !== null && $returnedAt->copy()->startOfDay()->gt($endDate)) {
+            $daysLate = (int) $endDate->diffInDays($returnedAt->copy()->startOfDay(), true);
+        } elseif ($isOverdue) {
+            $daysLate = (int) $endDate->diffInDays($today, true);
+        }
+
         $payload = [
             'id' => $permit->id,
             'student_id' => $permit->student_id,
@@ -646,6 +694,11 @@ class StudentWelfareService
             'reason' => $permit->reason,
             'start_date' => $permit->start_date?->toDateString(),
             'end_date' => $permit->end_date?->toDateString(),
+            'returned_at' => $returnedAt?->toDateTimeString(),
+            'is_returned' => $isReturned,
+            'is_overdue' => $isOverdue,
+            'is_late' => $daysLate > 0,
+            'days_late' => $daysLate,
             'status' => $permit->status,
             'status_label' => $this->permitStatusLabel($permit->status),
             'is_override' => (bool) $permit->is_override,
@@ -654,6 +707,9 @@ class StudentWelfareService
             'can_cancel' => ! $forWali && $user->canManageAkhlak()
                 && $permit->status !== StudentPermit::STATUS_CANCELLED
                 && $permit->status !== StudentPermit::STATUS_REJECTED,
+            'can_return' => ! $forWali && $user->canManageAkhlak()
+                && $permit->status === StudentPermit::STATUS_APPROVED
+                && ! $isReturned,
         ];
 
         if (! $forWali) {
@@ -662,6 +718,8 @@ class StudentWelfareService
             $payload['decided_by'] = $permit->decided_by;
             $payload['decided_by_name'] = (string) $permit->decider?->name;
             $payload['decided_at'] = $permit->decided_at?->toDateTimeString();
+            $payload['returned_by'] = $permit->returned_by;
+            $payload['returned_by_name'] = (string) $permit->returner?->name;
             $payload['decision_note'] = $permit->decision_note;
             $payload['override_reason'] = $permit->override_reason;
         }

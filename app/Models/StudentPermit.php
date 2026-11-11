@@ -30,6 +30,8 @@ class StudentPermit extends Model
         'end_date',
         'status',
         'decided_at',
+        'returned_at',
+        'returned_by',
         'decision_note',
         'is_override',
         'override_reason',
@@ -43,6 +45,7 @@ class StudentPermit extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'decided_at' => 'datetime',
+            'returned_at' => 'datetime',
             'is_override' => 'boolean',
         ];
     }
@@ -65,6 +68,11 @@ class StudentPermit extends Model
     public function decider(): BelongsTo
     {
         return $this->belongsTo(User::class, 'decided_by');
+    }
+
+    public function returner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'returned_by');
     }
 
     public function isPending(): bool

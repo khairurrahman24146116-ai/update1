@@ -51,6 +51,11 @@ class StudentPermitPolicy
             && $this->welfare->canViewStudent($user, $permit->student);
     }
 
+    public function return(User $user, StudentPermit $permit): bool
+    {
+        return $this->cancel($user, $permit);
+    }
+
     public function delete(User $user, StudentPermit $permit): bool
     {
         return false;
