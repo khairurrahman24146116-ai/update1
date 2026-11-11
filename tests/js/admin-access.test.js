@@ -56,3 +56,10 @@ test('guru without finance permission or jabatan does not see the finance menu',
 test('server finance access flag is honoured', () => {
   assert.equal(hasFinanceAccess({ role: 'guru', permissions: [], can_access_finance: true }), true)
 })
+
+test('legacy admin finance route redirects to the active finance area', () => {
+  const router = readFileSync(new URL('../../resources/js/router.js', import.meta.url), 'utf8')
+
+  assert.equal(router.includes("path: '/app/admin/finance', redirect: '/app/bendahara'"), true)
+  assert.equal(router.includes('Pages/Admin/Finance.vue'), false)
+})

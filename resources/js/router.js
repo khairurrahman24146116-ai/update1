@@ -24,7 +24,6 @@ import AdminStructure from './Pages/Admin/Structure.vue'
 import AdminStudents from './Pages/Admin/Students.vue'
 import AdminTeachers from './Pages/Admin/Teachers.vue'
 import TeacherDetail from './Pages/Admin/TeacherDetail.vue'
-import AdminFinance from './Pages/Admin/Finance.vue'
 import AdminSchedules from './Pages/Admin/Schedules.vue'
 import AdminActivityLogs from './Pages/Admin/ActivityLogs.vue'
 import AdminKelas from './Pages/Admin/Kelas.vue'
@@ -60,7 +59,7 @@ import { ADMIN_MANAGE_PERMISSIONS, canManageAkhlak, hasFinanceAccess } from './p
 import { refreshUserSession } from './composables/useAuth.js'
 
 const roleMap = { admin_utama: '/app/admin', operator: '/app/operator/akun', pending: '/app/pending', kepala_sekolah: '/app/kepala/guru', guru: '/app/guru', bendahara: '/app/bendahara', bendahara_lpi: '/app/bendahara', bendahara_sma: '/app/bendahara', wali_murid: '/app/wali-murid' }
-const financeRoles = ['admin_utama', 'bendahara_lpi', 'bendahara_sma']
+
 function currentUser() {
   try { return JSON.parse(localStorage.getItem('madani_user') || 'null') } catch { return null }
 }
@@ -143,7 +142,7 @@ const routes = [
     { path: '/app/kepala', redirect: '/app/kepala/guru' },
     { path: '/app/kepala/guru', component: AdminTeachers, meta: { requiresAuth: true, role: 'kepala_sekolah', permissions: ['teachers.view'] } },
     { path: '/app/kepala/guru/:id', component: TeacherDetail, meta: { requiresAuth: true, role: 'kepala_sekolah', permissions: ['teachers.view'] } },
-    { path: '/app/admin/finance', component: AdminFinance, meta: { requiresAuth: true, role: financeRoles, permissions: ['finance.view', 'reports.finance.view'] } },
+    { path: '/app/admin/finance', redirect: '/app/bendahara' },
     { path: '/app/admin/kelas', component: AdminKelas, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['classrooms.view'] } },
     { path: '/app/admin/mapel', component: AdminMapel, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['subjects.view'] } },
     { path: '/app/admin/schedules', component: AdminSchedules, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['schedules.view'] } },
