@@ -63,3 +63,11 @@ test('legacy admin finance route redirects to the active finance area', () => {
   assert.equal(router.includes("path: '/app/admin/finance', redirect: '/app/bendahara'"), true)
   assert.equal(router.includes('Pages/Admin/Finance.vue'), false)
 })
+
+test('welfare permit actions use the shared dialog instead of window.prompt', () => {
+  const page = readFileSync(new URL('../../resources/js/Pages/Guru/Akhlak.vue', import.meta.url), 'utf8')
+
+  assert.equal(page.includes('window.prompt'), false)
+  assert.equal(page.includes('useDialog'), true)
+  assert.equal((page.match(/dialog\.prompt\(/g) || []).length, 4)
+})

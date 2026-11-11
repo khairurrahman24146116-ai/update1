@@ -336,7 +336,9 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AppShell from '../../Components/AppShell.vue'
 import EmptyState from '../../Components/EmptyState.vue'
+import { useDialog } from '../../composables/useDialog.js'
 
+const dialog = useDialog()
 const meta = ref({ has_lpi: false, classrooms: [], students: [], settings: {}, permissions: { manage: false, approve: false, settings: false } })
 const activeTab = ref('akhlak')
 const loadingMeta = ref(true)
@@ -539,7 +541,12 @@ async function saveAkhlak() {
 }
 
 async function cancelAkhlak(record) {
-  const reason = window.prompt('Alasan pembatalan catatan akhlak:')
+  const reason = await dialog.prompt('Alasan pembatalan catatan akhlak:', {
+    title: 'Batalkan Catatan Akhlak',
+    inputPlaceholder: 'Tulis alasan pembatalan',
+    confirmText: 'Batalkan Catatan',
+    variant: 'danger',
+  })
   if (!reason) return
   saving.value = true
   error.value = ''
@@ -597,7 +604,12 @@ async function approvePermit(permit) {
     if (response.status === 422) {
       const payload = await response.json().catch(() => ({}))
       if (payload.errors?.override_reason) {
-        const reason = window.prompt('Izin melebihi batas. Alasan override wajib diisi:')
+        const reason = await dialog.prompt('Izin melebihi batas. Alasan override wajib diisi:', {
+          title: 'Alasan Override Izin',
+          inputPlaceholder: 'Tulis alasan override',
+          confirmText: 'Setujui Izin',
+          variant: 'warning',
+        })
         if (!reason) return
         response = await fetch(`/api/welfare/permits/${permit.id}/approve`, {
           method: 'POST',
@@ -617,7 +629,12 @@ async function approvePermit(permit) {
 }
 
 async function rejectPermit(permit) {
-  const note = window.prompt('Catatan penolakan (opsional):', '')
+  const note = await dialog.prompt('Catatan penolakan (opsional):', {
+    title: 'Tolak Izin',
+    inputPlaceholder: 'Catatan opsional',
+    confirmText: 'Tolak Izin',
+    variant: 'danger',
+  })
   if (note === null) return
   saving.value = true
   error.value = ''
@@ -637,7 +654,12 @@ async function rejectPermit(permit) {
 }
 
 async function cancelPermit(permit) {
-  const note = window.prompt('Catatan pembatalan (opsional):', '')
+  const note = await dialog.prompt('Catatan pembatalan (opsional):', {
+    title: 'Batalkan Izin',
+    inputPlaceholder: 'Catatan opsional',
+    confirmText: 'Batalkan Izin',
+    variant: 'danger',
+  })
   if (note === null) return
   saving.value = true
   error.value = ''
