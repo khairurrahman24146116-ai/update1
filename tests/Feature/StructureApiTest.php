@@ -35,7 +35,18 @@ class StructureApiTest extends TestCase
         $this->assertCount(1, $smaTree);
         $this->assertSame('Kepala SMA', $smaTree[0]['position']);
 
-        $this->getJson('/api/structure/smp')->assertOk()->assertJsonPath('tree', []);
+        $this->getJson('/api/structure/smp')->assertNotFound();
+    }
+
+    public function test_public_endpoint_returns_tree_for_enabled_smp_unit(): void
+    {
+        config(['units.enabled' => ['lpi', 'sma', 'smp']]);
+        OrganizationMember::create(['unit' => 'smp', 'position' => 'Kepala SMP', 'name' => 'E', 'sort_order' => 1]);
+
+        $this->getJson('/api/structure/smp')
+            ->assertOk()
+            ->assertJsonPath('unit', 'smp')
+            ->assertJsonCount(1, 'tree');
     }
 
     public function test_public_endpoint_rejects_unknown_unit(): void

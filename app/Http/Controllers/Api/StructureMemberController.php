@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\OrganizationMember;
+use App\Models\Unit;
 use App\Services\ActivityLogger;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +28,8 @@ class StructureMemberController extends Controller
         if (! in_array($unit, OrganizationMember::UNITS, true)) {
             return response()->json(['message' => 'Unit struktur tidak dikenal.'], 422);
         }
+
+        abort_unless(Unit::isEnabledCode($unit), 404);
 
         $members = OrganizationMember::query()
             ->unit($unit)
