@@ -31,7 +31,6 @@ use App\Http\Controllers\Api\StudentImportController;
 use App\Http\Controllers\Api\StudentPermitController;
 use App\Http\Controllers\Api\StudentWelfareSettingController;
 use App\Http\Controllers\Api\SubjectController;
-use App\Http\Controllers\Api\TeacherAccountController;
 use App\Http\Controllers\Api\TeacherAssignmentController;
 use App\Http\Controllers\Api\TeacherAttendanceController;
 use App\Http\Controllers\Api\TeacherController;
@@ -193,13 +192,6 @@ Route::middleware(['auth:sanctum', 'active', 'role.assigned'])->group(function (
         Route::post('/', [AccountController::class, 'store'])->middleware('permission:users.create');
         Route::put('/{id}', [AccountController::class, 'update'])->middleware('permission:users.update');
         Route::post('/{id}/reset-password', [AccountController::class, 'resetPassword'])->middleware('permission:users.update');
-    });
-
-    Route::prefix('teacher-accounts')->middleware('role:admin_utama,operator')->group(function () {
-        Route::get('/', [TeacherAccountController::class, 'index'])->middleware('permission:teachers.view');
-        Route::get('/classrooms', [TeacherAccountController::class, 'classrooms'])->middleware('permission:teachers.view');
-        Route::post('/', [TeacherAccountController::class, 'store'])->middleware('permission:teachers.create');
-        Route::put('/{id}', [TeacherAccountController::class, 'update'])->middleware('permission:teachers.update');
     });
 
     Route::prefix('teacher-directory')

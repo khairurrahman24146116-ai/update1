@@ -267,7 +267,7 @@ class OperatorAccountApiTest extends TestCase
         $operator = $this->operator();
         $admin = $this->admin();
 
-        $this->actingAs($operator)->postJson('/api/teacher-accounts', [
+        $this->actingAs($operator)->postJson('/api/accounts', [
             'name' => 'Guru Dari Operator',
             'email' => 'guru-operator@madani.test',
             'password' => 'password123',
@@ -275,10 +275,12 @@ class OperatorAccountApiTest extends TestCase
         ])->assertCreated()
             ->assertJsonPath('role', 'pending');
 
-        $this->actingAs($admin)->postJson('/api/teacher-accounts', [
+        $this->actingAs($admin)->postJson('/api/accounts', [
             'name' => 'Guru Dari Admin',
             'email' => 'guru-admin@madani.test',
             'password' => 'password123',
+            'role' => 'guru',
+            'units' => [['code' => 'LPI', 'jabatan' => 'Guru']],
             'is_active' => true,
         ])->assertCreated()
             ->assertJsonPath('role', 'guru');
@@ -293,7 +295,7 @@ class OperatorAccountApiTest extends TestCase
             'role' => 'pending',
         ]);
 
-        $this->actingAs($operator)->putJson("/api/teacher-accounts/{$pending->id}", [
+        $this->actingAs($operator)->putJson("/api/accounts/{$pending->id}", [
             'role' => 'guru',
         ])->assertStatus(422)
             ->assertJsonValidationErrors('role');
@@ -336,7 +338,6 @@ class OperatorAccountApiTest extends TestCase
 
         $this->actingAs($operator)->getJson('/api/students')->assertStatus(403);
         $this->actingAs($operator)->getJson('/api/classrooms')->assertStatus(403);
-        $this->actingAs($operator)->getJson('/api/teacher-accounts/classrooms')->assertOk();
     }
 
     private function admin(): User
