@@ -269,6 +269,58 @@ class StudentWelfareTest extends TestCase
         ]);
     }
 
+    public function test_zero_violation_threshold_allows_student_without_violations(): void
+    {
+        $kabag = $this->kabagPengajian();
+        $classroom = $this->lpiClassroom(Classroom::JENJANG_ALIYAH, 'X-C');
+        $student = $this->student($classroom, 'Santri Tanpa Pelanggaran');
+
+        $settings = StudentWelfareSetting::query()->firstOrCreate([], StudentWelfareSetting::defaults());
+        $settings->update([
+            'violation_warning_points' => 0,
+            'violation_max_points' => 0,
+        ]);
+
+        $response = $this->actingAs($kabag)
+            ->getJson("/api/welfare/students/{$student->id}/eligibility")
+            ->assertOk();
+
+        $response->assertJsonPath('status', 'layak')
+            ->assertJsonPath('violations.points', 0);
+
+        $codes = collect($response->json('reasons'))->pluck('code')->all();
+        $this->assertNotContains('violation_points_max', $codes);
+        $this->assertNotContains('violation_points_warning', $codes);
+
+        $this->actingAs($kabag)->postJson('/api/welfare/akhlak', [
+            'student_id' => $student->id,
+            'type' => AkhlakRecord::TYPE_PELANGGARAN,
+            'severity' => AkhlakRecord::SEVERITY_RINGAN,
+            'description' => 'Pelanggaran ringan.',
+            'occurred_at' => now()->toDateString(),
+        ])->assertCreated()
+            ->assertJsonPath('points', 5);
+
+        $response = $this->actingAs($kabag)
+            ->getJson("/api/welfare/students/{$student->id}/eligibility")
+            ->assertOk();
+
+        $response->assertJsonPath('status', 'tidak_memenuhi')
+            ->assertJsonPath('status_label', 'Tidak Memenuhi Syarat')
+            ->assertJsonPath('violations.points', 5);
+
+        $this->assertContains(
+            'violation_points_max',
+            collect($response->json('reasons'))->pluck('code')->all(),
+        );
+
+        $this->assertDatabaseHas('student_welfare_alerts', [
+            'student_id' => $student->id,
+            'type' => StudentWelfareAlert::TYPE_VIOLATION,
+            'severity' => 'danger',
+        ]);
+    }
+
     public function test_admin_can_override_permit_limit_and_reason_is_recorded(): void
     {
         $admin = $this->admin();

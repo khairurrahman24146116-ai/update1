@@ -101,14 +101,14 @@ class EligibilityService
             ];
         }
 
-        if ($violationPoints >= $maxPoints) {
+        if ($violationPoints > $maxPoints) {
             $fails = true;
             $reasons[] = [
                 'code' => 'violation_points_max',
-                'label' => "Poin pelanggaran {$violationPoints} mencapai batas maksimum {$maxPoints}.",
+                'label' => "Poin pelanggaran {$violationPoints} melebihi batas maksimum {$maxPoints}.",
                 'severity' => 'danger',
             ];
-        } elseif ($violationPoints >= $warningPoints) {
+        } elseif ($warningPoints > 0 && $violationPoints >= $warningPoints) {
             $warnings = true;
             $reasons[] = [
                 'code' => 'violation_points_warning',
@@ -170,10 +170,10 @@ class EligibilityService
             ];
         }
 
-        if ($violationPoints >= $warningPoints) {
+        if ($violationPoints > $maxPoints || ($warningPoints > 0 && $violationPoints >= $warningPoints)) {
             $alertPayloads[] = [
                 'type' => StudentWelfareAlert::TYPE_VIOLATION,
-                'severity' => $violationPoints >= $maxPoints ? 'danger' : 'warning',
+                'severity' => $violationPoints > $maxPoints ? 'danger' : 'warning',
                 'message' => "Poin pelanggaran mencapai {$violationPoints} dari batas peringatan {$warningPoints}.",
             ];
         }
