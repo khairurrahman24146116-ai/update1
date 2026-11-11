@@ -208,7 +208,7 @@
                       v-model="form.password"
                       :type="showPassword ? 'text' : 'password'"
                       class="op-input op-input--password"
-                      minlength="6"
+                      minlength="8"
                       required
                       autocomplete="new-password"
                       placeholder="Minimal 6 karakter"
@@ -317,7 +317,7 @@
                     v-model="resetForm.password"
                     :type="showResetPassword ? 'text' : 'password'"
                     class="op-input op-input--password"
-                    minlength="6"
+                    minlength="8"
                     required
                     autocomplete="new-password"
                     placeholder="Minimal 6 karakter"
@@ -342,7 +342,7 @@
                     v-model="resetForm.password_confirmation"
                     :type="showResetConfirm ? 'text' : 'password'"
                     class="op-input op-input--password"
-                    minlength="6"
+                    minlength="8"
                     required
                     autocomplete="new-password"
                     placeholder="Ulangi kata sandi"

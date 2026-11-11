@@ -340,6 +340,31 @@ class OperatorAccountApiTest extends TestCase
         $this->actingAs($operator)->getJson('/api/classrooms')->assertStatus(403);
     }
 
+    public function test_account_passwords_must_be_at_least_eight_characters(): void
+    {
+        $operator = $this->operator();
+
+        $this->actingAs($operator)->postJson('/api/accounts', [
+            'name' => 'Guru Sandi Pendek',
+            'email' => 'sandi-pendek@madani.test',
+            'password' => 'short12',
+            'is_active' => true,
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors('password');
+
+        $account = $this->accountWithUnits([
+            'name' => 'Guru Reset Pendek',
+            'email' => 'reset-pendek@madani.test',
+            'role' => User::ROLE_GURU,
+        ], ['SMA']);
+
+        $this->actingAs($operator)->postJson("/api/accounts/{$account->id}/reset-password", [
+            'password' => 'short12',
+            'password_confirmation' => 'short12',
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors('password');
+    }
+
     private function admin(): User
     {
         return User::factory()->create([

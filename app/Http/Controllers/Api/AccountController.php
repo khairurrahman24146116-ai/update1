@@ -126,7 +126,7 @@ class AccountController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6'],
+            'password' => ['required', 'string', 'min:8'],
             'role' => ['required', Rule::in(self::MANAGEABLE_ROLES)],
             'units' => ['required', 'array', 'min:1'],
             'units.*.code' => ['required', 'string', 'distinct', Rule::in(array_map('strtoupper', Unit::enabledCodes()))],
@@ -243,7 +243,7 @@ class AccountController extends Controller
         $this->authorize('update', $account);
 
         $data = $request->validate([
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         $account->forceFill([
@@ -268,7 +268,7 @@ class AccountController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6'],
+            'password' => ['required', 'string', 'min:8'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
 

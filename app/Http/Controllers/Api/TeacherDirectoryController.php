@@ -167,7 +167,7 @@ class TeacherDirectoryController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6'],
+            'password' => ['required', 'string', 'min:8'],
             'phone' => ['nullable', 'string', 'max:30'],
             'nip' => ['nullable', 'string', 'max:30', 'unique:teachers,nip'],
             'is_active' => ['sometimes', 'boolean'],
@@ -231,7 +231,7 @@ class TeacherDirectoryController extends Controller
             'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
             'nip' => ['sometimes', 'nullable', 'string', 'max:30', Rule::unique('teachers', 'nip')->ignore($teacher->id)],
             'is_active' => ['sometimes', 'boolean'],
-            'password' => ['sometimes', 'nullable', 'string', 'min:6'],
+            'password' => ['sometimes', 'nullable', 'string', 'min:8'],
         ]);
 
         $passwordChanged = filled($data['password'] ?? null);

@@ -70,7 +70,7 @@
             <input v-model="form.phone" class="input" placeholder="Opsional" />
           </label>
           <label class="space-y-1 text-xs font-bold">Kata sandi awal
-            <input v-model="form.password" type="password" class="input" autocomplete="new-password" />
+            <input v-model="form.password" type="password" class="input" minlength="8" autocomplete="new-password" />
           </label>
           <label class="flex items-center gap-2 text-sm pt-6">
             <input v-model="form.is_active" type="checkbox" /> Akun aktif

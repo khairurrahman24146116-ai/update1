@@ -84,7 +84,7 @@
               <input v-model="profileForm.phone" class="input" />
             </label>
             <label class="space-y-1 text-xs font-bold">Kata sandi baru
-              <input v-model="profileForm.password" type="password" class="input" placeholder="Kosongkan bila tidak diganti" autocomplete="new-password" />
+              <input v-model="profileForm.password" type="password" class="input" minlength="8" placeholder="Kosongkan bila tidak diganti" autocomplete="new-password" />
             </label>
             <label class="flex items-center gap-2 text-sm pt-6">
               <input v-model="profileForm.is_active" type="checkbox" /> Akun aktif
