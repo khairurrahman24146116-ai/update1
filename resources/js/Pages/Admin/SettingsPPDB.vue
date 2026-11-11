@@ -45,7 +45,7 @@
 <div v-if="detail" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" @click.self="detail=null">
 <div class="bg-white rounded-xl border border-outline-variant shadow-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto p-4 space-y-2">
 <div class="flex items-center justify-between"><h3 class="font-bold text-sm">{{ detail.registration_number || ('#'+detail.id) }} — {{ detail.name }}</h3><button @click="detail=null" class="btn btn--ghost btn--sm">Tutup</button></div>
-<img v-if="detail.photo_path" :src="'/storage/'+detail.photo_path" alt="Pas foto" class="w-20 h-28 object-cover rounded-lg border border-outline-variant" />
+<img v-if="photoUrl" :src="photoUrl" alt="Pas foto" class="w-20 h-28 object-cover rounded-lg border border-outline-variant" />
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
 <div><b>NIK:</b> {{ detail.nik||'-' }}</div><div><b>JK:</b> {{ detail.gender||'-' }}</div>
 <div><b>TTL:</b> {{ detail.birth_place||'-' }}, {{ detail.birth_date?.slice(0,10)||'-' }}</div><div><b>Gol. darah:</b> {{ detail.blood_type||'-' }}</div>
@@ -68,8 +68,10 @@ const token=()=>localStorage.getItem('madani_token')
 const auth=()=>({Authorization:`Bearer ${token()}`})
 const waves=ref([]), loading=ref(false), showForm=ref(false), formError=ref(''), msg=ref(''), msgType=ref('success')
 const form=ref({name:'',slug:'',description:'',start_date:'',end_date:'',status:'buka',is_public:true})
-const selectedWave=ref(null), regs=ref([]), regSearch=ref(''), regStatus=ref(''), detail=ref(null)
-async function openDetail(r){ try{ const res=await fetch('/api/ppdb-registrations/'+r.id,{headers:auth()}); if(res.ok){ detail.value=await res.json(); return } }catch{} detail.value=r }
+const selectedWave=ref(null), regs=ref([]), regSearch=ref(''), regStatus=ref(''), detail=ref(null), photoUrl=ref('')
+function clearPhoto(){ if(photoUrl.value) URL.revokeObjectURL(photoUrl.value); photoUrl.value='' }
+async function loadPhoto(reg){ clearPhoto(); if(!reg.photo_path) return; try{ const res=await fetch('/api/ppdb-registrations/'+reg.id+'/photo',{headers:auth()}); if(!res.ok) return; photoUrl.value=URL.createObjectURL(await res.blob()) }catch{} }
+async function openDetail(r){ try{ const res=await fetch('/api/ppdb-registrations/'+r.id,{headers:auth()}); if(res.ok){ detail.value=await res.json(); await loadPhoto(detail.value); return } }catch{} detail.value=r; await loadPhoto(r) }
 let timer=null
 function notify(m,t='success'){msg.value=m;msgType.value=t;setTimeout(()=>msg.value='',3000)}
 function onRegSearch(){clearTimeout(timer);timer=setTimeout(loadRegs,350)}

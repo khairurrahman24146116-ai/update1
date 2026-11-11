@@ -80,7 +80,7 @@
             <td class="p-2 min-w-[200px]">
               <div class="font-semibold">{{ t.description }}</div>
               <div v-if="t.source === 'spp'" class="text-[11px] text-primary">Otomatis dari pembayaran SPP</div>
-              <a v-if="t.proof_path" :href="`/storage/${t.proof_path}`" target="_blank" rel="noopener" class="text-[11px] underline text-primary">Lihat bukti</a>
+              <button v-if="t.proof_path" type="button" class="text-[11px] underline text-primary" @click="openProof(t)">Lihat bukti</button>
             </td>
             <td class="p-2">{{ t.category?.name || '—' }}</td>
             <td v-if="!isIncome" class="p-2">{{ t.destination || '—' }}</td>
@@ -119,7 +119,7 @@
           <dt class="text-on-surface-variant">Sumber</dt><dd class="col-span-2">{{ detail.source === 'spp' ? 'Pembayaran SPP' : 'Input manual' }}</dd>
           <dt class="text-on-surface-variant">Dicatat oleh</dt><dd class="col-span-2">{{ detail.creator?.name || '—' }}</dd>
         </dl>
-        <a v-if="detail.proof_path" :href="`/storage/${detail.proof_path}`" target="_blank" rel="noopener" class="btn btn--ghost btn--sm">Buka bukti transaksi</a>
+        <button v-if="detail.proof_path" type="button" class="btn btn--ghost btn--sm" @click="openProof(detail)">Buka bukti transaksi</button>
       </div>
     </div>
   </FinanceShell>
@@ -276,6 +276,25 @@ async function remove(t) {
 
 function showDetail(t) {
   detail.value = t
+}
+
+async function openProof(trx) {
+  error.value = ''
+
+  try {
+    const token = localStorage.getItem('madani_token')
+    const res = await fetch(`/api/finance/transactions/${trx.id}/proof`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+
+    if (!res.ok) throw new Error('Gagal membuka bukti transaksi.')
+
+    const url = URL.createObjectURL(await res.blob())
+    window.open(url, '_blank', 'noopener')
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  } catch (e) {
+    error.value = e.message || 'Gagal membuka bukti transaksi.'
+  }
 }
 
 watch(type, async () => {

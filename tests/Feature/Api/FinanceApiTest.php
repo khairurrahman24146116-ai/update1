@@ -12,6 +12,8 @@ use App\Models\Student;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class FinanceApiTest extends TestCase
@@ -157,6 +159,55 @@ class FinanceApiTest extends TestCase
         ])->assertCreated()->assertJsonPath('unit', 'lpi');
 
         $this->assertDatabaseHas('finance_transactions', ['unit' => 'lpi', 'amount' => 75000]);
+    }
+
+    public function test_transaction_proof_is_private_and_unit_scoped(): void
+    {
+        Storage::fake('local');
+        $sma = $this->bendahara('sma');
+        $lpi = $this->bendahara('lpi');
+
+        $res = $this->actingAs($sma)->post('/api/finance/transactions', [
+            'type' => 'expense',
+            'transaction_date' => '2026-10-01',
+            'amount' => 100000,
+            'description' => 'Pembelian ATK',
+            'proof' => UploadedFile::fake()->create('bukti.pdf', 100, 'application/pdf'),
+        ]);
+
+        $res->assertCreated();
+
+        $trx = FinanceTransaction::findOrFail($res->json('id'));
+        $this->assertNotNull($trx->proof_path);
+        Storage::disk('local')->assertExists($trx->proof_path);
+
+        $url = "/api/finance/transactions/{$trx->id}/proof";
+        $this->actingAs($sma)->get($url)->assertOk();
+        $this->actingAs($lpi)->get($url)->assertForbidden();
+    }
+
+    public function test_spp_payment_proof_is_private_and_unit_scoped(): void
+    {
+        Storage::fake('local');
+        $sma = $this->bendahara('sma');
+        $lpi = $this->bendahara('lpi');
+        $invoice = SppInvoice::factory()->create(['unit' => 'sma', 'amount' => 500000]);
+
+        $res = $this->actingAs($sma)->post("/api/finance/spp/invoices/{$invoice->id}/payments", [
+            'amount' => 500000,
+            'method' => 'transfer',
+            'proof' => UploadedFile::fake()->create('transfer.pdf', 100, 'application/pdf'),
+        ]);
+
+        $res->assertCreated();
+
+        $payment = SppPayment::firstOrFail();
+        $this->assertNotNull($payment->proof_path);
+        Storage::disk('local')->assertExists($payment->proof_path);
+
+        $url = "/api/finance/spp/payments/{$payment->id}/proof";
+        $this->actingAs($sma)->get($url)->assertOk();
+        $this->actingAs($lpi)->get($url)->assertForbidden();
     }
 
     public function test_dashboard_includes_opening_balance_and_totals(): void

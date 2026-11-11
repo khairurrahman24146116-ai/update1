@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Api\Concerns\ResolvesFinanceUnit;
+use App\Http\Controllers\Api\Concerns\ServesPrivateFiles;
 use App\Http\Controllers\Controller;
 use App\Models\FinanceCategory;
 use App\Models\FinanceTransaction;
@@ -10,13 +11,13 @@ use App\Services\ActivityLogger;
 use App\Services\FinanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class FinanceTransactionController extends Controller
 {
     use ResolvesFinanceUnit;
+    use ServesPrivateFiles;
 
     public function __construct(protected FinanceService $finance) {}
 
@@ -112,6 +113,13 @@ class FinanceTransactionController extends Controller
         return $financeTransaction->load(['category', 'creator:id,name']);
     }
 
+    public function proof(Request $request, FinanceTransaction $financeTransaction)
+    {
+        $this->authorizeUnit($request, $financeTransaction->unit);
+
+        return $this->privateFileResponse($financeTransaction->proof_path);
+    }
+
     public function store(Request $request)
     {
         $unit = $this->resolveUnit($request);
@@ -134,7 +142,7 @@ class FinanceTransactionController extends Controller
         }
 
         if ($request->hasFile('proof')) {
-            $v['proof_path'] = $request->file('proof')->store('finance/proofs', 'public');
+            $v['proof_path'] = $request->file('proof')->store('finance/proofs', 'local');
         }
 
         $v['unit'] = $unit;
@@ -184,10 +192,8 @@ class FinanceTransactionController extends Controller
             $v['amount'] = round((float) $v['amount'], 2);
         }
         if ($request->hasFile('proof')) {
-            if ($financeTransaction->proof_path) {
-                Storage::disk('public')->delete($financeTransaction->proof_path);
-            }
-            $v['proof_path'] = $request->file('proof')->store('finance/proofs', 'public');
+            $this->deletePrivateFile($financeTransaction->proof_path);
+            $v['proof_path'] = $request->file('proof')->store('finance/proofs', 'local');
         }
         unset($v['proof']);
 
@@ -208,9 +214,7 @@ class FinanceTransactionController extends Controller
             throw ValidationException::withMessages(['transaction' => 'Transaksi pembayaran SPP tidak dapat dihapus manual.']);
         }
 
-        if ($financeTransaction->proof_path) {
-            Storage::disk('public')->delete($financeTransaction->proof_path);
-        }
+        $this->deletePrivateFile($financeTransaction->proof_path);
 
         $id = $financeTransaction->id;
         $financeTransaction->delete();

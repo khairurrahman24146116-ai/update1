@@ -167,6 +167,7 @@ Route::middleware(['auth:sanctum', 'active', 'role.assigned'])->group(function (
         Route::get('/transactions/preview', [FinanceTransactionController::class, 'preview'])->middleware('permission:finance.transactions.view');
         Route::post('/transactions', [FinanceTransactionController::class, 'store'])->middleware('permission:finance.transactions.create');
         Route::get('/transactions/{financeTransaction}', [FinanceTransactionController::class, 'show'])->middleware('permission:finance.transactions.view');
+        Route::get('/transactions/{financeTransaction}/proof', [FinanceTransactionController::class, 'proof'])->middleware('permission:finance.transactions.view');
         Route::put('/transactions/{financeTransaction}', [FinanceTransactionController::class, 'update'])->middleware('permission:finance.transactions.update');
         Route::delete('/transactions/{financeTransaction}', [FinanceTransactionController::class, 'destroy'])->middleware('permission:finance.transactions.delete');
 
@@ -177,6 +178,7 @@ Route::middleware(['auth:sanctum', 'active', 'role.assigned'])->group(function (
         Route::get('/spp/invoices/{sppInvoice}', [SppController::class, 'show'])->middleware('permission:spp.view');
         Route::post('/spp/invoices/{sppInvoice}/payments', [SppController::class, 'pay'])->middleware('permission:spp.update');
         Route::get('/spp/payments', [SppController::class, 'payments'])->middleware('permission:spp.view');
+        Route::get('/spp/payments/{sppPayment}/proof', [SppController::class, 'paymentProof'])->middleware('permission:spp.view');
         Route::delete('/spp/payments/{sppPayment}', [SppController::class, 'destroyPayment'])->middleware('permission:spp.delete');
         Route::get('/spp/outstanding', [SppController::class, 'outstanding'])->middleware('permission:spp.view');
         Route::get('/spp/report', [SppController::class, 'report'])->middleware('permission:reports.finance.view');
@@ -288,6 +290,8 @@ Route::middleware(['auth:sanctum', 'active', 'role.assigned'])->group(function (
         ->middlewareFor(['index', 'show'], 'permission:ppdb.registrations.view')
         ->middlewareFor(['update'], 'permission:ppdb.registrations.update')
         ->middlewareFor(['destroy'], 'permission:ppdb.registrations.delete');
+    Route::get('/ppdb-registrations/{ppdbRegistration}/photo', [PPDBRegistrationController::class, 'photo'])
+        ->middleware('permission:ppdb.registrations.view');
 
     Route::get('/homepage-settings', [HomepageSettingController::class, 'index'])->middleware('permission:settings.homepage.view');
     Route::put('/homepage-settings', [HomepageSettingController::class, 'update'])->middleware('permission:settings.homepage.manage');

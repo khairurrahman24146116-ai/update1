@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Api\Concerns\ResolvesFinanceUnit;
+use App\Http\Controllers\Api\Concerns\ServesPrivateFiles;
 use App\Http\Controllers\Controller;
 use App\Models\FinanceTransaction;
 use App\Models\SppInvoice;
@@ -18,6 +19,7 @@ use Illuminate\Validation\Rule;
 class SppController extends Controller
 {
     use ResolvesFinanceUnit;
+    use ServesPrivateFiles;
 
     public function __construct(protected SppService $spp) {}
 
@@ -130,7 +132,7 @@ class SppController extends Controller
         ]);
 
         if ($request->hasFile('proof')) {
-            $v['proof_path'] = $request->file('proof')->store('spp/proofs', 'public');
+            $v['proof_path'] = $request->file('proof')->store('spp/proofs', 'local');
         }
         unset($v['proof']);
 
@@ -143,6 +145,13 @@ class SppController extends Controller
         ]);
 
         return response()->json($payment->load(['invoice.student', 'invoice.payments']), 201);
+    }
+
+    public function paymentProof(Request $request, SppPayment $sppPayment)
+    {
+        $this->authorizeUnit($request, $sppPayment->unit);
+
+        return $this->privateFileResponse($sppPayment->proof_path);
     }
 
     public function payments(Request $request)
@@ -172,6 +181,8 @@ class SppController extends Controller
 
         $invoice = $sppPayment->invoice;
         $paymentId = $sppPayment->id;
+
+        $this->deletePrivateFile($sppPayment->proof_path);
 
         DB::transaction(function () use ($sppPayment, $invoice) {
             $sppPayment->delete();

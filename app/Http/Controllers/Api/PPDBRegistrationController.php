@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\ServesPrivateFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePPDBRegistrationRequest;
 use App\Models\PPDBRegistration;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class PPDBRegistrationController extends Controller
 {
+    use ServesPrivateFiles;
+
     public function publicStore(StorePPDBRegistrationRequest $request)
     {
         $v = $request->validated();
@@ -33,7 +36,7 @@ class PPDBRegistrationController extends Controller
 
         $reg = DB::transaction(function () use ($request, $data, $wave) {
             if ($request->hasFile('photo')) {
-                $data['photo_path'] = $request->file('photo')->store('ppdb/photos', 'public');
+                $data['photo_path'] = $request->file('photo')->store('ppdb/photos', 'local');
             }
             $data['registration_number'] = $this->generateNumber($wave);
             $model = new PPDBRegistration;
@@ -91,6 +94,11 @@ class PPDBRegistrationController extends Controller
     public function show(PPDBRegistration $ppdbRegistration)
     {
         return $ppdbRegistration->load('wave:id,name,slug');
+    }
+
+    public function photo(PPDBRegistration $ppdbRegistration)
+    {
+        return $this->privateFileResponse($ppdbRegistration->photo_path);
     }
 
     public function update(Request $request, PPDBRegistration $ppdbRegistration)
