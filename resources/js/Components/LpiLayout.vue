@@ -22,14 +22,14 @@
         <div class="flex items-center gap-2 sm:gap-space-md shrink-0">
           <ThemeToggle />
           <router-link
-            to="/sma/ppdb"
+            to="/ppdb"
             class="btn-skeu hidden xl:inline-flex items-center gap-2 px-5 h-11 rounded-full bg-primary text-on-primary font-title-md text-title-md uppercase tracking-wide whitespace-nowrap"
           >
             <span class="material-symbols-outlined text-[20px]">how_to_reg</span>
             Pendaftaran PPDB
           </router-link>
           <router-link
-            to="/sma/ppdb"
+            to="/ppdb"
             class="btn-skeu hidden sm:inline-flex xl:hidden items-center h-11 px-4 rounded-full bg-primary text-on-primary font-label-sm text-label-sm font-bold uppercase tracking-wide whitespace-nowrap shrink-0"
           >
             PPDB
@@ -59,7 +59,7 @@
         >
           <template #footer>
             <router-link
-              to="/sma/ppdb"
+              to="/ppdb"
               class="mt-2 inline-flex items-center justify-center gap-2 h-11 rounded-full bg-primary text-on-primary font-title-md text-title-md uppercase tracking-wide"
               @click="menuOpen = false"
             >

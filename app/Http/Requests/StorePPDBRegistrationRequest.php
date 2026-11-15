@@ -25,9 +25,10 @@ class StorePPDBRegistrationRequest extends FormRequest
     {
         return [
             'wave_id' => 'required|exists:p_p_d_b_waves,id',
+            'jenjang' => ['required', Rule::in(['lanjut', 'sma', 'smp', 'salafiyah'])],
             'name' => 'required|string|max:255',
             'nik' => 'required|string|size:16|regex:/^[0-9]+$/',
-            'gender' => 'required|in:L,P',
+            'gender' => ['required', Rule::in($this->input('jenjang') === 'salafiyah' ? ['P'] : ['L', 'P'])],
             'birth_place' => 'required|string|max:100',
             'birth_date' => 'required|date|before:today',
             'nationality' => 'required|in:Indonesia,Lainnya',
@@ -46,7 +47,7 @@ class StorePPDBRegistrationRequest extends FormRequest
             'city' => 'required|string|max:100',
             'province' => 'required|string|max:100',
             'postal_code' => 'nullable|string|max:10',
-            'photo' => 'required|file|max:2048|mimes:jpg,jpeg,png,webp',
+            'photo' => 'nullable|file|max:2048|mimes:jpg,jpeg,png,webp',
             'origin_school_name' => 'required|string|max:150',
             'origin_school_address' => 'nullable|string|max:2000',
             'father_family_card' => 'required|string|max:20',
@@ -151,7 +152,6 @@ class StorePPDBRegistrationRequest extends FormRequest
         return [
             'nik.size' => 'NIK harus 16 digit.',
             'consent.accepted' => 'Pernyataan persetujuan wajib disetujui.',
-            'photo.required' => 'Pas foto 3x4 wajib diunggah.',
         ];
     }
 }

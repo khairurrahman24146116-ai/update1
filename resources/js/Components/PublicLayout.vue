@@ -71,7 +71,7 @@
               <router-link to="/sma/visi-misi" class="hover:text-primary transition-colors">Visi &amp; Misi</router-link>
               <router-link to="/sma/kurikulum" class="hover:text-primary transition-colors">Kurikulum</router-link>
               <router-link to="/sma/struktur" class="hover:text-primary transition-colors">Struktur Organisasi</router-link>
-              <router-link to="/sma/ppdb" class="hover:text-primary transition-colors">Penerimaan Peserta Didik Baru (PPDB)</router-link>
+
               <router-link to="/sma/fasilitas" class="hover:text-primary transition-colors">Fasilitas Sekolah</router-link>
             </nav>
           </div>
@@ -154,7 +154,6 @@ const nav = [
   { name: 'Prestasi', href: '/sma/prestasi' },
   { name: 'Berita', href: '/sma/berita' },
   { name: 'Galeri', href: '/sma/galeri' },
-  { name: 'Penerimaan (PPDB)', href: '/sma/ppdb' },
   { name: 'Kontak', href: '/sma/kontak' },
 ]
 </script>

@@ -112,7 +112,8 @@ const konten = [
   { to:'/app/admin/settings?tab=landing', label:'Landing Page Content', desc:'Hero, sambutan & section', icon:'language', bg:'bg-surface-container-low', permission:'settings.landing.manage' },
   { to:'/app/admin/settings?tab=berita', label:'Berita & Kategori', desc:'Artikel publish/draft', icon:'newspaper', bg:'bg-primary-fixed', permission:'content.news.update' },
   { to:'/app/admin/settings?tab=galeri', label:'Galeri & Album', desc:'Foto & video per album', icon:'photo_library', bg:'bg-tertiary-fixed', permission:'content.gallery.update' },
-  { to:'/app/admin/settings?tab=ppdb', label:'PPDB & Pendaftar', desc:'Gelombang & status seleksi', icon:'edit_note', bg:'bg-primary-fixed', permission:'ppdb.waves.update' },
+  { to:'/app/admin/ppdb', label:'Dashboard PPDB', desc:'Statistik, pendaftar & riwayat', icon:'groups', bg:'bg-primary-fixed', permission:'ppdb.registrations.view' },
+  { to:'/app/admin/settings?tab=ppdb', label:'PPDB & Gelombang', desc:'Kelola gelombang pendaftaran', icon:'edit_note', bg:'bg-primary-fixed', permission:'ppdb.waves.update' },
   { to:'/app/admin/settings?tab=keamanan', label:'Keamanan', desc:'Audit log & keamanan akses', icon:'security', bg:'bg-primary-fixed', permission:'logs.view', adminOnly:true },
 ]
 const filteredManajemen = computed(() => filterModules(manajemen))

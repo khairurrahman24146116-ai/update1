@@ -6,6 +6,8 @@ import Prestasi from './Pages/Prestasi.vue'
 import Kontak from './Pages/Kontak.vue'
 import Login from './Pages/Login.vue'
 import PPDB from './Pages/PPDB.vue'
+import PPDBUploadPhoto from './Pages/PPDBUploadPhoto.vue'
+import AdminPPDB from './Pages/Admin/PPDB.vue'
 import AdminDashboard from './Pages/Admin/Dashboard.vue'
 import GuruDashboard from './Pages/Guru/Dashboard.vue'
 import BendaharaDashboard from './Pages/Bendahara/Dashboard.vue'
@@ -103,7 +105,8 @@ const routes = [
     { path: '/sma/fasilitas', component: Fasilitas },
     { path: '/sma/prestasi', component: Prestasi },
     { path: '/sma/kontak', component: Kontak },
-    { path: '/sma/ppdb', component: PPDB },
+    { path: '/ppdb', component: PPDB },
+    { path: '/ppdb/upload-foto', component: PPDBUploadPhoto },
     { path: '/sma/berita', component: BeritaList },
     { path: '/sma/galeri', component: GaleriList },
     { path: '/sma/berita/:id', component: BeritaDetail },
@@ -119,7 +122,7 @@ const routes = [
     { path: '/fasilitas', redirect: '/sma/fasilitas' },
     { path: '/prestasi', redirect: '/sma/prestasi' },
     { path: '/kontak', redirect: '/sma/kontak' },
-    { path: '/ppdb', redirect: '/sma/ppdb' },
+    { path: '/sma/ppdb', redirect: '/ppdb' },
     { path: '/berita', redirect: '/sma/berita' },
     { path: '/galeri', redirect: '/sma/galeri' },
     { path: '/berita/:id', redirect: (to) => `/sma/berita/${to.params.id}` },
@@ -131,6 +134,7 @@ const routes = [
     { path: '/app/operator', redirect: '/app/operator/akun' },
     { path: '/app/operator/akun', component: OperatorAkun, meta: { requiresAuth: true, role: ['admin_utama', 'operator'], permissions: ['users.view'] } },
     { path: '/app/admin', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin_utama', permissions: ADMIN_MANAGE_PERMISSIONS } },
+    { path: '/app/admin/ppdb', component: AdminPPDB, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['ppdb.registrations.view'] } },
     { path: '/app/admin/settings', component: AdminSettings, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['users.view', 'permissions.view', 'settings.site.manage', 'settings.landing.manage', 'content.news.view', 'content.gallery.view', 'ppdb.waves.view'] } },
     { path: '/app/admin/activity-logs', component: AdminActivityLogs, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['logs.view'], adminOnly: true } },
     { path: '/app/admin/homepage', component: AdminHomepageSettings, meta: { requiresAuth: true, role: 'admin_utama', permissions: ['settings.homepage.view', 'settings.homepage.manage'] } },

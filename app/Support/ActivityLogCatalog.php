@@ -115,7 +115,11 @@ class ActivityLogCatalog
         'ppdb_wave.delete' => 'Menghapus gelombang PPDB',
         'ppdb_registration.create' => 'Pendaftaran PPDB baru',
         'ppdb_registration.update' => 'Mengubah status pendaftar PPDB',
+        'ppdb_registration.edit' => 'Mengubah data pendaftar PPDB',
         'ppdb_registration.delete' => 'Menghapus pendaftar PPDB',
+        'ppdb_registration.photo_upload' => 'Mengunggah foto pendaftar PPDB',
+        'ppdb_registration.pdf' => 'Mencetak formulir pendaftar PPDB',
+        'ppdb_registration.pdf_recap' => 'Mencetak rekap pendaftar PPDB',
 
         'news.create' => 'Menambah berita',
         'news.update' => 'Mengubah berita',

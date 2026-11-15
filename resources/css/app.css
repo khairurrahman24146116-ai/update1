@@ -888,3 +888,97 @@ html[data-theme='dark'] .control-glass:hover:not(:disabled) {
 .ui-square *::after {
   border-radius: 0 !important;
 }
+
+/* Dark mode: form controls (seluruh admin & seluruh halaman bertema gelap)
+ * Selector mode gelap: html[data-theme='dark'] (diset di welcome.blade.php + useTheme.js).
+ * Variabel warna mengikuti tokens.css/app.css; fallback hardcode disertakan.
+ * color-scheme: dark sudah di tokens.css; ditegaskan di sini untuk cakupan form.
+ */
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+html[data-theme='dark'] select,
+html[data-theme='dark'] input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']):not([type='submit']):not([type='button']):not([type='reset']):not([type='image']):not([type='hidden']),
+html[data-theme='dark'] textarea {
+  background-color: var(--color-surface-container-lowest, #19231d);
+  color: var(--color-on-surface, #edf5ef);
+  border: 1px solid var(--color-outline-variant, #35463a);
+  caret-color: var(--color-on-surface, #edf5ef);
+}
+
+html[data-theme='dark'] select:hover,
+html[data-theme='dark'] input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']):not([type='submit']):not([type='button']):not([type='reset']):not([type='image']):not([type='hidden']):hover,
+html[data-theme='dark'] textarea:hover {
+  border-color: var(--color-outline, #6e8074);
+}
+
+html[data-theme='dark'] select:focus,
+html[data-theme='dark'] input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']):not([type='submit']):not([type='button']):not([type='reset']):not([type='image']):not([type='hidden']):focus,
+html[data-theme='dark'] textarea:focus {
+  border-color: var(--color-primary, #55d99a);
+  outline: 2px solid var(--color-primary, #55d99a);
+  outline-offset: 0;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #55d99a) 22%, transparent);
+}
+
+html[data-theme='dark'] select option,
+html[data-theme='dark'] select optgroup {
+  background-color: var(--color-surface-container-low, #222f27);
+  color: var(--color-on-surface, #edf5ef);
+}
+
+html[data-theme='dark'] select option:checked,
+html[data-theme='dark'] select option:hover,
+html[data-theme='dark'] select option:focus {
+  background-color: var(--color-primary, #55d99a);
+  color: var(--color-on-primary, #06281a);
+}
+
+html[data-theme='dark'] ::placeholder {
+  color: var(--color-on-surface-variant, #b4c5b8);
+  opacity: 1;
+}
+
+html[data-theme='dark'] select:invalid,
+html[data-theme='dark'] select option[value=''],
+html[data-theme='dark'] select option[value=' '][disabled] {
+  color: var(--color-on-surface-variant, #b4c5b8);
+}
+
+html[data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator,
+html[data-theme='dark'] input[type='time']::-webkit-calendar-picker-indicator,
+html[data-theme='dark'] input[type='datetime-local']::-webkit-calendar-picker-indicator,
+html[data-theme='dark'] input[type='month']::-webkit-calendar-picker-indicator,
+html[data-theme='dark'] input[type='week']::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.1);
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+html[data-theme='dark'] input:read-only:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='button']):not([type='submit']):not([type='reset']),
+html[data-theme='dark'] textarea:read-only,
+html[data-theme='dark'] select:disabled,
+html[data-theme='dark'] input:disabled:not([type='checkbox']):not([type='radio']),
+html[data-theme='dark'] textarea:disabled {
+  background-color: var(--color-surface-container, #26342c);
+  color: var(--color-on-surface-variant, #b4c5b8);
+  border-color: var(--color-outline-variant, #35463a);
+  opacity: 0.85;
+}
+
+html[data-theme='dark'] input[type='checkbox'],
+html[data-theme='dark'] input[type='radio'] {
+  accent-color: var(--color-primary, #55d99a);
+}
+
+html[data-theme='dark'] input:-webkit-autofill,
+html[data-theme='dark'] input:-webkit-autofill:hover,
+html[data-theme='dark'] input:-webkit-autofill:focus,
+html[data-theme='dark'] textarea:-webkit-autofill,
+html[data-theme='dark'] select:-webkit-autofill {
+  -webkit-text-fill-color: var(--color-on-surface, #edf5ef);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-surface-container-lowest, #19231d) inset;
+  box-shadow: 0 0 0 1000px var(--color-surface-container-lowest, #19231d) inset;
+  caret-color: var(--color-on-surface, #edf5ef);
+}

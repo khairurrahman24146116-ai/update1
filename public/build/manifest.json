@@ -76,7 +76,7 @@
     "src": "_plus-jakarta-sans-800-normal-CusIZhrK.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-DYPgYnjo.css",
+    "file": "assets/app-DhHJzIhf.css",
     "name": "app",
     "names": [
       "app.css"
@@ -92,12 +92,12 @@
     "src": "resources/fonts/material-symbols-outlined.woff2"
   },
   "resources/js/app.js": {
-    "file": "assets/app-DoloJ9DS.js",
+    "file": "assets/app-B5dMD1Cq.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "css": [
-      "assets/app-DD8_aiVr.css"
+      "assets/app-BLbJqa5N.css"
     ]
   }
 }

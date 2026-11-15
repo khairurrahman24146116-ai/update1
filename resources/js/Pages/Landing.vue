@@ -220,7 +220,7 @@
             </span>
             <h3 class="font-headline-md text-headline-md text-on-surface font-semibold">Informasi Alur &amp; Gelombang PPDB</h3>
             <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">Jadwal gelombang dan alur pendaftaran ditetapkan oleh panitia sekolah dan diumumkan melalui laman ini. Periksa kembali halaman ini secara berkala untuk informasi terbaru.</p>
-            <router-link to="/sma/ppdb" class="landing-cta landing-glow inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
+            <router-link to="/ppdb" class="landing-cta landing-glow inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
               <span>Buka Halaman PPDB</span>
               <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
             </router-link>
@@ -242,7 +242,7 @@
                 <span class="material-symbols-outlined text-primary text-[18px]">mail</span>
                 <span>Hubungi Sekretariat</span>
               </router-link>
-              <router-link to="/sma/ppdb" class="landing-cta inline-flex items-center gap-space-xs px-space-md py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
+              <router-link to="/ppdb" class="landing-cta inline-flex items-center gap-space-xs px-space-md py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
                 <span>Daftar Sekarang</span>
                 <span class="material-symbols-outlined text-[18px]">login</span>
               </router-link>
@@ -263,7 +263,7 @@
               <p class="font-body-md text-body-md text-on-surface-variant">Lengkapi pendaftaran secara daring dan pantau pengumuman resmi sekolah untuk informasi jadwal, berkas, dan tahapan seleksi.</p>
             </div>
             <div class="flex flex-col sm:flex-row items-center gap-space-md w-full lg:w-auto shrink-0">
-              <router-link to="/sma/ppdb" class="landing-cta landing-glow w-full sm:w-auto inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
+              <router-link to="/ppdb" class="landing-cta landing-glow w-full sm:w-auto inline-flex items-center justify-center gap-space-xs px-space-lg py-space-sm bg-primary text-on-primary font-title-md text-title-md rounded-full shadow-sm hover:bg-primary-hover hover:shadow-md">
                 <span>Registrasi Santri Baru</span>
                 <span class="material-symbols-outlined text-[18px]">how_to_reg</span>
               </router-link>

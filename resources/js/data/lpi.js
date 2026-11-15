@@ -93,6 +93,7 @@ export const navigation = [
     ],
   },
   { name: 'Layanan', href: '/layanan' },
+  { name: 'PPDB', href: '/ppdb' },
 ]
 
 export const footerLinks = [
@@ -102,4 +103,5 @@ export const footerLinks = [
   { name: 'Program', href: '/program' },
   { name: 'Akademik', href: '/akademik/kurikulum' },
   { name: 'Layanan', href: '/layanan' },
+  { name: 'PPDB', href: '/ppdb' },
 ]

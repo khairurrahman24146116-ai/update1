@@ -2,15 +2,28 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PPDBRegistration extends Model
 {
+    use HasFactory;
+
     protected $table = 'p_p_d_b_registrations';
 
+    /**
+     * @var array<string, string>
+     */
+    public const JENJANG_LABELS = [
+        'lanjut' => 'Jenjang Lanjut',
+        'sma' => 'Pendaftaran SMA',
+        'smp' => 'Pendaftaran SMP',
+        'salafiyah' => 'Salafiyah Santri Putri',
+    ];
+
     protected $fillable = [
-        'wave_id', 'registration_number',
+        'wave_id', 'jenjang', 'registration_number',
         'name', 'nik', 'gender', 'birth_place', 'birth_date',
         'nationality', 'nationality_other', 'child_order', 'sibling_count', 'orphan_status',
         'daily_language', 'daily_language_other',
@@ -69,5 +82,10 @@ class PPDBRegistration extends Model
     public function wave(): BelongsTo
     {
         return $this->belongsTo(PPDBWave::class, 'wave_id');
+    }
+
+    public function jenjangLabel(): string
+    {
+        return self::JENJANG_LABELS[$this->jenjang] ?? '—';
     }
 }

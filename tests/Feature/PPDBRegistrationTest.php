@@ -28,6 +28,7 @@ class PPDBRegistrationTest extends TestCase
     private function payload(array $over = []): array
     {
         return array_merge([
+            'jenjang' => 'sma',
             'name' => 'Ahmad Santri',
             'nik' => '1101010101010101',
             'gender' => 'L',
@@ -133,6 +134,84 @@ class PPDBRegistrationTest extends TestCase
 
         $res->assertStatus(422);
         $this->assertDatabaseCount('p_p_d_b_registrations', 0);
+    }
+
+    public function test_salafiyah_requires_female_gender(): void
+    {
+        Storage::fake('local');
+        $wave = $this->wave();
+
+        $this->post('/api/ppdb-registrations', array_merge(
+            $this->payload(['wave_id' => $wave->id, 'jenjang' => 'salafiyah', 'gender' => 'L']),
+            ['photo' => UploadedFile::fake()->image('foto.jpg', 300, 400)]
+        ))->assertUnprocessable();
+
+        $this->assertDatabaseCount('p_p_d_b_registrations', 0);
+
+        $this->post('/api/ppdb-registrations', array_merge(
+            $this->payload(['wave_id' => $wave->id, 'jenjang' => 'salafiyah', 'gender' => 'P']),
+            ['photo' => UploadedFile::fake()->image('foto.jpg', 300, 400)]
+        ))->assertCreated();
+
+        $this->assertDatabaseHas('p_p_d_b_registrations', [
+            'wave_id' => $wave->id,
+            'jenjang' => 'salafiyah',
+            'gender' => 'P',
+        ]);
+    }
+
+    public function test_admin_can_download_registration_pdf(): void
+    {
+        Storage::fake('local');
+        $wave = $this->wave();
+
+        $this->post('/api/ppdb-registrations', array_merge(
+            $this->payload(['wave_id' => $wave->id]),
+            ['photo' => UploadedFile::fake()->image('foto.jpg', 300, 400)]
+        ))->assertCreated();
+
+        $registration = PPDBRegistration::firstOrFail();
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN_UTAMA]);
+
+        $response = $this->actingAs($admin)->get("/api/ppdb-registrations/{$registration->id}/pdf");
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
+    }
+
+    public function test_admin_can_download_registration_recap_pdf(): void
+    {
+        Storage::fake('local');
+        $wave = $this->wave();
+
+        $this->post('/api/ppdb-registrations', array_merge(
+            $this->payload(['wave_id' => $wave->id]),
+            ['photo' => UploadedFile::fake()->image('foto.jpg', 300, 400)]
+        ))->assertCreated();
+
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN_UTAMA]);
+
+        $response = $this->actingAs($admin)->get('/api/ppdb-registrations/pdf?wave_id='.$wave->id.'&jenjang=sma');
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
+    }
+
+    public function test_ppdb_pdf_requires_export_permission(): void
+    {
+        Storage::fake('local');
+        $wave = $this->wave();
+
+        $this->post('/api/ppdb-registrations', array_merge(
+            $this->payload(['wave_id' => $wave->id]),
+            ['photo' => UploadedFile::fake()->image('foto.jpg', 300, 400)]
+        ))->assertCreated();
+
+        $registration = PPDBRegistration::firstOrFail();
+        $guru = User::factory()->create(['role' => User::ROLE_GURU]);
+
+        $this->actingAs($guru)->get("/api/ppdb-registrations/{$registration->id}/pdf")->assertForbidden();
+        $this->actingAs($guru)->get('/api/ppdb-registrations/pdf')->assertForbidden();
     }
 
     public function test_public_store_rejects_wrong_photo_type(): void

@@ -1,13 +1,13 @@
 <template>
-  <PublicLayout>
+  <LpiLayout>
     <section class="w-full bg-surface-container-low px-gutter py-space-sm">
       <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-space-xs">
         <div class="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
-          <router-link to="/sma" class="hover:text-primary transition-colors">Beranda</router-link>
+          <router-link to="/" class="hover:text-primary transition-colors">Beranda</router-link>
           <span class="material-symbols-outlined text-[13px] text-outline">chevron_right</span>
           <span class="text-on-surface font-semibold">Pendaftaran Santri Baru 2026–2027</span>
         </div>
-        <span class="font-code-md text-code-md text-outline">PPDB SMA MADANI AL-AZIZIYAH</span>
+        <span class="font-code-md text-code-md text-outline">PPDB LPI MADANI AL-AZIZIYAH</span>
       </div>
     </section>
 
@@ -23,8 +23,68 @@
     </section>
 
     <section class="w-full max-w-7xl mx-auto px-gutter pb-space-xl">
-      <div v-if="!success" class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+      <div v-if="!success" class="mb-space-sm">
+        <router-link to="/ppdb/upload-foto" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest border border-outline-variant text-sm font-semibold hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-[18px]">upload_file</span>
+          Sudah mendaftar? Upload foto
+        </router-link>
+      </div>
+
+      <div v-if="!success" class="mb-space-lg">
+        <div class="flex flex-wrap items-end justify-between gap-space-xs mb-3">
+          <div>
+            <h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Pilih Jalur Pendaftaran</h2>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Pilih salah satu jalur sesuai jenjang yang dituju. Pilihan dapat diubah sebelum formulir dikirim.</p>
+          </div>
+          <span v-if="form.jenjang" class="inline-flex items-center gap-1 bg-primary-fixed text-primary px-space-sm py-1 rounded-full font-label-sm text-label-sm">
+            <span class="material-symbols-outlined text-[14px]">check_circle</span>
+            {{ jenjangLabel(form.jenjang) }}
+          </span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-sm">
+          <button v-for="j in jenjangOptions" :key="j.key" type="button" @click="selectJenjang(j.key)"
+            class="group relative text-left bg-surface-container-lowest border rounded-[24px] p-space-md transition-all hover:-translate-y-0.5 hover:shadow-md"
+            :class="form.jenjang === j.key ? 'border-primary ring-2 ring-primary/25 shadow-sm' : 'border-outline-variant hover:border-primary/40'">
+            <div class="flex items-start justify-between gap-2">
+              <span class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" :class="form.jenjang === j.key ? 'bg-primary text-on-primary' : 'bg-primary-fixed text-primary'">
+                <span class="material-symbols-outlined text-[22px]">{{ j.icon }}</span>
+              </span>
+              <span v-if="form.jenjang === j.key" class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+              <span v-else-if="j.badge" class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed">{{ j.badge }}</span>
+            </div>
+            <h3 class="font-title-md text-title-md text-on-surface font-semibold mt-3">{{ j.label }}</h3>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-relaxed">{{ j.description }}</p>
+            <p v-if="j.note" class="font-label-sm text-label-sm text-primary mt-2 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">info</span>{{ j.note }}
+            </p>
+            <span class="mt-3 inline-flex items-center gap-1 font-label-sm text-label-sm" :class="form.jenjang === j.key ? 'text-primary font-semibold' : 'text-on-surface-variant group-hover:text-primary'">
+              {{ form.jenjang === j.key ? 'Jalur dipilih' : 'Pilih jalur' }}
+              <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div v-if="!success && !form.jenjang" class="bg-surface-container-lowest border border-dashed border-outline-variant rounded-[28px] p-space-lg text-center">
+        <span class="material-symbols-outlined text-[40px] text-primary">touch_app</span>
+        <p class="font-body-md text-body-md text-on-surface-variant mt-2">Pilih salah satu jalur pendaftaran di atas untuk mulai mengisi formulir.</p>
+      </div>
+
+      <div v-if="!success && form.jenjang" class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
         <div class="lg:col-span-4 flex flex-col gap-space-md">
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-sm p-space-md">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold mb-2">Jalur Pendaftaran</h3>
+            <div class="flex items-center gap-2">
+              <span class="w-9 h-9 rounded-xl bg-primary-fixed text-primary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[20px]">{{ jenjangOptions.find((j) => j.key === form.jenjang)?.icon || 'route' }}</span>
+              </span>
+              <div>
+                <p class="font-title-md text-title-md text-on-surface font-semibold">{{ jenjangLabel(form.jenjang) }}</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">Jenjang / jalur terpilih</p>
+              </div>
+            </div>
+            <p v-if="form.jenjang === 'salafiyah'" class="font-body-sm text-body-sm text-primary bg-primary-fixed/40 rounded-xl px-3 py-2 mt-3">Program khusus santri putri. Jenis kelamin otomatis diisi Perempuan.</p>
+          </div>
           <div class="bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-sm p-space-md">
             <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold mb-2">Gelombang Pendaftaran</h3>
             <div v-if="!loaded" class="font-body-sm text-body-sm text-on-surface-variant">Memuat gelombang…</div>
@@ -65,10 +125,19 @@
 
             <!-- Step 0: Identitas Santri -->
             <div v-if="steps[step].key === 'santri'" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="md:col-span-2">
+                <label class="lbl">Jalur pendaftaran *</label>
+                <select v-model="form.jenjang" class="inp" @change="onJenjangChange">
+                  <option v-for="j in jenjangOptions" :key="j.key" :value="j.key">{{ j.label }}</option>
+                </select>
+                <p v-if="form.jenjang === 'salafiyah'" class="font-label-sm text-label-sm text-primary mt-1 flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">info</span>Jalur Salafiyah khusus santri putri.
+                </p>
+              </div>
               <div class="md:col-span-2"><label class="lbl">Nama lengkap *</label><input v-model="form.name" class="inp" placeholder="Nama lengkap santri" /></div>
               <div><label class="lbl">NIK (16 digit) *</label><input v-model="form.nik" class="inp" inputmode="numeric" maxlength="16" placeholder="3271…" /></div>
               <div><label class="lbl">NISN</label><input v-model="form.nisn" class="inp" placeholder="NISN" /></div>
-              <div><label class="lbl">Jenis kelamin *</label><select v-model="form.gender" class="inp"><option value="">Pilih</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+              <div><label class="lbl">Jenis kelamin *</label><select v-model="form.gender" class="inp disabled:opacity-60 disabled:cursor-not-allowed" :disabled="form.jenjang === 'salafiyah'"><option value="">Pilih</option><option value="L" :disabled="form.jenjang === 'salafiyah'">Laki-laki</option><option value="P">Perempuan</option></select></div>
               <div class="grid grid-cols-2 gap-2">
                 <div><label class="lbl">Tempat lahir *</label><input v-model="form.birth_place" class="inp" /></div>
                 <div><label class="lbl">Tanggal lahir *</label><input v-model="form.birth_date" type="date" class="inp" /></div>
@@ -89,7 +158,7 @@
               <div><label class="lbl">No. HP</label><input v-model="form.phone" class="inp" /></div>
               <div class="md:col-span-2"><label class="lbl">Email</label><input v-model="form.email" type="email" class="inp" /></div>
               <div class="md:col-span-2">
-                <label class="lbl">Pas foto 3×4 latar biru (JPG/PNG/WebP, maks 2MB) *</label>
+                <label class="lbl">Pas foto 3×4 latar biru (JPG/PNG/WebP, maks 2MB, opsional)</label>
                 <input type="file" accept=".jpg,.jpeg,.png,.webp" @change="onPhoto" class="inp" />
                 <img v-if="photoPreview" :src="photoPreview" alt="Pratinjau pas foto" class="w-24 h-32 object-cover rounded-xl border border-outline-variant mt-2" />
               </div>
@@ -235,6 +304,7 @@
             <!-- Step 7: Ringkasan -->
             <div v-if="steps[step].key === 'ringkas'" class="flex flex-col gap-3">
               <div class="bg-surface-container-low border border-outline-variant rounded-2xl p-space-sm font-body-sm text-body-sm">
+                <p><strong>Jalur:</strong> {{ jenjangLabel(form.jenjang) }}</p>
                 <p><strong>Gelombang:</strong> {{ selected?.name }}</p>
                 <p><strong>Nama santri:</strong> {{ form.name }} ({{ form.gender === 'L' ? 'Laki-laki' : form.gender === 'P' ? 'Perempuan' : '—' }})</p>
                 <p><strong>NIK / NISN:</strong> {{ form.nik || '—' }} / {{ form.nisn || '—' }}</p>
@@ -273,26 +343,29 @@
         <div class="w-full bg-surface-container-low border border-outline-variant rounded-2xl p-space-md text-left font-body-md text-body-md grid grid-cols-1 sm:grid-cols-2 gap-2">
           <p><strong>Nomor pendaftaran:</strong><br />{{ success.registration_number }}</p>
           <p><strong>Nama santri:</strong><br />{{ success.name }}</p>
+          <p><strong>Jalur:</strong><br />{{ jenjangLabel(success.jenjang) }}</p>
           <p><strong>Gelombang:</strong><br />{{ success.wave?.name }}</p>
           <p><strong>Tanggal:</strong><br />{{ fmtDateTime(success.registered_at) }}</p>
         </div>
         <p class="font-body-sm text-body-sm text-on-surface-variant">Simpan nomor pendaftaran. Pantau pengumuman resmi sekolah untuk jadwal, berkas, dan tahapan seleksi.</p>
         <div class="flex flex-wrap justify-center gap-2">
           <button @click="printBukti" class="px-5 py-2 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-primary-hover">Cetak Bukti</button>
-          <router-link to="/sma/ppdb" @click="resetAll" class="px-5 py-2 bg-surface-container-low border border-outline-variant rounded-full text-sm font-semibold">Daftar Lain</router-link>
+          <router-link :to="{ path: '/ppdb/upload-foto', query: { registration_number: success.registration_number } }" class="px-5 py-2 bg-primary-container text-on-primary-container rounded-full text-sm font-semibold">Upload Pas Foto</router-link>
+          <router-link to="/ppdb" @click="resetAll" class="px-5 py-2 bg-surface-container-low border border-outline-variant rounded-full text-sm font-semibold">Daftar Lain</router-link>
         </div>
       </div>
     </section>
-  </PublicLayout>
+  </LpiLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import PublicLayout from '../Components/PublicLayout.vue'
+import LpiLayout from '../Components/LpiLayout.vue'
 
 const waves = ref([])
 const loaded = ref(false)
 const selected = ref(null)
+const publicStats = ref(null)
 const step = ref(0)
 const submitting = ref(false)
 const formError = ref('')
@@ -304,6 +377,27 @@ const copyFather = ref(false)
 const copyMother = ref(false)
 
 const diseases = ['TBC', 'Hepatitis', 'Asthma/Sesak', 'Epilepsi/Ayan', 'Kanker', 'Tipes', 'Tidak Ada', 'Lainnya']
+
+const jenjangOptions = [
+  { key: 'lanjut', label: 'Jenjang Lanjut', icon: 'trending_up', badge: '', description: 'Pendaftaran santri yang melanjutkan ke jenjang berikutnya di lingkungan LPI Dayah Madani Al-Aziziyah.', note: '' },
+  { key: 'sma', label: 'Pendaftaran SMA', icon: 'account_balance', badge: '', description: 'Pendaftaran santri baru untuk jenjang SMA Dayah Madani Al-Aziziyah.', note: '' },
+  { key: 'smp', label: 'Pendaftaran SMP', icon: 'school', badge: '', description: 'Pendaftaran santri baru untuk jenjang SMP Dayah Madani Al-Aziziyah.', note: '' },
+  { key: 'salafiyah', label: 'Salafiyah Santri Putri', icon: 'female', badge: 'Khusus Putri', description: 'Pendaftaran khusus santri putri pada program Salafiyah.', note: 'Jenis kelamin otomatis Perempuan' },
+]
+const jenjangMap = Object.fromEntries(jenjangOptions.map((j) => [j.key, j.label]))
+function jenjangLabel(key) { return jenjangMap[key] || '—' }
+
+function onJenjangChange() {
+  if (form.value.jenjang === 'salafiyah') {
+    form.value.gender = 'P'
+  }
+  formError.value = ''
+}
+
+function selectJenjang(key) {
+  form.value.jenjang = key
+  onJenjangChange()
+}
 
 const steps = [
   { key: 'santri', label: 'Identitas Santri' },
@@ -317,7 +411,7 @@ const steps = [
 ]
 
 const blank = () => ({
-  wave_id: null, name: '', nik: '', gender: '', birth_place: '', birth_date: '',
+  wave_id: null, jenjang: '', name: '', nik: '', gender: '', birth_place: '', birth_date: '',
   nationality: '', nationality_other: '', child_order: null, sibling_count: null,
   orphan_status: '', daily_language: '', daily_language_other: '',
   nisn: '', phone: '', email: '', address: '', village: '', district: '', city: '', province: '', postal_code: '',
@@ -357,11 +451,16 @@ function fmtDateTime(d) { try { return new Date(d).toLocaleString('id-ID') } cat
 
 onMounted(async () => {
   try {
-    const r = await fetch('/api/ppdb-waves/public')
-    if (r.ok) waves.value = await r.json()
+    const wr = await fetch('/api/ppdb-waves/public')
+    if (wr.ok) waves.value = await wr.json()
   } catch { /* abaikan */ } finally { loaded.value = true }
 })
 
+watch(() => form.value.jenjang, (v) => {
+  if (v === 'salafiyah') {
+    form.value.gender = 'P'
+  }
+})
 watch(copyFather, (v) => {
   if (v) {
     form.value.father_address = form.value.address
@@ -435,7 +534,8 @@ function validateStep() {
     if (f.child_order === null || f.child_order === '') errs.push('Anak ke wajib diisi.')
     if (f.sibling_count === null || f.sibling_count === '') errs.push('Jumlah saudara wajib diisi.')
     if (f.daily_language === 'Lainnya' && !f.daily_language_other) errs.push('Bahasa lainnya wajib dijelaskan.')
-    if (!photoFile.value) errs.push('Pas foto 3×4 wajib diunggah.')
+    if (!f.jenjang) errs.push('Jalur pendaftaran wajib dipilih.')
+    if (f.jenjang === 'salafiyah' && f.gender !== 'P') errs.push('Jalur Salafiyah hanya untuk santri putri.')
   }
   if (k === 'sekolah') {
     const e = req(f.origin_school_name, 'Nama sekolah asal')
@@ -559,3 +659,4 @@ function printBukti() { window.print() }
 }
 .inp:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 </style>
+

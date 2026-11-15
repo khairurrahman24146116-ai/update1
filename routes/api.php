@@ -55,6 +55,8 @@ Route::get('/gallery/public', [GalleryAlbumController::class, 'publicIndex']);
 Route::get('/gallery/public/{id}', [GalleryAlbumController::class, 'publicShow']);
 Route::get('/ppdb-waves/public', [PPDBWaveController::class, 'publicIndex']);
 Route::get('/ppdb-waves/public/{id}', [PPDBWaveController::class, 'publicShow']);
+Route::get('/ppdb-registrations/public-stats', [PPDBRegistrationController::class, 'publicStats']);
+Route::post('/ppdb-registrations/photo-upload', [PPDBRegistrationController::class, 'publicPhotoUpload'])->middleware('throttle:10,1');
 Route::post('/ppdb-registrations', [PPDBRegistrationController::class, 'publicStore'])->middleware('throttle:10,1');
 Route::get('/organization-members/public', [OrganizationMemberController::class, 'publicIndex']);
 Route::get('/structure/{unit}', [StructureMemberController::class, 'publicShow']);
@@ -279,6 +281,15 @@ Route::middleware(['auth:sanctum', 'active', 'role.assigned'])->group(function (
         ->middlewareFor(['update'], 'permission:ppdb.waves.update')
         ->middlewareFor(['destroy'], 'permission:ppdb.waves.delete');
 
+    Route::get('/ppdb-registrations/stats', [PPDBRegistrationController::class, 'stats'])
+        ->middleware('permission:ppdb.registrations.view');
+
+    Route::get('/ppdb-registrations/pdf', [PPDBRegistrationController::class, 'pdfRecap'])
+        ->middleware('permission:ppdb.registrations.export');
+
+    Route::post('/ppdb-registrations/{ppdbRegistration}/photo', [PPDBRegistrationController::class, 'uploadPhoto'])
+        ->middleware('permission:ppdb.registrations.update');
+
     Route::apiResource('ppdb-registrations', PPDBRegistrationController::class)
         ->only(['index', 'show', 'update', 'destroy'])
         ->middlewareFor(['index', 'show'], 'permission:ppdb.registrations.view')
@@ -286,6 +297,8 @@ Route::middleware(['auth:sanctum', 'active', 'role.assigned'])->group(function (
         ->middlewareFor(['destroy'], 'permission:ppdb.registrations.delete');
     Route::get('/ppdb-registrations/{ppdbRegistration}/photo', [PPDBRegistrationController::class, 'photo'])
         ->middleware('permission:ppdb.registrations.view');
+    Route::get('/ppdb-registrations/{ppdbRegistration}/pdf', [PPDBRegistrationController::class, 'pdf'])
+        ->middleware('permission:ppdb.registrations.export');
 
     Route::get('/homepage-settings', [HomepageSettingController::class, 'index'])->middleware('permission:settings.homepage.view');
     Route::put('/homepage-settings', [HomepageSettingController::class, 'update'])->middleware('permission:settings.homepage.manage');
