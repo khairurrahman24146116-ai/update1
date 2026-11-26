@@ -6,6 +6,8 @@ import Prestasi from './Pages/Prestasi.vue'
 import Kontak from './Pages/Kontak.vue'
 import Login from './Pages/Login.vue'
 import PPDB from './Pages/PPDB.vue'
+import PPDBCekStatus from './Pages/PPDBCekStatus.vue'
+import PPDBPengumuman from './Pages/PPDBPengumuman.vue'
 import PPDBUploadPhoto from './Pages/PPDBUploadPhoto.vue'
 import AdminPPDB from './Pages/Admin/PPDB.vue'
 import AdminDashboard from './Pages/Admin/Dashboard.vue'
@@ -106,6 +108,8 @@ const routes = [
     { path: '/sma/prestasi', component: Prestasi },
     { path: '/sma/kontak', component: Kontak },
     { path: '/ppdb', component: PPDB },
+    { path: '/ppdb/cek-status', component: PPDBCekStatus },
+    { path: '/ppdb/pengumuman', component: PPDBPengumuman },
     { path: '/ppdb/upload-foto', component: PPDBUploadPhoto },
     { path: '/sma/berita', component: BeritaList },
     { path: '/sma/galeri', component: GaleriList },

@@ -160,6 +160,99 @@ class PPDBRegistrationTest extends TestCase
         ]);
     }
 
+    private function registration(PPDBWave $wave, array $over = []): PPDBRegistration
+    {
+        return PPDBRegistration::create(array_merge([
+            'wave_id' => $wave->id,
+            'registration_number' => 'PPDB-2026-001-0001',
+            'jenjang' => 'sma',
+            'name' => 'Ahmad Santri',
+            'nik' => '1101010101010101',
+            'status' => 'pending',
+        ], $over));
+    }
+
+    public function test_public_can_check_status_by_registration_number(): void
+    {
+        $wave = $this->wave();
+        $registration = $this->registration($wave, ['status' => 'diterima']);
+
+        $this->postJson('/api/ppdb-registrations/check-status', [
+            'registration_number' => $registration->registration_number,
+        ])
+            ->assertOk()
+            ->assertJsonPath('registration_number', $registration->registration_number)
+            ->assertJsonPath('status', 'diterima')
+            ->assertJsonPath('status_label', 'Diterima')
+            ->assertJsonPath('jenjang_label', 'Pendaftaran SMA');
+    }
+
+    public function test_public_can_check_status_by_nik(): void
+    {
+        $wave = $this->wave();
+        $this->registration($wave, ['nik' => '1101010101010101', 'status' => 'cadangan']);
+
+        $this->postJson('/api/ppdb-registrations/check-status', [
+            'nik' => '1101010101010101',
+        ])
+            ->assertOk()
+            ->assertJsonPath('status', 'cadangan')
+            ->assertJsonPath('status_label', 'Cadangan');
+    }
+
+    public function test_public_status_check_requires_an_identifier(): void
+    {
+        $this->postJson('/api/ppdb-registrations/check-status', [])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['registration_number', 'nik']);
+    }
+
+    public function test_public_status_check_rejects_unknown_registration(): void
+    {
+        $this->postJson('/api/ppdb-registrations/check-status', [
+            'registration_number' => 'PPDB-TIDAK-ADA',
+        ])->assertUnprocessable();
+    }
+
+    public function test_public_status_check_requires_both_identifiers_to_match(): void
+    {
+        $wave = $this->wave();
+        $this->registration($wave, [
+            'registration_number' => 'PPDB-2026-001-0001',
+            'nik' => '1101010101010101',
+        ]);
+
+        $this->postJson('/api/ppdb-registrations/check-status', [
+            'registration_number' => 'PPDB-2026-001-0001',
+            'nik' => '1101010101010199',
+        ])->assertUnprocessable();
+    }
+
+    public function test_public_announcements_only_lists_accepted_registrations(): void
+    {
+        $wave = $this->wave();
+        $this->registration($wave, ['status' => 'diterima', 'name' => 'Diterima Satu']);
+        $this->registration($wave, ['status' => 'pending', 'name' => 'Pending Dua', 'nik' => '1101010101010102', 'registration_number' => 'PPDB-2026-001-0002']);
+
+        $this->getJson('/api/ppdb-registrations/public-announcements')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Diterima Satu')
+            ->assertJsonPath('meta.total', 1);
+    }
+
+    public function test_public_announcements_can_filter_by_jenjang(): void
+    {
+        $wave = $this->wave();
+        $this->registration($wave, ['status' => 'diterima', 'jenjang' => 'sma', 'name' => 'SMA Satu']);
+        $this->registration($wave, ['status' => 'diterima', 'jenjang' => 'smp', 'name' => 'SMP Dua', 'nik' => '1101010101010102', 'registration_number' => 'PPDB-2026-001-0002']);
+
+        $this->getJson('/api/ppdb-registrations/public-announcements?jenjang=smp')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.jenjang', 'smp');
+    }
+
     public function test_admin_can_download_registration_pdf(): void
     {
         Storage::fake('local');

@@ -28,9 +28,9 @@
           <div class="lg:col-span-5 min-w-0 flex flex-col gap-space-md">
             <Reveal slow :delay="200">
               <div class="relative bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-sm p-2 overflow-hidden landing-glow">
-                <div class="image-card w-full aspect-[4/3] bg-surface-container relative overflow-hidden border border-outline-variant rounded-[20px] landing-img-wrap">
-                  <img class="block w-full h-full max-w-full object-cover object-center landing-ken" :src="heroImage" alt="Kegiatan belajar santri" />
-                  <div class="absolute bottom-2 left-2 right-2 z-10 min-w-0 bg-surface-container-lowest/95 border border-outline-variant rounded-xl p-space-xs flex items-center justify-between gap-2">
+                <div class="image-card w-full max-w-full aspect-[4/3] bg-surface-container relative overflow-hidden border border-outline-variant rounded-[20px] landing-img-wrap">
+                  <img class="block w-full h-full max-w-full object-cover object-center rounded-[20px] landing-ken" :src="heroImage" alt="Kegiatan belajar santri" />
+                  <div class="landing-caption z-10 min-w-0 bg-surface-container-lowest/95 border border-outline-variant p-space-xs flex items-center justify-between gap-2">
                     <div class="min-w-0">
                       <p class="font-label-sm text-label-sm text-on-surface uppercase font-bold truncate">Suasana Belajar Santri</p>
                       <p class="font-code-md text-code-md text-on-surface-variant line-clamp-2">Kegiatan pembelajaran di lingkungan pesantren</p>
@@ -90,10 +90,10 @@
             <p class="font-body-sm text-body-sm text-on-surface-variant max-w-md">{{ profilBody }}</p>
           </Reveal>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg">
-          <Reveal slow v-for="(p, i) in pillars" :key="p.no" :delay="i * 160" class="h-full">
-            <div class="landing-card h-full bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-sm flex flex-col justify-between">
-              <div class="p-space-lg border-b border-outline-variant">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg items-stretch">
+          <Reveal slow v-for="(p, i) in pillars" :key="p.no" :delay="i * 160" class="h-full min-w-0">
+            <div class="landing-card h-full min-w-0 bg-surface-container-lowest border border-outline-variant rounded-[28px] shadow-sm flex flex-col overflow-hidden">
+              <div class="p-space-lg flex flex-1 flex-col">
                 <div class="flex items-center justify-between pb-space-sm">
                   <span class="landing-float w-10 h-10 border border-outline-variant rounded-full flex items-center justify-center font-bold text-on-surface" :class="p.chipBg">{{ p.no }}</span>
                   <span class="font-code-md text-code-md px-2 py-0.5 bg-surface-container border border-outline-variant rounded">{{ p.badge }}</span>
@@ -375,3 +375,16 @@ const awards = [
   },
 ]
 </script>
+
+<style scoped>
+.landing-caption {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  box-sizing: border-box;
+  max-width: calc(100% - 24px);
+  border-radius: 12px;
+  overflow: hidden;
+}
+</style>

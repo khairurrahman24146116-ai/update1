@@ -56,6 +56,8 @@ Route::get('/gallery/public/{id}', [GalleryAlbumController::class, 'publicShow']
 Route::get('/ppdb-waves/public', [PPDBWaveController::class, 'publicIndex']);
 Route::get('/ppdb-waves/public/{id}', [PPDBWaveController::class, 'publicShow']);
 Route::get('/ppdb-registrations/public-stats', [PPDBRegistrationController::class, 'publicStats']);
+Route::get('/ppdb-registrations/public-announcements', [PPDBRegistrationController::class, 'publicAnnouncements'])->middleware('throttle:60,1');
+Route::post('/ppdb-registrations/check-status', [PPDBRegistrationController::class, 'publicCheckStatus'])->middleware('throttle:15,1');
 Route::post('/ppdb-registrations/photo-upload', [PPDBRegistrationController::class, 'publicPhotoUpload'])->middleware('throttle:10,1');
 Route::post('/ppdb-registrations', [PPDBRegistrationController::class, 'publicStore'])->middleware('throttle:10,1');
 Route::get('/organization-members/public', [OrganizationMemberController::class, 'publicIndex']);

@@ -189,6 +189,98 @@ class PPDBRegistrationController extends Controller
         ]);
     }
 
+    public function publicCheckStatus(Request $request)
+    {
+        $v = $request->validate([
+            'registration_number' => 'required_without:nik|nullable|string|max:50',
+            'nik' => 'required_without:registration_number|nullable|string|size:16|regex:/^[0-9]+$/',
+        ]);
+
+        $registration = PPDBRegistration::with('wave:id,name,slug')
+            ->when($v['registration_number'] ?? null, fn ($q, $value) => $q->where('registration_number', trim($value)))
+            ->when($v['nik'] ?? null, fn ($q, $value) => $q->where('nik', $value))
+            ->first();
+
+        if (! $registration) {
+            throw ValidationException::withMessages([
+                'registration_number' => 'Data pendaftaran tidak ditemukan. Periksa kembali nomor pendaftaran atau NIK.',
+            ]);
+        }
+
+        return response()->json([
+            'registration_number' => $registration->registration_number,
+            'name' => $registration->name,
+            'jenjang' => $registration->jenjang,
+            'jenjang_label' => $registration->jenjangLabel(),
+            'wave' => $registration->wave ? [
+                'id' => $registration->wave->id,
+                'name' => $registration->wave->name,
+                'slug' => $registration->wave->slug,
+            ] : null,
+            'status' => $registration->status,
+            'status_label' => $registration->statusLabel(),
+            'status_message' => $this->statusMessage($registration->status),
+            'registered_at' => $registration->created_at,
+            'decided_at' => $registration->updated_at,
+        ]);
+    }
+
+    public function publicAnnouncements(Request $request)
+    {
+        $filters = $request->validate([
+            'wave_id' => 'nullable|integer|exists:p_p_d_b_waves,id',
+            'jenjang' => 'nullable|in:lanjut,sma,smp,salafiyah',
+            'search' => 'nullable|string|max:100',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        $paginator = PPDBRegistration::query()
+            ->where('status', 'diterima')
+            ->with('wave:id,name,slug')
+            ->when($filters['wave_id'] ?? null, fn ($q, $value) => $q->where('wave_id', $value))
+            ->when($filters['jenjang'] ?? null, fn ($q, $value) => $q->where('jenjang', $value))
+            ->when($filters['search'] ?? null, fn ($q, $value) => $q->where(fn ($qq) => $qq
+                ->where('name', 'like', "%{$value}%")
+                ->orWhere('registration_number', 'like', "%{$value}%")))
+            ->orderBy('registration_number')
+            ->paginate($filters['per_page'] ?? 20);
+
+        return response()->json([
+            'data' => collect($paginator->items())->map(fn (PPDBRegistration $registration) => [
+                'registration_number' => $registration->registration_number,
+                'name' => $registration->name,
+                'jenjang' => $registration->jenjang,
+                'jenjang_label' => $registration->jenjangLabel(),
+                'wave' => $registration->wave ? [
+                    'id' => $registration->wave->id,
+                    'name' => $registration->wave->name,
+                    'slug' => $registration->wave->slug,
+                ] : null,
+            ])->values(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+            'waves' => PPDBWave::query()
+                ->whereHas('registrations', fn ($q) => $q->where('status', 'diterima'))
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']),
+            'jenjang_labels' => PPDBRegistration::JENJANG_LABELS,
+        ]);
+    }
+
+    private function statusMessage(string $status): string
+    {
+        return match ($status) {
+            'diterima' => 'Selamat! Pendaftar dinyatakan DITERIMA. Silakan menunggu informasi daftar ulang dari panitia.',
+            'cadangan' => 'Pendaftar berada di daftar CADANGAN. Panitia akan menghubungi jika tersedia kuota.',
+            'ditolak' => 'Mohon maaf, pendaftar belum dapat diterima pada gelombang ini.',
+            default => 'Pendaftaran sedang menunggu verifikasi panitia.',
+        };
+    }
+
     private function isWaveOpen(PPDBWave $wave): bool
     {
         if ($wave->status !== 'buka') {

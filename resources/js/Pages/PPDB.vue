@@ -23,10 +23,18 @@
     </section>
 
     <section class="w-full max-w-7xl mx-auto px-gutter pb-space-xl">
-      <div v-if="!success" class="mb-space-sm">
+      <div v-if="!success" class="mb-space-sm flex flex-wrap gap-2">
+        <router-link to="/ppdb/cek-status" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest border border-outline-variant text-sm font-semibold hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-[18px]">fact_check</span>
+          Sudah mendaftar? Cek status
+        </router-link>
+        <router-link to="/ppdb/pengumuman" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest border border-outline-variant text-sm font-semibold hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-[18px]">campaign</span>
+          Pengumuman hasil seleksi
+        </router-link>
         <router-link to="/ppdb/upload-foto" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest border border-outline-variant text-sm font-semibold hover:text-primary transition-colors">
           <span class="material-symbols-outlined text-[18px]">upload_file</span>
-          Sudah mendaftar? Upload foto
+          Upload pas foto
         </router-link>
       </div>
 
@@ -351,6 +359,8 @@
         <div class="flex flex-wrap justify-center gap-2">
           <button @click="printBukti" class="px-5 py-2 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-primary-hover">Cetak Bukti</button>
           <router-link :to="{ path: '/ppdb/upload-foto', query: { registration_number: success.registration_number } }" class="px-5 py-2 bg-primary-container text-on-primary-container rounded-full text-sm font-semibold">Upload Pas Foto</router-link>
+          <router-link :to="{ path: '/ppdb/cek-status', query: { nomor: success.registration_number } }" class="px-5 py-2 bg-surface-container-low border border-outline-variant rounded-full text-sm font-semibold">Cek Status</router-link>
+          <router-link to="/ppdb/pengumuman" class="px-5 py-2 bg-surface-container-low border border-outline-variant rounded-full text-sm font-semibold">Pengumuman</router-link>
           <router-link to="/ppdb" @click="resetAll" class="px-5 py-2 bg-surface-container-low border border-outline-variant rounded-full text-sm font-semibold">Daftar Lain</router-link>
         </div>
       </div>

@@ -22,6 +22,16 @@ class PPDBRegistration extends Model
         'salafiyah' => 'Salafiyah Santri Putri',
     ];
 
+    /**
+     * @var array<string, string>
+     */
+    public const STATUS_LABELS = [
+        'pending' => 'Menunggu Verifikasi',
+        'diterima' => 'Diterima',
+        'cadangan' => 'Cadangan',
+        'ditolak' => 'Tidak Diterima',
+    ];
+
     protected $fillable = [
         'wave_id', 'jenjang', 'registration_number',
         'name', 'nik', 'gender', 'birth_place', 'birth_date',
@@ -87,5 +97,10 @@ class PPDBRegistration extends Model
     public function jenjangLabel(): string
     {
         return self::JENJANG_LABELS[$this->jenjang] ?? '—';
+    }
+
+    public function statusLabel(): string
+    {
+        return self::STATUS_LABELS[$this->status] ?? '—';
     }
 }
