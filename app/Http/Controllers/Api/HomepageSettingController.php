@@ -43,7 +43,19 @@ class HomepageSettingController extends Controller
     {
         $this->authorize('update', SiteSetting::class);
 
-        $validated = $request->validate([
+        $input = $request->all();
+        foreach (['prayer_latitude', 'prayer_longitude'] as $coordinate) {
+            if (! array_key_exists($coordinate, $input)) {
+                continue;
+            }
+            $value = $input[$coordinate];
+            if (is_string($value)) {
+                $normalized = trim(str_replace(',', '.', $value));
+                $input[$coordinate] = $normalized === '' ? null : $normalized;
+            }
+        }
+
+        $validated = validator($input, [
             'homepage_badge_text' => 'nullable|string|max:100',
             'homepage_title' => 'nullable|string|max:200',
             'homepage_tagline' => 'nullable|string|max:300',
@@ -53,7 +65,7 @@ class HomepageSettingController extends Controller
             'prayer_timezone' => 'nullable|string|max:50',
             'prayer_card_visible' => 'boolean',
             'hero_overlay_opacity' => 'integer|between:0,80',
-        ]);
+        ])->validate();
 
         $settings = SiteSetting::firstOrCreate(['id' => 1]);
         $old = $settings->only(array_keys($validated));
@@ -251,8 +263,8 @@ class HomepageSettingController extends Controller
             'homepage_logo_path' => $settings?->homepage_logo_path,
             'logo_path' => $settings?->logo_path,
             'prayer_city_name' => $settings?->prayer_city_name,
-            'prayer_latitude' => $settings?->prayer_latitude ? (float) $settings->prayer_latitude : null,
-            'prayer_longitude' => $settings?->prayer_longitude ? (float) $settings->prayer_longitude : null,
+            'prayer_latitude' => $settings?->prayer_latitude !== null ? (float) $settings->prayer_latitude : null,
+            'prayer_longitude' => $settings?->prayer_longitude !== null ? (float) $settings->prayer_longitude : null,
             'prayer_timezone' => $settings?->prayer_timezone ?? 'Asia/Jakarta',
             'prayer_card_visible' => $settings?->prayer_card_visible ?? true,
             'hero_overlay_opacity' => $settings?->hero_overlay_opacity ?? 40,

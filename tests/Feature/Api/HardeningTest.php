@@ -137,6 +137,36 @@ class HardeningTest extends TestCase
             ->assertJsonPath('prayer_card_visible', true);
     }
 
+    public function test_homepage_settings_normalize_decimal_comma_and_return_zero_coordinates(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin_utama']);
+
+        $this->actingAs($admin)->putJson('/api/homepage-settings', [
+            'prayer_city_name' => 'Khatulistiwa',
+            'prayer_latitude' => '0,0000000',
+            'prayer_longitude' => '0,0000000',
+            'prayer_timezone' => 'Asia/Jakarta',
+            'prayer_card_visible' => true,
+            'hero_overlay_opacity' => 40,
+        ])->assertOk();
+
+        $this->getJson('/api/homepage-settings/public')
+            ->assertOk()
+            ->assertJsonPath('prayer_latitude', 0)
+            ->assertJsonPath('prayer_longitude', 0);
+    }
+
+    public function test_homepage_settings_reject_invalid_coordinates(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin_utama']);
+
+        $this->actingAs($admin)->putJson('/api/homepage-settings', [
+            'prayer_latitude' => '5,54,83',
+            'prayer_longitude' => '95.3238',
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors(['prayer_latitude']);
+    }
+
     public function test_students_pagination(): void
     {
         $admin = User::factory()->create(['role' => 'admin_utama']);

@@ -75,7 +75,7 @@ const roleLabel = computed(() => {
 
 const squareShell = computed(() => ['admin', 'admin_utama', 'bendahara', 'bendahara_lpi', 'bendahara_sma'].includes(user.value?.role))
 
-const showAdminPanel = computed(() => !['admin', 'admin_utama', 'operator', 'kepala_sekolah'].includes(user.value?.role) && isAdminAreaUser.value)
+const showAdminPanel = computed(() => !['admin', 'admin_utama'].includes(user.value?.role) && isAdminAreaUser.value)
 const showFinancePanel = computed(() => !['admin', 'admin_utama', 'bendahara_lpi', 'bendahara_sma'].includes(user.value?.role) && isFinanceAreaUser.value)
 
 const homePath = computed(() => {

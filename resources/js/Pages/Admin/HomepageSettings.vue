@@ -174,6 +174,15 @@ async function readError(r, fallback) {
   return j.message || (j.errors && Object.values(j.errors).flat().join(', ')) || fallback
 }
 
+function normalizeCoordinate(value) {
+  if (value === '' || value === null || value === undefined) return { empty: true, value: null }
+  const normalized = String(value).trim().replace(',', '.')
+  if (normalized === '') return { empty: true, value: null }
+  const number = Number(normalized)
+  if (!Number.isFinite(number)) return { invalid: true, value: null }
+  return { value: number }
+}
+
 async function fetchData() {
   loading.value = true
   try {
@@ -181,9 +190,17 @@ async function fetchData() {
     if (!r.ok) throw new Error(await readError(r, 'Gagal memuat pengaturan beranda.'))
     const j = await r.json()
     const s = j.settings || {}
-    Object.keys(form).forEach((k) => {
-      if (s[k] !== undefined && s[k] !== null) form[k] = s[k]
-    })
+    form.homepage_badge_text = s.homepage_badge_text ?? ''
+    form.homepage_title = s.homepage_title ?? ''
+    form.homepage_tagline = s.homepage_tagline ?? ''
+    form.homepage_logo_path = s.homepage_logo_path ?? ''
+    form.logo_path = s.logo_path ?? ''
+    form.prayer_city_name = s.prayer_city_name ?? ''
+    form.prayer_latitude = s.prayer_latitude ?? ''
+    form.prayer_longitude = s.prayer_longitude ?? ''
+    form.prayer_timezone = s.prayer_timezone ?? 'Asia/Jakarta'
+    form.prayer_card_visible = s.prayer_card_visible ?? true
+    form.hero_overlay_opacity = s.hero_overlay_opacity ?? 40
     media.value = Array.isArray(j.hero_media) ? j.hero_media : []
   } catch (e) {
     notify(e.message, 'error')
@@ -195,13 +212,24 @@ async function fetchData() {
 async function saveSettings() {
   saving.value = true
   try {
+    const latitude = normalizeCoordinate(form.prayer_latitude)
+    const longitude = normalizeCoordinate(form.prayer_longitude)
+    if (latitude.invalid) throw new Error('Latitude tidak valid. Gunakan angka, contoh 5.5483.')
+    if (longitude.invalid) throw new Error('Longitude tidak valid. Gunakan angka, contoh 95.3238.')
+    if (latitude.value !== null && (latitude.value < -90 || latitude.value > 90)) {
+      throw new Error('Latitude harus antara -90 sampai 90.')
+    }
+    if (longitude.value !== null && (longitude.value < -180 || longitude.value > 180)) {
+      throw new Error('Longitude harus antara -180 sampai 180.')
+    }
+
     const payload = {
       homepage_badge_text: form.homepage_badge_text || null,
       homepage_title: form.homepage_title || null,
       homepage_tagline: form.homepage_tagline || null,
       prayer_city_name: form.prayer_city_name || null,
-      prayer_latitude: form.prayer_latitude === '' ? null : Number(form.prayer_latitude),
-      prayer_longitude: form.prayer_longitude === '' ? null : Number(form.prayer_longitude),
+      prayer_latitude: latitude.value,
+      prayer_longitude: longitude.value,
       prayer_timezone: form.prayer_timezone || 'Asia/Jakarta',
       prayer_card_visible: form.prayer_card_visible,
       hero_overlay_opacity: Number(form.hero_overlay_opacity),
@@ -212,8 +240,12 @@ async function saveSettings() {
       body: JSON.stringify(payload),
     })
     if (!r.ok) throw new Error(await readError(r, 'Gagal menyimpan pengaturan.'))
-    notify('Pengaturan beranda tersimpan.')
     await fetchData()
+    if (form.prayer_card_visible && (form.prayer_latitude === '' || form.prayer_longitude === '')) {
+      notify('Pengaturan tersimpan, tetapi latitude/longitude kosong. Kartu waktu salat akan menampilkan "Atur lokasi salat di pengaturan".', 'error')
+    } else {
+      notify('Pengaturan beranda tersimpan.')
+    }
   } catch (e) {
     notify(e.message, 'error')
   } finally {
