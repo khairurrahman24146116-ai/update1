@@ -13,7 +13,7 @@
     </div>
 
     <div v-if="loading" class="py-10 text-center text-on-surface-variant">Memuat data PPDB…</div>
-    <p v-else-if="error" class="text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-sm mb-4">{{ error }}</p>
+    <p v-else-if="error" class="text-error bg-error-bg border border-error rounded-xl px-3 py-2 text-sm mb-4">{{ error }}</p>
 
     <template v-if="stats">
       <div v-if="tab === 'ringkasan'" class="space-y-4">
@@ -46,7 +46,7 @@
           <div v-else class="space-y-1">
             <div v-for="r in todayRows" :key="r.id" class="p-2 bg-surface-container-lowest border border-outline-variant rounded-xl flex items-center justify-between gap-2">
               <div class="min-w-0"><div class="font-bold text-xs truncate">{{ r.registration_number || ('#'+r.id) }} — {{ r.name }}</div><div class="text-xs text-on-surface-variant">{{ jenjangLabel(r.jenjang) }} · {{ statusLabel(r.status) }} · {{ fmtDateTime(r.created_at) }}</div></div>
-              <button @click="openDetail(r)" class="px-2 py-1 border border-outline-variant rounded-md text-xs font-bold bg-white">Detail</button>
+              <button @click="openDetail(r)" class="px-2 py-1 border border-outline-variant rounded-md text-xs font-bold bg-surface-container-lowest">Detail</button>
             </div>
           </div>
         </div>
@@ -75,8 +75,8 @@
             <div v-for="r in rows" :key="r.id" class="p-2 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-wrap items-center justify-between gap-2">
               <div class="min-w-0 flex-1"><div class="font-bold text-xs truncate">{{ r.registration_number || ('#'+r.id) }} — {{ r.name }} <span class="text-on-surface-variant">({{ r.nisn || '-' }})</span></div><div class="text-xs text-on-surface-variant truncate">{{ fmtDate(r.created_at) }} · {{ jenjangLabel(r.jenjang) }} · {{ r.gender || '-' }} · {{ statusLabel(r.status) }}</div></div>
               <div class="flex items-center gap-1 shrink-0 flex-wrap">
-                <button @click="downloadRegistrationPdf(r)" class="px-2 py-1 border border-outline-variant rounded-md text-xs font-bold bg-white">PDF</button>
-                <button @click="openDetail(r)" class="px-2 py-1 border border-outline-variant rounded-md text-xs font-bold bg-white">Detail</button>
+                <button @click="downloadRegistrationPdf(r)" class="px-2 py-1 border border-outline-variant rounded-md text-xs font-bold bg-surface-container-lowest">PDF</button>
+                <button @click="openDetail(r)" class="px-2 py-1 border border-outline-variant rounded-md text-xs font-bold bg-surface-container-lowest">Detail</button>
                 <select :value="r.status" @change="e => updateStatus(r, e.target.value)" class="px-2 py-1 border border-outline-variant rounded-md text-xs font-bold"><option value="pending">pending</option><option value="diterima">diterima</option><option value="ditolak">ditolak</option><option value="cadangan">cadangan</option></select>
               </div>
             </div>
@@ -104,7 +104,7 @@
     </template>
 
     <div v-if="detail" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" @click.self="detail=null">
-      <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto p-5">
+      <div class="bg-surface-container-lowest rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto p-5">
         <div class="flex items-center justify-between mb-3"><h3 class="font-bold">Detail Pendaftar: {{ detail.name }}</h3><button @click="detail=null" class="text-sm font-bold">Tutup</button></div>
         <div class="grid md:grid-cols-3 gap-3 text-xs">
           <div class="md:col-span-1">
@@ -294,8 +294,8 @@ onMounted(loadAll)
 </script>
 
 <style scoped>
-.input { width: 100%; padding: 8px 10px; border: 1px solid var(--color-outline-variant); border-radius: 10px; background: var(--color-surface-container-lowest); font-size: 12px; }
-.btn { padding: 8px 12px; border: 1px solid var(--color-outline-variant); border-radius: 10px; background: var(--color-surface-container-lowest); font-size: 12px; font-weight: 700; }
+.input { width: 100%; padding: 8px 10px; border: 1px solid var(--color-outline-variant); border-radius: 10px; background: var(--color-surface-container-lowest); color: var(--color-on-surface); font-size: 12px; }
+.btn { padding: 8px 12px; border: 1px solid var(--color-outline-variant); border-radius: 10px; background: var(--color-surface-container-lowest); color: var(--color-on-surface); font-size: 12px; font-weight: 700; }
 .btn--sm { padding: 6px 10px; font-size: 11px; }
 .btn--primary { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); }
 </style>

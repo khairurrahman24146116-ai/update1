@@ -39,7 +39,7 @@
             <input v-model="nik" type="text" inputmode="numeric" maxlength="16" class="inp" placeholder="16 digit NIK pendaftar" />
           </div>
 
-          <p v-if="error" class="text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-sm">{{ error }}</p>
+          <p v-if="error" class="text-error bg-error-bg border border-error rounded-xl px-3 py-2 text-sm">{{ error }}</p>
 
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="submit" :disabled="submitting" class="btn-skeu inline-flex items-center gap-2 px-5 py-2 bg-primary text-on-primary rounded-full text-sm font-semibold disabled:opacity-60">
@@ -114,9 +114,9 @@ onMounted(() => {
 
 function statusClass(status) {
   return {
-    diterima: 'bg-green-50 text-green-800 border border-green-200',
-    cadangan: 'bg-amber-50 text-amber-800 border border-amber-200',
-    ditolak: 'bg-red-50 text-red-800 border border-red-200',
+    diterima: 'bg-success-bg text-success border border-success-solid',
+    cadangan: 'bg-warning-bg text-warning border border-warning-solid',
+    ditolak: 'bg-error-bg text-error border border-error-solid',
     pending: 'bg-primary-fixed text-primary border border-primary/20',
   }[status] || 'bg-surface-container-low text-on-surface-variant border border-outline-variant'
 }
@@ -182,9 +182,10 @@ function reset() {
   border: 1px solid var(--color-outline-variant);
   border-radius: 10px;
   background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
   font-size: 14px;
   outline: none;
   box-shadow: inset 0 1px 2px rgba(50, 104, 84, 0.05);
 }
-.inp:focus { border-color: var(--color-primary); box-shadow: inset 0 1px 2px rgba(50, 104, 84, 0.08), 0 0 0 3px var(--color-primary-fixed); }
+.inp:focus { border-color: var(--color-primary); box-shadow: inset 0 1px 2px rgba(50, 104, 84, 0.08), 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent); }
 </style>

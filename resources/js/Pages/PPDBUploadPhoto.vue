@@ -35,7 +35,7 @@
             <img v-if="preview" :src="preview" alt="Pratinjau pas foto" class="w-24 h-32 object-cover rounded-xl border border-outline-variant mt-2" />
           </div>
 
-          <p v-if="error" class="text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-sm">{{ error }}</p>
+          <p v-if="error" class="text-error bg-error-bg border border-error rounded-xl px-3 py-2 text-sm">{{ error }}</p>
 
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="submit" :disabled="submitting" class="btn-skeu inline-flex items-center gap-2 px-5 py-2 bg-primary text-on-primary rounded-full text-sm font-semibold disabled:opacity-60">
@@ -156,9 +156,10 @@ function resetForm() {
   border: 1px solid var(--color-outline-variant);
   border-radius: 10px;
   background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
   font-size: 14px;
   outline: none;
   box-shadow: inset 0 1px 2px rgba(50, 104, 84, 0.05);
 }
-.inp:focus { border-color: var(--color-primary); box-shadow: inset 0 1px 2px rgba(50, 104, 84, 0.08), 0 0 0 3px var(--color-primary-fixed); }
+.inp:focus { border-color: var(--color-primary); box-shadow: inset 0 1px 2px rgba(50, 104, 84, 0.08), 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent); }
 </style>

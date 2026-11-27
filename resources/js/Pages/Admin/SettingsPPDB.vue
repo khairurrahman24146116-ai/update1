@@ -13,7 +13,7 @@
         <select v-model="form.status" class="input"><option value="buka">buka</option><option value="tutup">tutup</option><option value="archived">archived</option></select>
         <label class="flex items-center gap-2 text-xs font-bold"><input type="checkbox" v-model="form.is_public" /> Public</label>
       </div>
-      <p v-if="formError" class="text-xs text-error bg-red-50 border border-red-200 rounded-xl px-3 py-2">{{ formError }}</p>
+      <p v-if="formError" class="text-xs text-error bg-error-bg border border-error rounded-xl px-3 py-2">{{ formError }}</p>
       <div class="flex gap-2"><button @click="submit" class="btn btn--primary btn--sm">Simpan</button><button @click="showForm=false" class="btn btn--ghost btn--sm">Batal</button></div>
     </div>
   </Transition>
@@ -59,7 +59,7 @@
         </div>
 
         <div class="modal-body flex-1 overflow-y-auto" style="padding:32px;">
-          <p v-if="saveError" class="mb-6 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{{ saveError }}</p>
+          <p v-if="saveError" class="mb-6 text-sm text-error bg-error-bg border border-error rounded-xl px-4 py-3">{{ saveError }}</p>
 
           <div class="profile-card rounded-2xl border border-outline-variant bg-surface-container-low/60 flex flex-col sm:flex-row gap-6 items-start" style="padding:24px;">
             <div class="photo-wrap shrink-0">
@@ -228,7 +228,7 @@
   </Transition>
 
   <Transition name="fade">
-    <div v-if="toast" class="fixed bottom-5 right-5 z-[60] px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold" :class="toastType==='error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-emerald-600 text-white border-emerald-700'">{{ toast }}</div>
+    <div v-if="toast" class="fixed bottom-5 right-5 z-[60] px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold" :class="toastType==='error' ? 'bg-error-bg text-error border-error' : 'bg-success-solid text-white border-success-solid'">{{ toast }}</div>
   </Transition>
 </div>
 </template>
@@ -261,8 +261,8 @@ async function loadPhoto(reg) { clearPhoto(); if (!reg?.photo_path) return; try 
 function fmtDateTime(d) { if (!d) return '—'; try { return new Date(d).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) } catch { return d } }
 function ttl(r) { const p = r.birth_place || ''; const d = r.birth_date ? String(r.birth_date).slice(0,10) : ''; return (p || d) ? `${p}${p && d ? ', ' : ''}${d}` : '—' }
 
-function jenjangBadgeClass(j) { return { lanjut:'bg-sky-100/80 text-sky-800 border-sky-200', sma:'bg-indigo-100/80 text-indigo-800 border-indigo-200', smp:'bg-teal-100/80 text-teal-800 border-teal-200', salafiyah:'bg-amber-100/80 text-amber-800 border-amber-200' }[j] || 'bg-surface-container text-on-surface-variant border-outline-variant' }
-function statusBadgeClass(s) { return { pending:'bg-amber-100/80 text-amber-800 border-amber-200', diterima:'bg-emerald-100/80 text-emerald-800 border-emerald-200', ditolak:'bg-red-100/80 text-red-800 border-red-200', cadangan:'bg-violet-100/80 text-violet-800 border-violet-200' }[s] || 'bg-surface-container text-on-surface-variant border-outline-variant' }
+function jenjangBadgeClass(j) { return { lanjut:'bg-primary-container text-on-primary-container border-primary-container', sma:'bg-tertiary-container text-on-tertiary-container border-tertiary-container', smp:'bg-secondary-container text-on-secondary-container border-secondary-container', salafiyah:'bg-warning-bg text-warning border-warning-solid' }[j] || 'bg-surface-container text-on-surface-variant border-outline-variant' }
+function statusBadgeClass(s) { return { pending:'bg-warning-bg text-warning border-warning-solid', diterima:'bg-success-bg text-success border-success-solid', ditolak:'bg-error-bg text-error border-error-solid', cadangan:'bg-info-bg text-info border-info-solid' }[s] || 'bg-surface-container text-on-surface-variant border-outline-variant' }
 
 async function openDetail(r) {
   try {
@@ -384,7 +384,7 @@ const ESelect = defineComponent({
 .btn--sm { padding: 6px 10px; font-size: 11px; }
 .btn--primary { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); }
 .btn--ghost { background: transparent; }
-.btn--destructive { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+.btn--destructive { background: var(--color-error-bg); color: var(--color-error); border-color: var(--color-error); }
 
 .header-kicker { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-on-surface-variant); }
 .header-reg { font-size: 14px; font-weight: 600; color: var(--color-on-surface); margin-top: 2px; }
@@ -407,11 +407,11 @@ const ESelect = defineComponent({
 .field-box.is-empty { color: var(--color-on-surface-variant); opacity: 0.7; font-weight: 400; }
 .field-input { width: 100%; min-height: 46px; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--color-outline-variant); background: color-mix(in srgb, var(--color-surface-container-lowest) 70%, black 6%); font-size: 15px; font-weight: 500; color: var(--color-on-surface); font-family: inherit; outline: none; transition: border-color .15s, box-shadow .15s; }
 .field-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent); }
-.field-input.has-error { border-color: #dc2626; }
+.field-input.has-error { border-color: var(--color-error); }
 .field-input:disabled { opacity: 0.7; cursor: not-allowed; }
 .field-textarea { min-height: 96px; resize: vertical; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-.field-error { font-size: 12px; color: #dc2626; margin-top: 6px; }
+.field-error { font-size: 12px; color: var(--color-error); margin-top: 6px; }
 
 .fbtn { height: 42px; padding: 0 18px; border-radius: 8px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; cursor: pointer; transition: all .15s ease; }
 .fbtn-primary { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); }

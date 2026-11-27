@@ -52,7 +52,7 @@
           </div>
         </form>
 
-        <p v-if="error" class="mt-4 text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-sm">{{ error }}</p>
+        <p v-if="error" class="mt-4 text-error bg-error-bg border border-error rounded-xl px-3 py-2 text-sm">{{ error }}</p>
 
         <div class="mt-5">
           <div v-if="loading" class="flex items-center justify-center gap-2 py-10 text-on-surface-variant font-body-sm text-body-sm">
@@ -173,9 +173,10 @@ onMounted(() => load(1))
   border: 1px solid var(--color-outline-variant);
   border-radius: 10px;
   background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
   font-size: 14px;
   outline: none;
   box-shadow: inset 0 1px 2px rgba(50, 104, 84, 0.05);
 }
-.inp:focus { border-color: var(--color-primary); box-shadow: inset 0 1px 2px rgba(50, 104, 84, 0.08), 0 0 0 3px var(--color-primary-fixed); }
+.inp:focus { border-color: var(--color-primary); box-shadow: inset 0 1px 2px rgba(50, 104, 84, 0.08), 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent); }
 </style>
