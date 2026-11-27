@@ -81,8 +81,8 @@ export const navigation = [
     name: 'Program',
     href: '/program',
     children: [
-      { name: 'SMA Madani', href: '/sma' },
-      { name: 'SMP Madani', href: null, comingSoon: true },
+      { name: 'SMA Madani Al-Aziziyah', href: '/sma' },
+      { name: 'SMP Madani Al-Aziziyah', href: null, comingSoon: true },
     ],
   },
   {
