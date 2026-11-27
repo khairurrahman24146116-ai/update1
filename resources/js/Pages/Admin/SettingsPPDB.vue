@@ -10,6 +10,8 @@
         <textarea v-model="form.description" placeholder="Deskripsi" rows="2" class="md:col-span-2 input"></textarea>
         <input v-model="form.start_date" type="date" class="input" />
         <input v-model="form.end_date" type="date" class="input" />
+        <input v-model="form.schedule_days" placeholder="Hari pendaftaran (cth: Setiap hari Sabtu s/d Kamis)" class="input" />
+        <input v-model="form.schedule_hours" placeholder="Jam pendaftaran (cth: Pukul 09.00-12.00 WIB dan 14.00-17.00 WIB)" class="input" />
         <select v-model="form.status" class="input"><option value="buka">buka</option><option value="tutup">tutup</option><option value="archived">archived</option></select>
         <label class="flex items-center gap-2 text-xs font-bold"><input type="checkbox" v-model="form.is_public" /> Public</label>
       </div>
@@ -240,7 +242,7 @@ const token = () => localStorage.getItem('madani_token')
 const auth = () => ({ Authorization: `Bearer ${token()}`, Accept: 'application/json' })
 const waves = ref([]), loading = ref(false), showForm = ref(false), formError = ref('')
 const toast = ref(''), toastType = ref('success')
-const form = ref({ name: '', slug: '', description: '', start_date: '', end_date: '', status: 'buka', is_public: true })
+const form = ref({ name: '', slug: '', description: '', start_date: '', end_date: '', schedule_days: '', schedule_hours: '', status: 'buka', is_public: true })
 const selectedWave = ref(null), regs = ref([]), regSearch = ref(''), regStatus = ref(''), regJenjang = ref('')
 const detail = ref(null), photoUrl = ref('')
 const editMode = ref(false), saving = ref(false), saveError = ref(''), fieldErrors = ref({})
@@ -314,8 +316,8 @@ async function saveEdit() {
 
 let timer = null
 function onRegSearch() { clearTimeout(timer); timer = setTimeout(loadRegs, 350) }
-function openCreate() { form.value = { name: '', slug: '', description: '', start_date: '', end_date: '', status: 'buka', is_public: true }; formError.value = ''; showForm.value = true }
-function openEdit(w) { form.value = { id: w.id, name: w.name, slug: w.slug, description: w.description || '', start_date: (w.start_date||'').slice(0,10) || '', end_date: (w.end_date||'').slice(0,10) || '', status: w.status, is_public: !!w.is_public }; formError.value = ''; showForm.value = true }
+function openCreate() { form.value = { name: '', slug: '', description: '', start_date: '', end_date: '', schedule_days: '', schedule_hours: '', status: 'buka', is_public: true }; formError.value = ''; showForm.value = true }
+function openEdit(w) { form.value = { id: w.id, name: w.name, slug: w.slug, description: w.description || '', start_date: (w.start_date||'').slice(0,10) || '', end_date: (w.end_date||'').slice(0,10) || '', schedule_days: w.schedule_days || '', schedule_hours: w.schedule_hours || '', status: w.status, is_public: !!w.is_public }; formError.value = ''; showForm.value = true }
 async function loadWaves() { loading.value = true; try { const r = await fetch('/api/ppdb-waves', { headers: auth() }); if (!r.ok) throw new Error('Gagal memuat daftar gelombang'); const j = await r.json(); waves.value = j.data ?? j; return true } catch (e) { showToast(e.message, 'error'); return false } finally { loading.value = false } }
 async function submit() { formError.value = ''; if (!form.value.name) { formError.value = 'Nama wajib'; return } const payload = { ...form.value }; if (!payload.slug) delete payload.slug; if (!payload.start_date) delete payload.start_date; if (!payload.end_date) delete payload.end_date; const isEdit = !!form.value.id; const url = isEdit ? '/api/ppdb-waves/' + form.value.id : '/api/ppdb-waves'; const method = isEdit ? 'PUT' : 'POST'; const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json', ...auth() }, body: JSON.stringify(payload) }); if (!r.ok) { const j = await r.json().catch(()=>({})); formError.value = j.message || Object.values(j.errors || {}).flat().join(', '); return } showForm.value = false; await loadWaves(); showToast(isEdit ? 'Gelombang diperbarui' : 'Gelombang dibuat') }
 async function remove(w) { if (!confirm('Hapus gelombang ' + w.name + '?')) return; const r = await fetch('/api/ppdb-waves/' + w.id, { method: 'DELETE', headers: auth() }); if (!r.ok) { const j = await r.json().catch(() => ({})); showToast(j.message || 'Gagal menghapus gelombang', 'error'); return } await loadWaves(); showToast('Gelombang dihapus') }

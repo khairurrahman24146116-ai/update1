@@ -73,8 +73,8 @@
 
             <article class="ppdb-card ppdb-schedule-card ppdb-anim" :style="{ '--d': (waves.length * 80) + 'ms' }">
               <span class="ppdb-label ppdb-label--sm">Jadwal Pendaftaran</span>
-              <p class="ppdb-schedule-text">Setiap hari <strong>Sabtu s/d Kamis</strong></p>
-              <p class="ppdb-schedule-text">Pukul <strong>09.00–12.00 WIB</strong> dan <strong>14.00–17.00 WIB</strong></p>
+              <p class="ppdb-schedule-text"><strong>{{ scheduleDays }}</strong></p>
+              <p class="ppdb-schedule-text"><strong>{{ scheduleHours }}</strong></p>
             </article>
           </div>
         </div>
@@ -164,6 +164,8 @@ const waves = ref([])
 const loaded = ref(false)
 const selectedWave = ref(null)
 const selectedJenjang = ref('')
+const DEFAULT_SCHEDULE_DAYS = 'Setiap hari Sabtu s/d Kamis'
+const DEFAULT_SCHEDULE_HOURS = 'Pukul 09.00-12.00 WIB dan 14.00-17.00 WIB'
 
 const jenjangOptions = [
   { key: 'lanjut', label: 'Jenjang Lanjut', icon: 'trending_up', badge: '', description: 'Pendaftaran santri yang melanjutkan ke jenjang berikutnya di lingkungan LPI Dayah Madani Al-Aziziyah.', note: '' },
@@ -178,6 +180,8 @@ const statusMap = { buka: 'Dibuka', tutup: 'Ditutup', archived: 'Arsip' }
 function statusLabel(s) { return statusMap[s] || s || '—' }
 function fmtDate(d) { return d ? String(d).slice(0, 10) : '—' }
 
+const scheduleDays = computed(() => selectedWave.value?.schedule_days || waves.value[0]?.schedule_days || DEFAULT_SCHEDULE_DAYS)
+const scheduleHours = computed(() => selectedWave.value?.schedule_hours || waves.value[0]?.schedule_hours || DEFAULT_SCHEDULE_HOURS)
 const formLink = computed(() => {
   const query = {}
   if (selectedWave.value) query.wave = selectedWave.value.id

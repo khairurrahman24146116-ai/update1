@@ -47,8 +47,8 @@
 
             <article class="ppdb-card ppdb-schedule-card ppdb-anim" :style="{ '--d': (waves.length * 80) + 'ms' }">
               <span class="ppdb-label ppdb-label--sm">Jadwal Pendaftaran</span>
-              <p class="ppdb-schedule-text">Setiap hari <strong>Sabtu s/d Kamis</strong></p>
-              <p class="ppdb-schedule-text">Pukul <strong>09.00–12.00 WIB</strong> dan <strong>14.00–17.00 WIB</strong></p>
+              <p class="ppdb-schedule-text"><strong>{{ scheduleDays }}</strong></p>
+              <p class="ppdb-schedule-text"><strong>{{ scheduleHours }}</strong></p>
             </article>
           </div>
         </div>
@@ -368,6 +368,8 @@ const waves = ref([])
 const loaded = ref(false)
 const selected = ref(null)
 const publicStats = ref(null)
+const DEFAULT_SCHEDULE_DAYS = 'Setiap hari Sabtu s/d Kamis'
+const DEFAULT_SCHEDULE_HOURS = 'Pukul 09.00-12.00 WIB dan 14.00-17.00 WIB'
 const step = ref(0)
 const submitting = ref(false)
 const formError = ref('')
@@ -399,6 +401,15 @@ function onJenjangChange() {
 function selectJenjang(key) {
   form.value.jenjang = key
   onJenjangChange()
+}
+
+const scheduleDays = ref(DEFAULT_SCHEDULE_DAYS)
+const scheduleHours = ref(DEFAULT_SCHEDULE_HOURS)
+
+function syncSchedule() {
+  const src = selected.value || waves.value[0] || null
+  scheduleDays.value = src?.schedule_days || DEFAULT_SCHEDULE_DAYS
+  scheduleHours.value = src?.schedule_hours || DEFAULT_SCHEDULE_HOURS
 }
 
 const steps = [
@@ -467,6 +478,7 @@ onMounted(async () => {
         if (found) selectWave(found)
       }
     }
+    syncSchedule()
   } catch { /* abaikan */ } finally { loaded.value = true }
 })
 
@@ -499,6 +511,7 @@ watch(copyMother, (v) => {
 function selectWave(w) {
   selected.value = w
   form.value.wave_id = w.id
+  syncSchedule()
   step.value = 0
   success.value = null
   formError.value = ''
@@ -510,6 +523,7 @@ function changeWave() {
   form.value.wave_id = null
   formError.value = ''
   backendErrors.value = []
+  syncSchedule()
 }
 
 function onPhoto(e) {
@@ -653,6 +667,7 @@ function resetAll() {
   step.value = 0
   success.value = null
   selected.value = null
+  syncSchedule()
 }
 
 function printBukti() { window.print() }

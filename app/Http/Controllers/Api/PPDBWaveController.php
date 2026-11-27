@@ -37,7 +37,7 @@ class PPDBWaveController extends Controller
 
     public function store(Request $request)
     {
-        $v = $request->validate(['name' => 'required|string|max:255', 'slug' => 'nullable|string|unique:p_p_d_b_waves,slug', 'description' => 'nullable|string', 'banner' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,webp', 'start_date' => 'nullable|date', 'end_date' => 'nullable|date|after_or_equal:start_date', 'status' => 'nullable|in:buka,tutup,archived', 'is_public' => 'boolean']);
+        $v = $request->validate(['name' => 'required|string|max:255', 'slug' => 'nullable|string|unique:p_p_d_b_waves,slug', 'description' => 'nullable|string', 'banner' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,webp', 'start_date' => 'nullable|date', 'end_date' => 'nullable|date|after_or_equal:start_date', 'schedule_days' => 'nullable|string|max:120', 'schedule_hours' => 'nullable|string|max:120', 'status' => 'nullable|in:buka,tutup,archived', 'is_public' => 'boolean']);
         $data = collect($v)->except('banner')->toArray();
         if ($request->hasFile('banner')) {
             $data['banner_path'] = $request->file('banner')->store('ppdb', 'public');
@@ -53,7 +53,7 @@ class PPDBWaveController extends Controller
 
     public function update(Request $request, PPDBWave $ppdbWave)
     {
-        $v = $request->validate(['name' => 'sometimes|string|max:255', 'slug' => 'sometimes|nullable|string|unique:p_p_d_b_waves,slug,'.$ppdbWave->id, 'description' => 'nullable|string', 'banner' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,webp', 'start_date' => 'nullable|date', 'end_date' => 'nullable|date|after_or_equal:start_date', 'status' => 'sometimes|in:buka,tutup,archived', 'is_public' => 'boolean']);
+        $v = $request->validate(['name' => 'sometimes|string|max:255', 'slug' => 'sometimes|nullable|string|unique:p_p_d_b_waves,slug,'.$ppdbWave->id, 'description' => 'nullable|string', 'banner' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,webp', 'start_date' => 'nullable|date', 'end_date' => 'nullable|date|after_or_equal:start_date', 'schedule_days' => 'nullable|string|max:120', 'schedule_hours' => 'nullable|string|max:120', 'status' => 'sometimes|in:buka,tutup,archived', 'is_public' => 'boolean']);
         $data = collect($v)->except('banner')->toArray();
         if ($request->hasFile('banner')) {
             $data['banner_path'] = $request->file('banner')->store('ppdb', 'public');

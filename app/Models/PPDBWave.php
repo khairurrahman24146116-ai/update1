@@ -10,7 +10,7 @@ class PPDBWave extends Model
 {
     protected $table = 'p_p_d_b_waves';
 
-    protected $fillable = ['name', 'slug', 'description', 'banner_path', 'start_date', 'end_date', 'status', 'is_public'];
+    protected $fillable = ['name', 'slug', 'description', 'banner_path', 'start_date', 'end_date', 'schedule_days', 'schedule_hours', 'status', 'is_public'];
 
     protected function casts(): array
     {
