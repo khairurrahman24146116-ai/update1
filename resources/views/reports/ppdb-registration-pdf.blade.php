@@ -103,8 +103,8 @@
             </td>
             <td class="photo-cell">
                 <div class="photo-box">
-                    @if ($photoPath && is_file($photoPath))
-                        <img src="{{ 'data:image/'.(pathinfo($photoPath, PATHINFO_EXTENSION) === 'png' ? 'png' : 'jpeg').';base64,'.base64_encode((string) file_get_contents($photoPath)) }}" alt="Pas Foto">
+                    @if (! empty($photoDataUri))
+                        <img src="{{ $photoDataUri }}" alt="Pas Foto">
                     @else
                         Pas Photo<br>3x4<br>Latar Biru
                     @endif

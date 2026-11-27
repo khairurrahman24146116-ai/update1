@@ -21,5 +21,16 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, AccountPolicy::class);
 
         StudentEnrollment::observe(StudentEnrollmentObserver::class);
+
+        $this->ensureDompdfDirectories();
+    }
+
+    private function ensureDompdfDirectories(): void
+    {
+        foreach ([storage_path('fonts'), storage_path('framework/dompdf-temp')] as $path) {
+            if (! is_dir($path)) {
+                @mkdir($path, 0775, true);
+            }
+        }
     }
 }

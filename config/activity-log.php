@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'pdf_max_rows' => 2000,
+    'pdf_max_rows' => 500,
 ];

@@ -14,6 +14,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -373,6 +374,7 @@ class PPDBRegistrationController extends Controller
 
     public function pdf(Request $request, PPDBRegistration $ppdbRegistration)
     {
+        $startedAt = microtime(true);
         $ppdbRegistration->load('wave:id,name,slug');
         $printedAt = now()->timezone('Asia/Jakarta');
 
@@ -380,17 +382,25 @@ class PPDBRegistrationController extends Controller
             'registration_number' => $ppdbRegistration->registration_number,
         ]);
 
-        return Pdf::loadView('reports.ppdb-registration-pdf', [
+        $response = Pdf::loadView('reports.ppdb-registration-pdf', [
             'registration' => $ppdbRegistration,
             'printedAt' => $printedAt,
             'printedBy' => $request->user(),
-            'photoPath' => $this->photoPath($ppdbRegistration),
+            'photoDataUri' => $this->pdfPhotoDataUri($ppdbRegistration),
         ])->setPaper('a4', 'portrait')
             ->download('formulir-ppdb-'.($ppdbRegistration->registration_number ?: $ppdbRegistration->id).'.pdf');
+
+        Log::info('ppdb_registration.pdf rendered', [
+            'registration_id' => $ppdbRegistration->id,
+            'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000),
+        ]);
+
+        return $response;
     }
 
     public function pdfRecap(Request $request)
     {
+        $startedAt = microtime(true);
         $filters = $request->validate([
             'wave_id' => 'nullable|integer|exists:p_p_d_b_waves,id',
             'status' => 'nullable|in:pending,diterima,ditolak,cadangan',
@@ -409,11 +419,11 @@ class PPDBRegistrationController extends Controller
             ->when($filters['search'] ?? null, fn ($q, $v) => $q->where(fn ($qq) => $qq->where('name', 'like', "%{$v}%")->orWhere('nisn', 'like', "%{$v}%")->orWhere('registration_number', 'like', "%{$v}%")))
             ->orderBy('registration_number');
 
-        $limit = 1000;
+        $limit = (int) config('ppdb.pdf_recap_max_rows', 300);
         $count = (clone $query)->count();
         if ($count > $limit) {
             throw ValidationException::withMessages([
-                'report' => "Data terlalu banyak untuk dicetak ({$count} pendaftar). Maksimal {$limit} pendaftar; persempit filter terlebih dahulu.",
+                'report' => "Data terlalu banyak untuk dicetak ({$count} pendaftar). Maksimal {$limit} pendaftar per PDF; persempit filter atau ekspor data.",
             ]);
         }
 
@@ -426,7 +436,7 @@ class PPDBRegistrationController extends Controller
             'rows' => $rows->count(),
         ]);
 
-        return Pdf::loadView('reports.ppdb-registration-recap-pdf', [
+        $response = Pdf::loadView('reports.ppdb-registration-recap-pdf', [
             'registrations' => $rows,
             'filters' => $filters,
             'waveName' => $waveName,
@@ -434,6 +444,41 @@ class PPDBRegistrationController extends Controller
             'printedBy' => $request->user(),
         ])->setPaper('a4', 'landscape')
             ->download('rekap-ppdb-'.$printedAt->format('Ymd-His').'.pdf');
+
+        Log::info('ppdb_registration.pdf_recap rendered', [
+            'rows' => $rows->count(),
+            'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000),
+        ]);
+
+        return $response;
+    }
+
+    private function pdfPhotoDataUri(PPDBRegistration $registration): ?string
+    {
+        try {
+            $sourcePath = $this->photoPath($registration);
+            if ($sourcePath === null) {
+                return null;
+            }
+
+            $derivativePath = $this->ensurePdfPhotoDerivative($sourcePath, $registration->photo_path);
+            $path = $derivativePath ?? $sourcePath;
+            $contents = @file_get_contents($path);
+            if ($contents === false) {
+                return null;
+            }
+
+            $mime = strtolower((string) pathinfo($path, PATHINFO_EXTENSION)) === 'png' ? 'image/png' : 'image/jpeg';
+
+            return 'data:'.$mime.';base64,'.base64_encode($contents);
+        } catch (\Throwable $e) {
+            Log::warning('ppdb_registration.pdf photo fallback', [
+                'registration_id' => $registration->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private function photoPath(PPDBRegistration $registration): ?string
@@ -443,6 +488,63 @@ class PPDBRegistrationController extends Controller
         }
 
         return Storage::disk('local')->path($registration->photo_path);
+    }
+
+    private function ensurePdfPhotoDerivative(string $sourcePath, string $relativePath): ?string
+    {
+        if (! extension_loaded('gd')) {
+            return null;
+        }
+
+        $derivativeRelative = 'ppdb/photos_pdf/'.pathinfo($relativePath, PATHINFO_FILENAME).'.jpg';
+        $disk = Storage::disk('local');
+        $derivativePath = $disk->path($derivativeRelative);
+
+        $sourceMtime = @filemtime($sourcePath) ?: 0;
+        $derivativeMtime = @filemtime($derivativePath) ?: 0;
+        if ($disk->exists($derivativeRelative) && $derivativeMtime >= $sourceMtime) {
+            return $derivativePath;
+        }
+
+        $directory = dirname($derivativePath);
+        if (! is_dir($directory)) {
+            @mkdir($directory, 0775, true);
+        }
+
+        $info = @getimagesize($sourcePath);
+        if ($info === false) {
+            return null;
+        }
+
+        [$width, $height, $type] = $info;
+        if ($width < 1 || $height < 1) {
+            return null;
+        }
+
+        $source = match ($type) {
+            IMAGETYPE_JPEG => @imagecreatefromjpeg($sourcePath),
+            IMAGETYPE_PNG => @imagecreatefrompng($sourcePath),
+            IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($sourcePath) : false,
+            default => false,
+        };
+        if ($source === false) {
+            return null;
+        }
+
+        $maxWidth = 400;
+        $targetWidth = $width > $maxWidth ? $maxWidth : $width;
+        $targetHeight = (int) max(1, round($height * $targetWidth / $width));
+
+        $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
+        $white = imagecolorallocate($canvas, 255, 255, 255);
+        imagefilledrectangle($canvas, 0, 0, $targetWidth, $targetHeight, $white);
+        imagecopyresampled($canvas, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
+
+        $saved = @imagejpeg($canvas, $derivativePath, 80);
+        imagedestroy($source);
+        imagedestroy($canvas);
+
+        return $saved ? $derivativePath : null;
     }
 
     public function update(UpdatePPDBRegistrationRequest $request, PPDBRegistration $ppdbRegistration)
